@@ -20,13 +20,15 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
         )
 
 
+(define fn 16)
+
 (define (make-segment base-width base-length position rotation tree-definition depth port)
   (define (translate v)
     (display (format "translate([~a, ~a, ~a])\n"
                      (vector-ref v 0) (vector-ref v 1) (vector-ref v 2))
              port))
   (define (rotate v)
-    (let ((eu-rot (quaternion->euler v)))
+    (let ((eu-rot (quaternion->euler~0 v)))
       (display (format "rotate([~a, ~a, ~a])\n"
                        (radians->degrees (vector-ref eu-rot 0))
                        (radians->degrees (vector-ref eu-rot 1))
@@ -41,8 +43,8 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (translate position)
     (rotate rotation)
     (if (eqv? #\o (string-ref tree-definition 0))
-        (display "sphere(r = 1);\n" port)
-        (display "sphere(r = 2);\n" port))
+        (display (format "resize([10, 2.5, 10]) sphere(r = 1, $fn=~a);\n" fn) port)
+        (display (format "resize([10, 8, 10]) sphere(r = 2, $fn=~a);\n" fn) port))
     (display "\n" port))
    (else
     ;; branch
@@ -62,24 +64,51 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
       (translate position)
       (rotate rotation)
       (display (format "rotate([-90, 0, 0])\n") port)
-      (display (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false);\n\n"
-                       my-length my-thickness child-thickness)
+      (display (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false, $fn=~a);\n\n"
+                       my-length my-thickness child-thickness fn)
                port)
       (cond
        ((eqv? #\i (string-ref tree-definition 0))
-        (new-child (degrees->radians (vector 0 30 0))))
+        ;; (new-child (degrees->radians (vector 0 30 0)))
+        (new-child (degrees->radians (vector 0 0 0)))
+        )
        ((eqv? #\y (string-ref tree-definition 0))
         ;; (new-child (degrees->radians (vector (+ 15 (* 5 depth)) -40 120)))
         ;; (new-child (degrees->radians (vector (- -15 (* 5 depth)) 40 120)))
-        (new-child (degrees->radians (vector 0 0 45)))
-        (new-child (degrees->radians (vector 0 0 -45)))
+        ;;
+        ;; (new-child (degrees->radians (vector (+ 15 (* 5 depth)) -40 0)))
+        ;; (new-child (degrees->radians (vector (- -15 (* 5 depth)) 40 0)))
+        ;;
+        ;; (let* ((r0 (rotation-quaternion-d (vector 1 0 0) (+ 15 (* 5 depth))))
+        ;;        (r1 (rotation-quaternion-d (vector 1 0 0) (- -15 (* 5 depth))))
+        ;;        (r0~ (combine-rotations (rotation-quaternion-d (vector 0 1 0) -40) r0))
+        ;;        (r1~ (combine-rotations (rotation-quaternion-d (vector 0 1 0) 40) r1))
+        ;;        ;; (r0~~ (combine-rotations (rotation-quaternion-d (vector 0 0 1) 120) r0~))
+        ;;        ;; (r1~~ (combine-rotations (rotation-quaternion-d (vector 0 0 1) 120) r1~))
+        ;;        )
+        ;;   (new-child (quaternion->euler r0~))
+        ;;   (new-child (quaternion->euler r1~))
+        ;;   )
+        ;;
+        ;; (new-child (degrees->radians (vector (+ 15 (* 5 depth)) 40 0)))
+        ;; (new-child (degrees->radians (vector (- -15 (* 5 depth)) 40 0)))
+        ;;
+        (let* ((r0 (rotation-quaternion-d (vector 0 1 0) 120))
+               (r1 (rotation-quaternion-d (vector 0 1 0) 120))
+               (r0~ (combine-rotations r0 (rotation-quaternion-d (vector 0 0 1) -40)))
+               (r1~ (combine-rotations r1 (rotation-quaternion-d (vector 0 0 1) 40)))
+               (r0~~ (combine-rotations r0~ (rotation-quaternion-d (vector 1 0 0) (+ 15 (* 5 depth)))))
+               (r1~~ (combine-rotations r1~ (rotation-quaternion-d (vector 1 0 0) (- -15 (* 5 depth)))))
+               )
+          (new-child (quaternion->euler r0~~))
+          (new-child (quaternion->euler r1~~))
+          )
+
         )
        ((eqv? #\x (string-ref tree-definition 0))
         (let* ((r0 (rotation-quaternion-d (vector 1 0 0) (+ 50 (* 5 depth))))
-               (r1 (combine-rotations
-                    r0 (rotation-quaternion-d (vector 0 1 0) 120)))
-               (r2 (combine-rotations
-                    r0 (rotation-quaternion-d (vector 0 1 0) -120))))
+               (r1 (combine-rotations r0 (rotation-quaternion-d (vector 0 1 0) 120)))
+               (r2 (combine-rotations r0 (rotation-quaternion-d (vector 0 1 0) -120))))
           (new-child (quaternion->euler r0))
           (new-child (quaternion->euler r1))
           (new-child (quaternion->euler r2))))

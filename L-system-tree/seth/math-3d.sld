@@ -320,7 +320,7 @@
     ;; atan2(2*(q0*q3 + q1*q2), 1 - 2*(q2^2 + q3^2))
 
 
-    (define (quaternion->euler r)
+    (define (quaternion->euler~0 r)
       (let* ((q0 (quat-s r))
              (q1 (quat-x r))
              (q2 (quat-y r))
@@ -341,7 +341,7 @@
 
 
 
-    (define (quaternion->euler~0 r)
+    (define (quaternion->euler r)
       (let* ((rs (quat-s r))
              (rx (quat-x r))
              (ry (quat-y r))
