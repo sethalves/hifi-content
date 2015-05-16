@@ -23,16 +23,20 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 (define fn 16)
 
 (define (make-segment base-width base-length position rotation tree-definition depth port)
+
+  ;; output an openscad translate command
   (define (translate v)
     (display (format "translate([~a, ~a, ~a])\n"
                      (vector-ref v 0) (vector-ref v 1) (vector-ref v 2))
              port))
+
+  ;; output an openscad rotate command
   (define (rotate v)
-    (let ((eu-rot (quaternion->euler~0 v)))
+    (let ((eu-rot (radians->degrees (quaternion->euler~zyx v))))
       (display (format "rotate([~a, ~a, ~a])\n"
-                       (radians->degrees (vector-ref eu-rot 0))
-                       (radians->degrees (vector-ref eu-rot 1))
-                       (radians->degrees (vector-ref eu-rot 2)))
+                       (vector-ref eu-rot 0)
+                       (vector-ref eu-rot 1)
+                       (vector-ref eu-rot 2))
                port)))
 
   (cond
