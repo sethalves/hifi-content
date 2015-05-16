@@ -5,13 +5,15 @@
 VHACD_UTIL=/home/seth/src/hifi/build/tools/vhacd-util/vhacd-util
 
 
-all: windmillCandidate-hull.obj
+all:
 
 
-parts: windmillCandidate.fbx
+parts: windmillcandidate.obj
 	rm -rf parts
 	mkdir -p parts
 	$(VHACD_UTIL) -i $^ -o parts/windmillCandidate --split
+
+#	$(VHACD_UTIL) -i $^ -o parts/windmillCandidate --split
 
 
 join-parts:
@@ -23,6 +25,7 @@ windmillCandidate-hull.obj: windmillCandidate.fbx
 
 download:
 	wget https://hifi-public.s3.amazonaws.com/ryan/windmillCandidate.fbx
+	wget https://hifi-public.s3.amazonaws.com/ryan/windmillcandidate.obj
 
 dist: windmillCandidate-hull.obj
 	scp $^ headache:public_html/hifi/
