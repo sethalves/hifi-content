@@ -22,7 +22,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 
 (define fn 8)
 
-(define (make-segment base-width base-length position rotation tree-definition depth skip-trunk skip-leaves port)
+(define (make-segment base-width base-length position rotation tree-definition depth skip-trunk skip-leaves port output-type)
 
   ;; output an openscad translate command
   (define (translate v)
@@ -65,7 +65,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                                       (substring tree-definition 1)
                                       (+ depth 1)
                                       skip-trunk skip-leaves
-                                      port))))
+                                      port output-type))))
 
       (cond ((not skip-trunk)
              (translate position)
@@ -75,6 +75,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                               my-length my-thickness child-thickness fn)
                       port)))
       (cond
+       ((eq? output-type 'hull) #t) ;; don't recurse
        ((eqv? #\i (string-ref tree-definition 0))
         ;; (new-child (degrees->radians (vector 0 30 0)))
         (new-child (degrees->radians (vector 0 0 0)))
@@ -131,6 +132,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (cout "   -p --position x y z           Set the position of the trunk\n")
     (cout "   -r --rotation x y z           Set the rotation of the trunk\n")
     (cout "   -w --base-width n             Thickness of truck.  default 10\n")
+    (cout "   -h --hull                     output obj collision hull\n")
     (cout "   -o --output filename          File to write to\n")
     (cout "   -t --tree ixyo                Define the shape of the tree\n")
     (cout "      i = no branching\n")
@@ -144,6 +146,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
   (let* ((args (parse-command-line
                 `(((-p --position -r --rotation) x y z)
                   ((-w --base-width) width)
+                  ((-h --hull))
                   (-t tree-definition)
                   (-o output-file)
                   ((--skip-trunk --skip-leaves))
@@ -152,6 +155,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
          (rot zero-vector)
          (base-width 2.0)
          (base-length 10.0)
+         (output-as-hull #f)
          (tree-definition "iixyyyO")
          (skip-trunk #f)
          (skip-leaves #f)
@@ -176,7 +180,9 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
          ((--skip-leaves)
           (set! skip-leaves #t))
          ((-w)
-          (set! base-width (cadr arg)))
+          (set! base-width (string->number (cadr arg))))
+         ((-h --hull)
+          (set! output-as-hull #t))
          ((-t)
           (set! tree-definition (cadr arg)))
          ((-o)
@@ -194,7 +200,9 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   (euler->quaternion (degrees->radians rot))
                   tree-definition 0
                   skip-trunk skip-leaves
-                  output-port)
+                  output-port
+                  (cond (output-as-hull 'hull)
+                        (else 'normal)))
     ))
 
 (main-program)
