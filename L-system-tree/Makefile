@@ -19,44 +19,38 @@ libs:
 	snow2 -p 'http://foldling.org/snow2/index.scm' install '(seth obj-model)' '(foldling command-line)'
 
 
-# ---
-
-tree0-trunk.scad: L-system-tree Makefile
-	./L-system-tree -w 4 -t iixxyiO --skip-leaves -o tree0-trunk.scad
-
-tree0-trunk.stl: tree0-trunk.scad
+%.stl: %.scad
 	openscad -o $@ $^
 
-tree0-trunk.obj: tree0-trunk.stl
+%-trunk.obj: %-trunk.stl
 	- ivcon $^ $@.tmp.obj
 	wavefront-obj-tool -c $@.tmp.obj -o $@ -S trunk_mtl
 
-
-
-tree0-leaves.scad: L-system-tree Makefile
-	./L-system-tree -w 4 -t iixxyiO --skip-trunk -o tree0-leaves.scad
-
-tree0-leaves.stl: tree0-leaves.scad
-	openscad -o $@ $^
-
-tree0-leaves.obj: tree0-leaves.stl
+%-leaves.obj: %-leaves.stl
 	- ivcon $^ $@.tmp.obj
 	wavefront-obj-tool -c $@.tmp.obj -o $@ -S leaves_mtl
 
-tree0.obj: tree0-trunk.obj tree0-leaves.obj
+%.obj: %.stl
+	- ivcon $^ $@.tmp.obj
+	wavefront-obj-tool -c $@.tmp.obj -o $@
+
+%.obj: %-trunk.obj %-leaves.obj
 	wavefront-obj-tool -L L-system-trees.mtl -o $@ $^
 
 
+# ---
+
+TREE0_W=5
+TREE0_SHAPE=iixxyiO
+
+tree0-trunk.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE0_W) -t $(TREE0_SHAPE) --skip-leaves -o $@
+
+tree0-leaves.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE0_W) -t $(TREE0_SHAPE) --skip-trunk -o $@
 
 tree0-hull.scad: L-system-tree Makefile
-	./L-system-tree -w 4 -t iixxyiO --hull -o tree0-hull.scad
-
-tree0-hull.stl: tree0-hull.scad
-	openscad -o $@ $^
-
-tree0-hull.obj: tree0-hull.stl
-	- ivcon $^ $@.tmp.obj
-	wavefront-obj-tool -c $@.tmp.obj -o $@
+	./L-system-tree -w $(TREE0_W) -t $(TREE0_SHAPE) --hull -o tree0-hull.scad
 
 # ---
 
