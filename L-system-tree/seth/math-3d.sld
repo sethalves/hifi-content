@@ -38,9 +38,13 @@
           quaternion
           atan2
           quaternion->euler
-          quaternion->euler~0
-          quaternion->euler~1
+          ;; quaternion->euler~0 broken
+          ;; quaternion->euler~1 broken
+          quaternion->euler~zyx
           euler->quaternion
+          euler->quaternion~0
+          euler->quaternion~1
+          euler->quaternion~zyx
           rotation-quaternion
           rotation-quaternion-d
           zero-rotation
@@ -55,6 +59,7 @@
           vector3-diff
           point-diff
           vector2-diff
+          vector-diff
           vector3-abs
           vector2-scale
           vector3-scale
@@ -70,6 +75,7 @@
           vector3-rotate
           combine-rotations
           dot-product
+          vector-magnitude
           vector3-magnitude
           cross-product
           distance-between-points
@@ -126,7 +132,8 @@
           bounding-box2-copy
           bounding-box2-=?
           bounding-box2-add-point
-
+          best-aligned-vector
+          epsilon
           )
   (import (scheme base)
           (scheme write)
@@ -143,11 +150,13 @@
     (define pi 3.14159265358979323846)
     (define pi*2 (* pi 2.0))
     (define pi/2 (/ pi 2.0))
+    (define epsilon 0.000001)
 
 
     (define (number->pretty-string v places)
       ;; I didn't want to write this.  Why did I have to write this?
       ;; number->string will return scientific notation on some platforms.
+      (define epsilon (expt 10 (inexact (- (- places) 1))))
       (define n->s (vector "0" "1" "2" "3" "4" "5" "6" "7" "8" "9"))
       (define (first-power v)
         (let loop ((p 1))
@@ -157,7 +166,7 @@
         (let loop ((v v)
                    (result 0))
           (let ((x (expt 10 (inexact p))))
-            (cond ((< v x) result)
+            (cond ((< v (- x epsilon)) result)
                   (else
                    (loop (- v x) (+ result 1)))))))
       (define (do-loop v)
@@ -174,6 +183,7 @@
                              (string-append result (vector-ref n->s n) ".")
                              (string-append result (vector-ref n->s n)))
                          next-v))))))
+
       (let ((result (if (< v 0)
                         (string-append "-" (do-loop (- v)))
                         (do-loop v))))
@@ -295,6 +305,12 @@
 
 
 
+    ;; http://www.geometrictools.com/Documentation/EulerAngles.pdf (via Clyde,
+    ;; https://github.com/threerings/clyde/blob/master/src/main/java/com/threerings/math/Quaternion.java)
+    ;; http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+    ;; http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    ;; http://wiki.call-cc.org/eggref/4/quaternions
+
     (define (quaternion->euler~1 q)
       ;; convert a quaternion into rotations about x, y, and z axis.
       ;; theta = elevation angle
@@ -319,7 +335,7 @@
     ;;  asin(2*(q0*q2 - q3*q1))
     ;; atan2(2*(q0*q3 + q1*q2), 1 - 2*(q2^2 + q3^2))
 
-
+ 
     (define (quaternion->euler~0 r)
       (let* ((q0 (quat-s r))
              (q1 (quat-x r))
@@ -338,7 +354,6 @@
          (atan2 (* 2 (+ q0*q1 q2*q3)) (- 1 (* 2 (+ q1^2 q2^2))))
          (asin (* 2 (- q0*q2 q3*q1)))
          (atan2 (* 2 (+ q0*q3 q1*q2)) (- 1 (* 2 (+ q2^2 q3^2)))))))
-
 
 
     (define (quaternion->euler r)
@@ -366,6 +381,60 @@
                     (else
                      (vector 0 (- (/ pi 2)) (atan2 (+ (* rz rs) (* rx ry))
                                                    (+ .5 (- tx) (- tz))))))))))
+
+
+    (define (quaternion->euler~zyx q)
+      (let* ((w (quat-s q))
+             (x (quat-x q))
+             (y (quat-y q))
+             (z (quat-z q))
+             (y*w (* y w))
+             (x*z (* x z))
+             (sy (* 2.0 (- y*w x*z)))
+             (eulers
+              (cond ((< sy (- 1.0 epsilon))
+                     (cond ((> sy (+ -1.0 epsilon))
+                            (vector
+                             (atan2 (+ (* y z) (* x w)) (- 0.5 (+ (* x x) (* y y))))
+                             (asin sy)
+                             (atan2 (+ (* x y) (* z w)) (- 0.5 (+ (* y y) (* z z))))))
+                           (else
+                            ;; not a unique solution; x + z = atan2(-m21, m11)
+                            (vector
+                             0.0
+                             (- pi/2)
+                             (atan2 (- (* x w) (* y z)) (- 0.5 (+ (* x x) (* z z))))))))
+                    (else
+                     ;; not a unique solution; x - z = atan2(-m21, m11)
+                     (vector
+                      0.0
+                      pi/2
+                      (- (atan2 (- (* x w) (* y z)) (- 0.5 (+ (* x x) (* z z))))))))))
+
+        (cond ((< (vector3-z eulers) pi/2)
+               ;; adjust so that z, rather than y, is in [-pi/2, pi/2]
+               (if (< (vector3-x eulers) 0.0)
+                   (vector-set! eulers 0 (+ (vector3-x eulers) pi))
+                   (vector-set! eulers 0 (- (vector3-x eulers) pi)))
+               (vector-set! eulers 1 (- (vector3-y eulers)))
+               (if (< (vector3-y eulers) 0.0)
+                   (vector-set! eulers 1 (+ (vector3-y eulers) pi))
+                   (vector-set! eulers 1 (- (vector3-y eulers) pi)))
+               (vector-set! eulers 2 (+ (vector3-z eulers) pi)))
+              ((> (vector3-z eulers) pi/2)
+               (if (< (vector3-x eulers) 0.0)
+                   (vector-set! eulers 0 (+ (vector3-x eulers) pi))
+                   (vector-set! eulers 0 (- (vector3-x eulers) pi)))
+               (vector-set! eulers 1 (- (vector3-y eulers)))
+               (if (< (vector3-y eulers) 0.0)
+                   (vector-set! eulers 1 (+ (vector3-y eulers) pi))
+                   (vector-set! eulers 1 (- (vector3-y eulers) pi)))
+               (vector-set! eulers 2 (- (vector3-z eulers) pi))
+               ))
+
+        eulers))
+
+
 
     ;; http://rpgstats.com/wiki/index.php?title=LibraryRotationFunctions
     ;; vector RotToEuler(rotation r)
@@ -400,7 +469,7 @@
                 (+ (* aw bw cz) (* ax by cw))
                 )))
 
-    (define (euler->quaternion-1 eu)
+    (define (euler->quaternion~0 eu)
       ;; this gives the same results as euler->quaternion, but it's easier to
       ;; understand what's happening.  the vector is rotated around the x, y, and
       ;; then z axis, but the axis rotate also.  the y rotation isn't around
@@ -415,8 +484,15 @@
         (combine-rotations x-rot y-rot z-rot)))
 
 
-    (define (euler->quaternion-2 eu)
-      ;; don't use this one, it's bogus.
+    (define (euler->quaternion~1 eu)
+      ;; another version, even slower, even easier to understand
+      (combine-rotations
+       (rotation-quaternion (vector 0 0 1) (vector3-z eu))
+       (rotation-quaternion (vector 0 1 0) (vector3-y eu))
+       (rotation-quaternion (vector 1 0 0) (vector3-x eu))))
+
+
+    (define (euler->quaternion~zyx eu)
       (combine-rotations
        (rotation-quaternion (vector 1 0 0) (vector3-x eu))
        (rotation-quaternion (vector 0 1 0) (vector3-y eu))
@@ -534,6 +610,7 @@
             ((list? r) (map radians->degrees r))
             (else
              (error "radians->degrees can't process: " r))))
+
     (define (degrees->radians d)
       (cond ((number? d) (/ (* d pi*2) 360.0))
             ((vector? d) (list->vector (degrees->radians (vector->list d))))
@@ -582,6 +659,12 @@
       ;; subtract vectors
       (vector (- (vector3-x v0) (vector3-x v1))
               (- (vector3-y v0) (vector3-y v1))))
+
+
+    (define (vector-diff v0 v1)
+      (vector-map
+       (lambda (elt0 elt1) (- elt0 elt1))
+       v0 v1))
 
 
     (define (vector3-abs v)
@@ -708,8 +791,11 @@
                      (+ index 1))))))
 
 
-    (define (vector3-magnitude v0)
-      (sqrt (dot-product v0 v0)))
+
+    (define (vector-magnitude v)
+      (sqrt (dot-product v v)))
+
+    (define vector3-magnitude vector-magnitude)
 
 
     (define (cross-product v0 v1)
@@ -1263,5 +1349,19 @@
                       (bounding-box2-set-y1! bb y)
                       (set! result #t)))
                result))))
+
+    (define (best-aligned-vector v choices)
+      ;; compare v to the normalized vectors in the choices list and
+      ;; return the one that has the largest abs dot product
+      (let loop ((choices choices)
+                 (best #f)
+                 (best-abs-dotp 0))
+        (if (null? choices) best
+            (let* ((choice (car choices))
+                   (abs-dotp (abs (dot-product choice v))))
+              (if (>= abs-dotp best-abs-dotp)
+                  (loop (cdr choices) choice abs-dotp)
+                  (loop (cdr choices) best best-abs-dotp))))))
+
 
     ))

@@ -20,9 +20,9 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
         )
 
 
-(define fn 16)
+(define fn 8)
 
-(define (make-segment base-width base-length position rotation tree-definition depth port)
+(define (make-segment base-width base-length position rotation tree-definition depth skip-trunk skip-leaves port)
 
   ;; output an openscad translate command
   (define (translate v)
@@ -43,13 +43,14 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
    ((= (string-length tree-definition) 0) #t) ;; done
    ((or (eqv? #\o (string-ref tree-definition 0))
         (eqv? #\O (string-ref tree-definition 0)))
-    ;; leaf ball
-    (translate position)
-    (rotate rotation)
-    (if (eqv? #\o (string-ref tree-definition 0))
-        (display (format "resize([10, 2.5, 10]) sphere(r = 1, $fn=~a);\n" fn) port)
-        (display (format "resize([10, 8, 10]) sphere(r = 2, $fn=~a);\n" fn) port))
-    (display "\n" port))
+    (cond ((not skip-leaves)
+           ;; leaf ball
+           (translate position)
+           (rotate rotation)
+           (if (eqv? #\o (string-ref tree-definition 0))
+               (display (format "resize([10, 2.5, 10]) sphere(r = 1, $fn=~a);\n" fn) port)
+               (display (format "resize([10, 8, 10]) sphere(r = 2, $fn=~a);\n" fn) port))
+           (display "\n" port))))
    (else
     ;; branch
     (let* ((my-length (- base-length depth))
@@ -63,14 +64,16 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                                                          rotation)
                                       (substring tree-definition 1)
                                       (+ depth 1)
+                                      skip-trunk skip-leaves
                                       port))))
 
-      (translate position)
-      (rotate rotation)
-      (display (format "rotate([-90, 0, 0])\n") port)
-      (display (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false, $fn=~a);\n\n"
-                       my-length my-thickness child-thickness fn)
-               port)
+      (cond ((not skip-trunk)
+             (translate position)
+             (rotate rotation)
+             (display (format "rotate([-90, 0, 0])\n") port)
+             (display (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false, $fn=~a);\n\n"
+                              my-length my-thickness child-thickness fn)
+                      port)))
       (cond
        ((eqv? #\i (string-ref tree-definition 0))
         ;; (new-child (degrees->radians (vector 0 30 0)))
@@ -143,12 +146,15 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   ((-w --base-width) width)
                   (-t tree-definition)
                   (-o output-file)
+                  ((--skip-trunk --skip-leaves))
                   (-?) (-h))))
          (pos zero-vector)
          (rot zero-vector)
          (base-width 2.0)
          (base-length 10.0)
          (tree-definition "iixyyyO")
+         (skip-trunk #f)
+         (skip-leaves #f)
          (output-file #f)
          (output-port (current-output-port))
          (extra-arguments '()))
@@ -165,6 +171,10 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
           (set! rot (vector (string->number (list-ref args 1))
                             (string->number (list-ref args 2))
                             (string->number (list-ref args 3)))))
+         ((--skip-trunk)
+          (set! skip-trunk #t))
+         ((--skip-leaves)
+          (set! skip-leaves #t))
          ((-w)
           (set! base-width (cadr arg)))
          ((-t)
@@ -183,6 +193,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (make-segment base-width base-length pos
                   (euler->quaternion (degrees->radians rot))
                   tree-definition 0
+                  skip-trunk skip-leaves
                   output-port)
     ))
 
