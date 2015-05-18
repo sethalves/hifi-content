@@ -132,6 +132,13 @@
           bounding-box2-copy
           bounding-box2-=?
           bounding-box2-add-point
+
+          make-aa-box
+          aa-box-add-point!
+          aa-box-low-corner aa-box-set-low-corner!
+          aa-box-high-corner aa-box-set-high-corner!
+
+
           best-aligned-vector
           epsilon
           )
@@ -1362,6 +1369,46 @@
               (if (>= abs-dotp best-abs-dotp)
                   (loop (cdr choices) choice abs-dotp)
                   (loop (cdr choices) best best-abs-dotp))))))
+
+
+    (define-record-type <aa-box>
+      (make-aa-box~ low-corner high-corner)
+      aa-box?
+      (low-corner aa-box-low-corner aa-box-set-low-corner!)
+      (high-corner aa-box-high-corner aa-box-set-high-corner!))
+
+
+    (define (make-aa-box initial-low initial-high)
+      (make-aa-box~
+       (if (> (vector-length initial-low) 2)
+           initial-low
+           (vector (vector2-x initial-low)
+                   (vector2-y initial-low)
+                   0))
+       (if (> (vector-length initial-high) 2)
+           initial-high
+           (vector (vector2-x initial-high)
+                   (vector2-y initial-high)
+                   0))))
+
+
+    (define (aa-box-add-point! aa-box p)
+      (let ((prev-low (aa-box-low-corner aa-box))
+            (prev-high (aa-box-high-corner aa-box)))
+        (aa-box-set-low-corner!
+         aa-box
+         (vector (min (vector-ref prev-low 0) (vector-ref p 0))
+                 (min (vector-ref prev-low 1) (vector-ref p 1))
+                 (if (> (vector-length p) 2)
+                     (min (vector-ref prev-low 2) (vector-ref p 2))
+                     (vector-ref prev-low 2))))
+        (aa-box-set-high-corner!
+         aa-box
+         (vector (max (vector-ref prev-high 0) (vector-ref p 0))
+                 (max (vector-ref prev-high 1) (vector-ref p 1))
+                 (if (> (vector-length p) 2)
+                     (max (vector-ref prev-high 2) (vector-ref p 2))
+                     (vector-ref prev-high 2))))))
 
 
     ))

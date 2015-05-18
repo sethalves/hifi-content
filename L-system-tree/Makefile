@@ -19,20 +19,24 @@ libs:
 	snow2 -p 'http://foldling.org/snow2/index.scm' install '(seth obj-model)' '(foldling command-line)'
 
 
+link-libs: very-clean
+	snow2 -s \
+	      -p 'http://foldling.org/snow2/index.scm' \
+	      -p '../../snow2-packages/seth/' \
+              install '(seth obj-model)' '(foldling command-line)'
+
+
 %.stl: %.scad
 	openscad -o $@ $^
 
 %-trunk.obj: %-trunk.stl
-	- ivcon $^ $@.tmp.obj
-	wavefront-obj-tool -c $@.tmp.obj -o $@ -S trunk_mtl
+	wavefront-obj-tool -c $^ -o $@ -S trunk_mtl
 
 %-leaves.obj: %-leaves.stl
-	- ivcon $^ $@.tmp.obj
-	wavefront-obj-tool -c $@.tmp.obj -o $@ -S leaves_mtl
+	wavefront-obj-tool -c $^ -o $@ -S leaves_mtl
 
 %.obj: %.stl
-	- ivcon $^ $@.tmp.obj
-	wavefront-obj-tool -c $@.tmp.obj -o $@
+	wavefront-obj-tool -c $^ -o $@
 
 %.obj: %-trunk.obj %-leaves.obj
 	wavefront-obj-tool -L L-system-trees.mtl -o $@ $^
@@ -54,8 +58,23 @@ tree0-hull.scad: L-system-tree Makefile
 
 # ---
 
+TREE1_W=3
+TREE1_SHAPE=iixyyyiO
 
-upload: L-system-trees.mtl tree0.obj tree0-hull.obj
+tree1-trunk.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE1_W) -t $(TREE1_SHAPE) --skip-leaves -o $@
+
+tree1-leaves.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE1_W) -t $(TREE1_SHAPE) --skip-trunk -o $@
+
+tree1-hull.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE1_W) -t $(TREE1_SHAPE) --hull -o tree1-hull.scad
+
+# ---
+
+
+upload: L-system-trees.mtl tree0.obj tree0-hull.obj \
+        L-system-trees.mtl tree1.obj tree1-hull.obj
 	scp $^ headache:public_html/hifi/
 
 
@@ -65,6 +84,10 @@ clean:
 	rm -f tree0-leaves.scad tree0-leaves.stl tree0-leaves.obj.tmp.obj tree0-leaves.obj
 	rm -f tree0-trunk.scad tree0-trunk.stl tree0-trunk.obj.tmp.obj tree0-trunk.obj
 	rm -f tree0-hull.scad tree0-hull.stl tree0-hull.obj.tmp.obj tree0-hull.obj
+	rm -f tree1.obj
+	rm -f tree1-leaves.scad tree1-leaves.stl tree1-leaves.obj.tmp.obj tree1-leaves.obj
+	rm -f tree1-trunk.scad tree1-trunk.stl tree1-trunk.obj.tmp.obj tree1-trunk.obj
+	rm -f tree1-hull.scad tree1-hull.stl tree1-hull.obj.tmp.obj tree1-hull.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling

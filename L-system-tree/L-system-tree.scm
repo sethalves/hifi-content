@@ -20,7 +20,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
         )
 
 
-(define fn 8)
+(define fn 16)
 
 (define (make-segment base-width base-length position rotation tree-definition depth skip-trunk skip-leaves port output-type)
 
