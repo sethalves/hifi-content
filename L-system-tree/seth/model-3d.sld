@@ -21,6 +21,7 @@
    model-prepend-vertex!
    model-append-vertex!
    model-prepend-normal!
+   model-append-normal!
    ;; materials
    make-material
    material?
@@ -199,7 +200,7 @@
       (snow-assert (model? model))
       (snow-assert (face-corner? face-corner))
       (let ((index (face-corner-normal-index face-corner)))
-        (if (eq? index 'unset) #f
+        (if (eq? index 'unset) 'unset
             (vector-map string->number (list-ref (model-normals model) index)))))
 
 
@@ -309,6 +310,18 @@
       (model-set-normals! model (cons (vector x y z) (model-normals model))))
 
 
+    (define (model-append-normal! model v)
+      ;; returns the index of the new normal
+      (snow-assert (model? model))
+      (snow-assert (vector? v))
+      (snow-assert (= (vector-length v) 3))
+      (snow-assert (string? (vector-ref v 0)))
+      (snow-assert (string? (vector-ref v 1)))
+      (snow-assert (string? (vector-ref v 2)))
+      (model-set-normals! model (reverse (cons v (reverse (model-normals model)))))
+      (- (length (model-normals model)) 1))
+
+
     (define (mesh-prepend-face! model mesh face-corners material
                                 vertex-index-start texture-index-start
                                 normal-index-start inport)
@@ -405,9 +418,9 @@
            ;; a face might be defined by more than 3 vertices.  if so, punt.
            (cond ((= (vector-length vertices) 3)
                   (let ((normals
-                         `(,(face-corner->normal model (vector-ref face 0))
-                           ,(face-corner->normal model (vector-ref face 1))
-                           ,(face-corner->normal model (vector-ref face 2))))
+                         `(,(face-corner->normal model (vector-ref corners 0))
+                           ,(face-corner->normal model (vector-ref corners 1))
+                           ,(face-corner->normal model (vector-ref corners 2))))
                         (vertex-0 (vector-ref vertices 0))
                         (vertex-1 (vector-ref vertices 1))
                         (vertex-2 (vector-ref vertices 2)))
@@ -439,7 +452,7 @@
                  (else face))))))
 
 
-    (define (pick-u-v-axis vertices)
+    (define (pick-u-v-axis~ vertices)
       (snow-assert (vector? vertices))
       (snow-assert (> (vector-length vertices) 2))
       (let* ((vertex-0 (vector-ref vertices 0))
@@ -455,27 +468,37 @@
         (values u-axis v-axis)))
 
 
-;;     (define (pick-u-v-axis vertices)
-;;       (snow-assert (vector? vertices))
-;;       (snow-assert (> (vector-length vertices) 2))
+    (define (pick-u-v-axis vertices)
+      (snow-assert (vector? vertices))
+      (snow-assert (> (vector-length vertices) 2))
+      (let* ((vertex-0 (vector-ref vertices 0))
+             (vertex-1 (vector-ref vertices 1))
+             (vertex-last (vector-ref vertices (- (vector-length vertices) 1)))
+             (diff-1-0 (vector3-diff vertex-1 vertex-0))
+             (diff-last-0 (vector3-diff vertex-last vertex-0))
+             (normal (cross-product diff-1-0 diff-last-0))
 
-;; ;; XXX http://mathworld.wolfram.com/Plane-PlaneIntersection.html
+             (sx (vector3-normalize #(1 0 0)))
+             (sy (vector3-normalize #(0 1 0)))
+             (sz (vector3-normalize #(0 0 1)))
+             (best-normal-axis (worst-aligned-vector normal (list sx sy sz)))
 
-;;       (let* ((vertex-0 (vector-ref vertices 0))
-;;              (vertex-1 (vector-ref vertices 1))
-;;              (diff-1-0 (vector3-diff vertex-1 vertex-0))
-;;              (x (vector-ref diff-1-0 0))
-;;              (y (vector-ref diff-1-0 1))
-;;              (z (vector-ref diff-1-0 2))
-;;              (sx (vector3-normalize (vector 0 y z)))
-;;              (sy (vector3-normalize (vector x 0 z)))
-;;              (sz (vector3-normalize (vector x y 0)))
-;;              (u-axis (best-aligned-vector diff-1-0 (list sx sy sz)))
-;;              (vertex-last (vector-ref vertices (- (vector-length vertices) 1)))
-;;              (diff-last-0 (vector3-diff vertex-last vertex-0))
-;;              (normal (cross-product diff-1-0 diff-last-0))
-;;              (v-axis (vector3-normalize (cross-product normal u-axis))))
-;;         (values u-axis v-axis)))
+             (center (vector3-scale
+                      (apply vector3-sum (vector->list vertices))
+                      (/ 1.0 (vector-length vertices))))
+             (plane-intersection (triangle-plane-intersection vertices (vector center best-normal-axis)))
+
+             )
+        (cond ((not plane-intersection)
+               (pick-u-v-axis~ vertices))
+
+              (else
+               (let* ((u0 (vector-ref plane-intersection 0))
+                      (u1 (vector-ref plane-intersection 1))
+                      (u-direction (vector3-diff u1 u0))
+                      (u-axis (vector3-normalize u-direction))
+                      (v-axis (vector3-normalize (cross-product normal u-axis))))
+                 (values u-axis v-axis))))))
 
 
     (define (add-simple-texture-coordinates model scale)

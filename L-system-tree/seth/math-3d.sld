@@ -140,6 +140,7 @@
 
 
           best-aligned-vector
+          worst-aligned-vector
           epsilon
           )
   (import (scheme base)
@@ -191,12 +192,14 @@
                              (string-append result (vector-ref n->s n)))
                          next-v))))))
 
-      (let ((result (if (< v 0)
-                        (string-append "-" (do-loop (- v)))
-                        (do-loop v))))
-        (cond ((equal? result "") "0")
-              ((equal? result "-") "0")
-              (else result))))
+      (if (nan? v)
+          "+nan.0"
+          (let ((result (if (< v 0)
+                            (string-append "-" (do-loop (- v)))
+                            (do-loop v))))
+            (cond ((equal? result "") "0")
+                  ((equal? result "-") "0")
+                  (else result)))))
 
 
     (define (vector-max v)
@@ -863,7 +866,7 @@
              (r (vector-ref P 0)) ;; point on plane
              (n (vector-ref P 1)) ;; plane normal
              (dnV (dot-product n V)))
-        (if (eqv? dnV 0.0) #f
+        (if (= dnV 0.0) #f
             (let ((u (/ (dot-product n (vector3-diff r S0)) dnV)))
               (if (or (< u 0.0) (> u 1.0))
                   #f
@@ -884,6 +887,10 @@
         (if (= (length intersections) 2)
             (list->vector intersections)
             #f)))
+
+
+    ;; http://mathworld.wolfram.com/Plane-PlaneIntersection.html
+
 
 
     (define (triangle-is-degenerate? T)
@@ -1369,6 +1376,20 @@
               (if (>= abs-dotp best-abs-dotp)
                   (loop (cdr choices) choice abs-dotp)
                   (loop (cdr choices) best best-abs-dotp))))))
+
+
+    (define (worst-aligned-vector v choices)
+      ;; compare v to the normalized vectors in the choices list and
+      ;; return the one that has the smallest abs dot product
+      (let loop ((choices choices)
+                 (worst #f)
+                 (worst-abs-dotp #f))
+        (if (null? choices) worst
+            (let* ((choice (car choices))
+                   (abs-dotp (abs (dot-product choice v))))
+              (if (or (not worst-abs-dotp) (<= abs-dotp worst-abs-dotp))
+                  (loop (cdr choices) choice abs-dotp)
+                  (loop (cdr choices) worst worst-abs-dotp))))))
 
 
     (define-record-type <aa-box>

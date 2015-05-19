@@ -30,16 +30,16 @@ link-libs: very-clean
 	openscad -o $@ $^
 
 %-trunk.obj: %-trunk.stl
-	wavefront-obj-tool -c $^ -o $@ -S trunk_mtl
+	wavefront-obj-tool -n -c $^ -o $@ -S trunk_mtl
 
 %-leaves.obj: %-leaves.stl
-	wavefront-obj-tool -c $^ -o $@ -S leaves_mtl
+	wavefront-obj-tool -n -c $^ -o $@ -S leaves_mtl
 
 %.obj: %.stl
-	wavefront-obj-tool -c $^ -o $@
+	wavefront-obj-tool -n -c $^ -o $@
 
 %.obj: %-trunk.obj %-leaves.obj
-	wavefront-obj-tool -L L-system-trees.mtl -o $@ $^
+	wavefront-obj-tool -n -L L-system-trees.mtl -o $@ $^
 
 
 # ---
@@ -72,9 +72,25 @@ tree1-hull.scad: L-system-tree Makefile
 
 # ---
 
+TREE2_W=4
+TREE2_SHAPE=iixyxxiO
 
-upload: L-system-trees.mtl tree0.obj tree0-hull.obj \
-        L-system-trees.mtl tree1.obj tree1-hull.obj
+tree2-trunk.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE2_W) -t $(TREE2_SHAPE) --skip-leaves -o $@
+
+tree2-leaves.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE2_W) -t $(TREE2_SHAPE) --skip-trunk -o $@
+
+tree2-hull.scad: L-system-tree Makefile
+	./L-system-tree -w $(TREE2_W) -t $(TREE2_SHAPE) --hull -o tree2-hull.scad
+
+# ---
+
+
+upload: L-system-trees.mtl \
+	tree0.obj tree0-hull.obj \
+        tree1.obj tree1-hull.obj \
+        tree2.obj tree2-hull.obj
 	scp $^ headache:public_html/hifi/
 
 
@@ -88,6 +104,11 @@ clean:
 	rm -f tree1-leaves.scad tree1-leaves.stl tree1-leaves.obj.tmp.obj tree1-leaves.obj
 	rm -f tree1-trunk.scad tree1-trunk.stl tree1-trunk.obj.tmp.obj tree1-trunk.obj
 	rm -f tree1-hull.scad tree1-hull.stl tree1-hull.obj.tmp.obj tree1-hull.obj
+	rm -f tree2.obj
+	rm -f tree2-leaves.scad tree2-leaves.stl tree2-leaves.obj.tmp.obj tree2-leaves.obj
+	rm -f tree2-trunk.scad tree2-trunk.stl tree2-trunk.obj.tmp.obj tree2-trunk.obj
+	rm -f tree2-hull.scad tree2-hull.stl tree2-hull.obj.tmp.obj tree2-hull.obj
+
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
