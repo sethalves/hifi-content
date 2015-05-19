@@ -3,7 +3,8 @@
 #
 
 
-OBJTOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+# OBJTOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+OBJTOOL=wavefront-obj-tool
 
 
 parts/%.stl: airhockey-table-hull.scad
@@ -14,7 +15,6 @@ parts/%.stl: airhockey-table-hull.scad
 	openscad -o $@ $^
 
 %.obj: %.stl
-	#../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm -n -c $^ -o $@
 	$(OBJTOOL) -n -c $^ -o $@
 
 
