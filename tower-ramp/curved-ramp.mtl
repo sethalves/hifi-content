@@ -1,0 +1,3 @@
+newmtl ramp_mtl
+map_Ka curved-ramp.jpg
+map_Kd curved-ramp.jpg
