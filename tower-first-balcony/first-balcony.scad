@@ -62,7 +62,7 @@ total_angle_sweep = 270.0;
 section_angle_sweep = total_angle_sweep / sections;
 half_section_angle_sweep = section_angle_sweep / 2.0;
 
-arch_height_ratio = 0.6;
+arch_height_ratio = 0.7;
 
 // radius of arch-cutout cone at the inner side of the wall
 arch_radius = (tower_height - thickness) - (tower_height * arch_height_ratio);
@@ -70,13 +70,11 @@ arch_radius = (tower_height - thickness) - (tower_height * arch_height_ratio);
 arch_half_angle = asin(arch_radius / inner_radius);
 // radius of arch cutout 1 closer than inner_radius
 arch_cone_inner_radius = sin(arch_half_angle) * (inner_radius - 1.0);
-// radius of arch coutout 1 further than outer_radius
-arch_cone_outer_radius = sin(arch_half_angle) * (outer_radius + 1.0);
 
-// do a goatse stretch on the arch cutouts
+// do a goatse stretch on the arch cutouts so that the supports touch down as a rectagle, despite the curve
 cylinder_length = (outer_radius - inner_radius + 2.0);
-// d = sin(arch_half_angle) * cylinder_length;
-d = (arch_cone_outer_radius - arch_cone_inner_radius);
+d = (sin(half_section_angle_sweep) * (inner_radius - 1.0)) -
+    (sin(half_section_angle_sweep) * (outer_radius + 1.0));
 minkowski_points = [[0, 0, 0],
                     [-d, 0, cylinder_length],
                     [d, 0, cylinder_length]];
@@ -87,21 +85,21 @@ combined = 1; // this can be overridden by the Makefile
 
 if (combined == 1) {
     difference() {
-        for(nth=[0:1:(sections-1)]) {
-            for(subsection=[0:1:(subsection_count-1)]) {
+        for(nth=[0:1:(sections * subsection_count - 1)]) {
+            // subsection = nth - floor(nth / subsection_count);
+            // for(subsection=[0:1:(subsection_count-1)]) {
                 first_balcony_section(inner_radius = inner_radius,
                                       outer_radius = outer_radius,
                                       tower_height = tower_height,
                                       thickness = tower_height,
-                                      angle_start = angle_start + (nth * section_angle_sweep),
+                                      angle_start = angle_start + (floor(nth / subsection_count) * section_angle_sweep),
                                       angle_sweep = section_angle_sweep,
-                                      subsection = subsection,
+                                      subsection = nth - (floor(nth / subsection_count) * subsection_count),
                                       subsection_count = subsection_count);
-            }
-
+             // }
         }
 
-        // cut out arch
+        // cut out arches
         for(nth=[0:1:(sections-1)]) {
             rotate([0, section_angle_sweep * nth + section_angle_sweep / 2.0, 0])
                 translate([0, tower_height * arch_height_ratio, inner_radius-1])
@@ -121,4 +119,14 @@ if (combined == 1) {
             }
         }
     }
+ } else {
+    // combined isn't 1, so we are making part of the collision hull.  nth will have been set by the invoker of openscad.
+    first_balcony_section(inner_radius = inner_radius,
+                          outer_radius = outer_radius,
+                          tower_height = tower_height,
+                          thickness = thickness,
+                          angle_start = angle_start + (floor(nth / subsection_count) * section_angle_sweep),
+                          angle_sweep = section_angle_sweep,
+                          subsection = nth - (floor(nth / subsection_count) * subsection_count),
+                          subsection_count = subsection_count);
  }
