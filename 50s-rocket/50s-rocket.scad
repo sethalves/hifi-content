@@ -11,7 +11,7 @@ rocket_outline = [2.0, // 0
                   2.8, // 4
                   2.7, // 5
                   2.5, // 6
-                  2.0, // 7
+                  2.1, // 7
                   1.7, // 8
                   1.0, // 9
                   0.1];
@@ -93,13 +93,18 @@ module rocket_wall_panel(vertical_index = 0,
 
 
 combined = 1; // this can be overridden by the Makefile
+door = 0;
 
 if (combined == 1) {
     vertical_slices = len(rocket_outline) - 1;
     for (vertical_index=[0:1:vertical_slices]) {
-        for (rotational_index=[0:1:rocket_rotational_slice_count]) {
-            rocket_wall_panel(vertical_index = vertical_index,
-                              rotational_index = rotational_index);
+        for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+            if ((door == 1 && (rotational_index < 3 && vertical_index < 2)) ||
+                (door == 0 && (rotational_index >= 3 || vertical_index >= 2))) {
+                echo(vertical_index=vertical_index,rotational_index=rotational_index);
+                rocket_wall_panel(vertical_index = vertical_index,
+                                  rotational_index = rotational_index);
+            }
         }
     }
 } else {
@@ -108,6 +113,9 @@ if (combined == 1) {
     rotational_index = floor(nth / vertical_slices);
     vertical_index = nth - (rotational_index * vertical_slices);
 
-    rocket_wall_panel(vertical_index = vertical_index,
-                      rotational_index = rotational_index);
+    if ((door == 1 && (rotational_index < 3 && vertical_index < 2)) ||
+        (door == 0 && (rotational_index >= 3 || vertical_index >= 2))) {
+        rocket_wall_panel(vertical_index = vertical_index,
+                          rotational_index = rotational_index);
+    }
 }
