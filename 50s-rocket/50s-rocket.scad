@@ -2,19 +2,19 @@
 //
 //
 
-rocket_vertical_slice_size = 1; // meters
+rocket_vertical_slice_size = 2; // meters
 rocket_rotational_slice_count = 20; // slices in a full circle
-rocket_outline = [2.0, // 0
-                  2.3, // 1
-                  2.5, // 2
-                  2.7, // 3
-                  2.8, // 4
-                  2.7, // 5
-                  2.5, // 6
-                  2.1, // 7
-                  1.7, // 8
-                  1.0, // 9
-                  0.1];
+rocket_outline = [4.0, // 0
+                  4.6, // 1
+                  5.0, // 2
+                  5.4, // 3
+                  5.6, // 4
+                  5.4, // 5
+                  5.0, // 6
+                  4.2, // 7
+                  3.4, // 8
+                  2.0, // 9
+                  0.2];
 rocket_wall_thickness = 0.1;
 
 
@@ -99,8 +99,8 @@ if (combined == 1) {
     vertical_slices = len(rocket_outline) - 1;
     for (vertical_index=[0:1:vertical_slices]) {
         for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
-            if ((door == 1 && (rotational_index < 3 && vertical_index < 2)) ||
-                (door == 0 && (rotational_index >= 3 || vertical_index >= 2))) {
+            if ((door == 1 && (rotational_index < 1 && vertical_index < 2)) ||
+                (door == 0 && (rotational_index >= 1 || vertical_index >= 2))) {
                 echo(vertical_index=vertical_index,rotational_index=rotational_index);
                 rocket_wall_panel(vertical_index = vertical_index,
                                   rotational_index = rotational_index);
@@ -113,8 +113,8 @@ if (combined == 1) {
     rotational_index = floor(nth / vertical_slices);
     vertical_index = nth - (rotational_index * vertical_slices);
 
-    if ((door == 1 && (rotational_index < 3 && vertical_index < 2)) ||
-        (door == 0 && (rotational_index >= 3 || vertical_index >= 2))) {
+    if ((door == 1 && (rotational_index < 1 && vertical_index < 2)) ||
+        (door == 0 && (rotational_index >= 1 || vertical_index >= 2))) {
         rocket_wall_panel(vertical_index = vertical_index,
                           rotational_index = rotational_index);
     }
