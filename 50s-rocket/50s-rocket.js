@@ -12,7 +12,8 @@
 (function() {
     this.doorID = null;
     this.doorSwitchID = null;
-    this.findPartsInterval = null;
+    // this.findPartsInterval = null;
+    this.maintenanceInterval = null;
 
     this.rocketVerticalSliceSize = 3.0; // matches global value in 50s-rocket.scad
     this.rocketRotationalSliceCount = 20; // matches global value in 50s-rocket.scad
@@ -25,7 +26,7 @@
 
     // constants that affect door behavior
     this.doorOpenness = 0.0;
-    this.doorDirection = -0.008;
+    this.doorDirection = 0.008;
     this.doorMoving = false;
     this.doorOpenMax = Math.PI * 108.5 / 180.0;
     this.doorMoveInterval = 40;
@@ -36,42 +37,84 @@
         return "{ " + v.x.toFixed(digits) + ", " + v.y.toFixed(digits) + ", " + v.z.toFixed(digits)+ " }";
     }
 
-    this.findParts = function() {
-        var _this = this;
-        this.findPartsInterval = Script.setInterval(function() {
-            var rocketProperties = Entities.getEntityProperties(_this.rocketID, ['position', 'rotation']);
-            var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
-            for (i = 0; i < nearbyEntities.length; i++) {
-                var nearbyID = nearbyEntities[i];
-                var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-                // print("checking: " + nearbyID + " " + nearbyName);
-                if (nearbyName == '50s rocket door') {
-                    _this.doorID = nearbyID;
-                }
-                if (nearbyName == '50s rocket door switch') {
-                    _this.doorSwitchID = nearbyID;
-                }
-            }
-            if (_this.doorID != null
-                // && _this.doorSwitchID != null
-               ) {
-                Script.clearInterval(_this.findPartsInterval);
-                _this.positionDoor(_this.doorOpenness);
-            }
-        }, 200);
-    };
+    // this.findParts = function() {
+    //     var _this = this;
+    //     this.findPartsInterval = Script.setInterval(function() {
+    //         var rocketProperties = Entities.getEntityProperties(_this.rocketID, ['position', 'rotation']);
+    //         var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
+    //         for (i = 0; i < nearbyEntities.length; i++) {
+    //             var nearbyID = nearbyEntities[i];
+    //             var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
+    //             // print("checking: " + nearbyID + " " + nearbyName);
+    //             if (nearbyName == '50s rocket door') {
+    //                 _this.doorID = nearbyID;
+    //             }
+    //             if (nearbyName == '50s rocket door switch') {
+    //                 _this.doorSwitchID = nearbyID;
+    //             }
+    //         }
+    //         if (_this.doorID != null
+    //             // && _this.doorSwitchID != null
+    //            ) {
+    //             Script.clearInterval(_this.findPartsInterval);
+    //             _this.positionDoor(_this.doorOpenness);
+    //         }
+    //     }, 200);
+    // };
 
     this.preload = function(entityId) {
         // figure out entityIDs for moving parts
         this.rocketID = entityId;
 
-        this.findParts();
-
         // openscad space + rocket-offset = hifi space
         this.calculateDoorOffset();
         this.calculateRocketOffset();
+
+        var _this = this;
+        this.maintenanceInterval = Script.setInterval(function() {
+            _this.doMaintenance();
+        }, 3000);
     };
 
+    this.doMaintenance = function() {
+        this.maintainDoor();
+    }
+
+    this.maintainDoor = function() {
+        if (this.doorID == null) {
+            var doorProperties = this.calculateDoorPosition(this.doorOpenness);
+            doorProperties["name"] = '50s rocket door';
+            doorProperties["type"] = 'Model';
+            doorProperties["modelURL"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj';
+            doorProperties["compoundShapeURL"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj';
+            doorProperties["dynamic"] = false;
+            doorProperties["gravity"] = { x: 0, y: 0, z: 0 };
+            doorProperties["angularDamping"] = { x: 0.0, y: 0.0, z: 0.0 };
+            doorProperties["parentID"] = this.rocketID;
+            doorProperties["parentJointIndex"] = -1;
+            doorProperties["collidesWith"] = "static,dynamic,kinematic,myAvatar,otherAvatar";
+            doorProperties["lifetime"] = 15;
+            this.doorID = Entities.addEntity(doorProperties);
+
+            // reset the door size
+            // var previousDoorProps = Entities.getEntityProperties(this.doorID, ["type", "naturalDimensions"]);
+            // var naturalDimensions = previousDoorProps.naturalDimensions;
+            // if (previousDoorProps.type == "Model" &&
+            //     naturalDimensions.x != 0 && naturalDimensions.y != 0 && naturalDimensions.z != 0) {
+            //     Entities.editEntity(this.doorID, {
+            //         dimensions: previousDoorProps.naturalDimensions,
+            //         collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar"
+            //     });
+            // }
+        } else {
+            var doorProperties = Entities.getEntityProperties(this.doorID, ["name", "age"]);
+            if (doorProperties.name == '50s rocket door') {
+                doorProperties = this.calculateDoorPosition(this.doorOpenness);
+                doorProperties["lifetime"] = doorProperties.age + 15;
+                Entities.editEntity(this.doorID, doorProperties);
+            }
+        }
+    }
 
     this.calculateDoorOffset = function() {
         // figure out the offset from the registration-point of the door to its rotation point
@@ -138,10 +181,7 @@
         }, this.doorMoveInterval);
     }
 
-    this.positionDoor = function(opennessRatio) {
-        if (this.doorID == null) {
-            return;
-        }
+    this.calculateDoorPosition = function(opennessRatio) {
         var p0 = {
             x: Math.sin(0.0) * this.baseRocketRadius[0],
             y: 0,
@@ -166,24 +206,6 @@
                                                     Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot));
 
 
-        // reset the door size
-        // var previousDoorProps = Entities.getEntityProperties(this.doorID, ["type", "naturalDimensions"]);
-        // var naturalDimensions = previousDoorProps.naturalDimensions;
-        // if (previousDoorProps.type == "Model" &&
-        //     naturalDimensions.x != 0 && naturalDimensions.y != 0 && naturalDimensions.z != 0) {
-        //     Entities.editEntity(this.doorID, {
-        //         dimensions: previousDoorProps.naturalDimensions,
-        //         collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar"
-        //     });
-        // }
-
-        Entities.editEntity(this.doorID, {
-            parentID: this.rocketID,
-            parentJointIndex: -1,
-            localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, adjustmentDueToRotation),
-            localRotation: rampRotation,
-            collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar"
-        });
 
         // Entities.addEntity({
         //     name: '50s rocket debug',
@@ -193,12 +215,29 @@
         //     localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot),
         //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
         // });
+
+
+        return {
+            localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, adjustmentDueToRotation),
+            localRotation: rampRotation
+        };
+    }
+
+    this.positionDoor = function(opennessRatio) {
+        if (this.doorID == null) {
+            return;
+        }
+
+        Entities.editEntity(this.doorID, this.calculateDoorPosition(opennessRatio));
     };
 
     this.unload = function() {
         // Script.update.disconnect(this.update);
         if (this.doorSwingInterval) {
             Script.clearInterval(this.doorSwingInterval);
+        }
+        if (this.maintenanceInterval) {
+            Script.clearInterval(this.maintenanceInterval);
         }
         this.cleanUp();
     };
