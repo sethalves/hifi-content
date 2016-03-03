@@ -169,13 +169,17 @@ module make_thruster(angle) {
         cylinder(h = rocket_thruster_height, r1 = 2.5, r2 = 2.0, center = true, $fs=0.5);
 }
 
-
-combined = 1; // this can be overridden by the Makefile
+// these are overridden by the Makefile
+combined = 1;
+body = 0;
 door = 0;
+thrusters = 0;
+table = 0;
+
 
 if (combined == 1) {
     vertical_slices = len(rocket_outline) - 1;
-    if (door == 0) {
+    if (body == 1) {
         for (vertical_index=[0:1:vertical_slices]) {
             for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
                 if (rotational_index >= 1 || vertical_index >= 2) {
@@ -187,12 +191,7 @@ if (combined == 1) {
             }
         }
         rocket_first_floor();
-        make_thruster(0);
-        make_thruster(120);
-        make_thruster(240);
-        make_table();
-    } else {
-        // door
+    } else if (door == 1) {
         rocket_wall_panel(vertical_index = 0,
                           rotational_index = 0,
                           door = door,
@@ -201,6 +200,12 @@ if (combined == 1) {
                           rotational_index = 0,
                           door = door,
                           hull = 0);
+    } else if (thrusters == 1) {
+        make_thruster(0);
+        make_thruster(120);
+        make_thruster(240);
+    } else if (table == 1) {
+        make_table();
     }
 } else {
     if (nth < 200) {
