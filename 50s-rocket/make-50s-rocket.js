@@ -54,6 +54,7 @@ function makeRocket() {
         type: 'Model',
         modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket.obj',
         compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
+        collisionsWillMove: false,
         position: center,
         script: 'http://headache.hungry.com/~seth/hifi/50s-rocket.js',
         dynamic: true,

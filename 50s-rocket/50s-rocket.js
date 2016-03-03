@@ -175,7 +175,7 @@
         var remoteID = Entities.addEntity({
             type: "Box",
             name: '50s rocket remote door opener',
-            localPosition: Vec3.sum(Vec3.multiply(this.rocketOffset, -1.0), { x: 1.5, y: 1.5, z: 0 }),
+            localPosition: Vec3.sum(Vec3.multiply(this.rocketOffset, -1.0), { x: this.baseRocketRadius[0] - 0.2, y: 1.5, z: 0 }),
             parentID: this.rocketID,
             parentJointIndex: -1,
             dimensions: { x: 0.08, y: 0.08, z: 0.08 },
