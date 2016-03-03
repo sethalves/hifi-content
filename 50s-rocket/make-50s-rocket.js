@@ -64,6 +64,12 @@ function makeRocket() {
         // registrationPoint: { x: 0.5,
         //                      y: 0.0049751, // model height is 20.1, this is (/ 0.1 20.1)
         //                      z: 0.5 },
+
+
+        userData: JSON.stringify({
+            grabbableKey: { grabbable: false }
+        }),
+        queryAACube: { x: 30, y: 30, z: 30 } // why?
     });
 }
 

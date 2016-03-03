@@ -10,6 +10,8 @@
 // }
 
 (function() {
+    this.NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
+
     this.doorID = null;
     this.doorSwitchID = null;
     // this.findPartsInterval = null;
@@ -23,6 +25,8 @@
     this.halfSliceRadians = this.sliceRadians / 2.0;
     this.rocketThrusterOffset = [0, -1.75, -7];
     this.rocketThrusterHeight = 2;
+
+    this.channelKey = null;
 
     // constants that affect door behavior
     this.doorOpenness = 0.0;
@@ -63,21 +67,52 @@
     // };
 
     this.preload = function(entityId) {
-        // figure out entityIDs for moving parts
+        var _this = this;
         this.rocketID = entityId;
 
         // openscad space + rocket-offset = hifi space
         this.calculateDoorOffset();
         this.calculateRocketOffset();
 
-        var _this = this;
+        this.channelKey = '555abc';
+        Messages.subscribe(this.channelKey);
+        Messages.messageReceived.connect(function(channel, message, sender) {
+            _this.handleMessages(channel, message, sender);
+        });
         this.maintenanceInterval = Script.setInterval(function() {
             _this.doMaintenance();
         }, 3000);
+
+        this.doMaintenance();
+        this.toggleDoor(); // so it starts closed and initially opens
     };
+
+    this.handleMessages = function(channel, message, sender) {
+        // if (sender === MyAvatar.sessionUUID) {
+
+        print("GOT MESSAGE, channel='" + channel + "', message='" + message + "'");
+
+        if (channel != this.channelKey) {
+            return;
+        }
+
+        var data = null;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            return;
+        }
+
+        if (data && data.action) {
+            if (data.action == 'remote clicked') {
+                this.toggleDoor();
+            }
+        }
+    }
 
     this.doMaintenance = function() {
         this.maintainDoor();
+        this.maintainRemote();
     }
 
     this.maintainDoor = function() {
@@ -116,6 +151,64 @@
         }
     }
 
+    this.findRemote = function() {
+        var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
+        var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
+        for (i = 0; i < nearbyEntities.length; i++) {
+            var nearbyID = nearbyEntities[i];
+            var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
+            if (nearbyName == '50s rocket remote door opener') {
+                Entities.callEntityMethod(nearbyID, "setChannelKey", [this.channelKey]);
+                return nearbyID;
+            }
+        }
+        return null;
+    }
+
+    this.maintainRemote = function() {
+        if (this.findRemote()) {
+            return;
+        }
+        // we didn't find the opener
+        print("50s rocket creating new remote door opener");
+        var remoteID = Entities.addEntity({
+            type: "Box",
+            name: '50s rocket remote door opener',
+            localPosition: Vec3.sum(Vec3.multiply(this.rocketOffset, -1.0), { x: 1.5, y: 1.5, z: 0 }),
+            parentID: this.rocketID,
+            parentJointIndex: -1,
+            dimensions: { x: 0.08, y: 0.08, z: 0.08 },
+            color: { red: 200, green: 0, blue: 20 },
+            shapeType: 'box',
+            dynamic: true,
+            gravity: { x: 0, y: -5.0, z: 0 },
+            restitution: 0,
+            damping: 0.5,
+            lifetime: 3600,
+            collisionSoundURL: "http://hifi-content.s3.amazonaws.com/james/pistol/sounds/drop.wav",
+            script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-remote.js',
+            userData: JSON.stringify({
+                grabbableKey: { grabbable: true },
+                wearable:{joints:{RightHand:[{x:0.07079616189002991,
+                                              y:0.20177987217903137,
+                                              z:0.06374628841876984},
+                                             {x:-0.5863648653030396,
+                                              y:-0.46007341146469116,
+                                              z:0.46949487924575806,
+                                              w:-0.4733745753765106}],
+                                  LeftHand:[{x:0.1802254319190979,
+                                             y:0.13442856073379517,
+                                             z:0.08504903316497803},
+                                            {x:0.2198076844215393,
+                                             y:-0.7377811074256897,
+                                             z:0.2780133783817291,
+                                             w:0.574519157409668}]}}
+            })
+        });
+        Entities.editEntity(remoteID, {parentID: this.NULL_UUID});
+        Entities.callEntityMethod(remoteID, "setChannelKey", this.channelKey);
+    }
+
     this.calculateDoorOffset = function() {
         // figure out the offset from the registration-point of the door to its rotation point
 
@@ -137,9 +230,6 @@
         var rocketBodyHeight = this.rocketVerticalSliceSize * 10;
         var thrusterTallness = (this.rocketThrusterHeight / 2.0) - this.rocketThrusterOffset[1];
 
-        print("total Height = " + (rocketBodyHeight + thrusterTallness));
-        print("thrusterTallness = " + thrusterTallness);
-
         this.rocketOffset = {
             x: 0,
             y: (rocketBodyHeight + thrusterTallness) / 2 - thrusterTallness,
@@ -148,17 +238,14 @@
     }
 
     this.clickDownOnEntity = function(entityID, mouseEvent) {
-        this.toggleDoor();
+        // this.toggleDoor();
     };
 
     this.toggleDoor = function() {
-        print("toggleDoor");
         if (this.doorID == null) {
-            print("this.doorID == null");
             return;
         }
         if (this.doorMoving) {
-            print("this.doorMoving");
             return;
         }
         this.doorMoving = true;
@@ -239,12 +326,17 @@
         if (this.maintenanceInterval) {
             Script.clearInterval(this.maintenanceInterval);
         }
-        this.cleanUp();
-    };
-
-    this.cleanUp = function() {
-        // Entities.deleteEntity(this.light);
-        // Overlays.deleteOverlay(this.field);
+        if (this.doorID) {
+            Entities.deleteEntity(this.doorID);
+        }
+        while (true) {
+            var remoteID = this.findRemote();
+            if (remoteID) {
+                Entities.deleteEntity(remoteID);
+            } else {
+                break;
+            }
+        }
     };
 
     // Script.scriptEnding.connect(this.scriptEnding);

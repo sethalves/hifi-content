@@ -57,7 +57,7 @@ clean:
 	rm -f 50s-rocket.obj.tmp.obj 50s-rocket.stl
 	rm -f 50s-rocket-door.obj.tmp.obj 50s-rocket-door.stl
 
-upload: make-50s-rocket.js 50s-rocket.js \
+upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js \
 		50s-rocket.obj 50s-rocket-collision-hull.obj \
 		50s-rocket-door.obj 50s-rocket-door-collision-hull.obj \
 	50s-rocket.mtl 50s-rocket-door.mtl
