@@ -14,7 +14,7 @@
     this.doorSwitchID = null;
     this.findPartsInterval = null;
 
-    this.rocketVerticalSliceSize = 2.0; // matches global value in 50s-rocket.scad
+    this.rocketVerticalSliceSize = 3.0; // matches global value in 50s-rocket.scad
     this.rocketRotationalSliceCount = 20; // matches global value in 50s-rocket.scad
     this.baseRocketRadius = [4.0, 4.6, 5.0, 5.4, 5.6, 5.4, 5.0, 4.2, 3.4, 2.0, 0.2]; // matches rocket_outline in 50s-rocket.scad
     this.rocketWallThickness = 0.1; // matches rocket_wall_thickness in 50s-rocket.scad
@@ -27,7 +27,7 @@
     this.doorOpenness = 0.0;
     this.doorDirection = -0.008;
     this.doorMoving = false;
-    this.doorOpenMax = Math.PI * 119.0 / 180.0;
+    this.doorOpenMax = Math.PI * 108.5 / 180.0;
     this.doorMoveInterval = 40;
     this.doorSwingInterval = null;
 

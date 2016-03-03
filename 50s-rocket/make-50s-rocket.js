@@ -76,8 +76,8 @@ function makeRocket() {
         gravity: { x: 0, y: 0, z: 0 },
         // registrationPoint: { x: 0.5, y: 0.0, z: 0.0 },
         angularDamping: { x: 0.0, y: 0.0, z: 0.0 },
-        collidesWith: "",
-        dimensions: { x: 1.5643, y: 4, z: 1.0865 }
+        collidesWith: ""
+        // dimensions: { x: 1.5643, y: 4, z: 1.0865 }
     });
 }
 

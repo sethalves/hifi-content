@@ -2,7 +2,7 @@
 //
 //
 
-rocket_vertical_slice_size = 2; // meters
+rocket_vertical_slice_size = 3.0; // meters
 rocket_rotational_slice_count = 20; // slices in a full circle -- matches value in 50s-rocket.js
 rocket_outline = [4.0, // 0 // matches baseRocketRadius in 50s-rocket.js
                   4.6, // 1
