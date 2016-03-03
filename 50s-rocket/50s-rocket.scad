@@ -3,8 +3,8 @@
 //
 
 rocket_vertical_slice_size = 2; // meters
-rocket_rotational_slice_count = 20; // slices in a full circle
-rocket_outline = [4.0, // 0
+rocket_rotational_slice_count = 20; // slices in a full circle -- matches value in 50s-rocket.js
+rocket_outline = [4.0, // 0 // matches baseRocketRadius in 50s-rocket.js
                   4.6, // 1
                   5.0, // 2
                   5.4, // 3
@@ -15,13 +15,63 @@ rocket_outline = [4.0, // 0
                   3.4, // 8
                   2.0, // 9
                   0.2];
-rocket_wall_thickness = 0.1;
+rocket_wall_thickness = 0.1; // matches rocketWallThickness in 50s-rocket.js
+
+
+module rocket_first_floor() {
+    for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+        start_angle = (360.0 / rocket_rotational_slice_count) * rotational_index;
+        end_angle = (360.0 / rocket_rotational_slice_count) * (rotational_index + 1);
+        outer_radius = rocket_outline[0];
+
+        p03x = 0;
+        p03y = 0 - rocket_wall_thickness;
+        p03z = 0;
+
+        p12x = 0;
+        p12y = 0;
+        p12z = 0;
+
+        p4x = outer_radius * sin(start_angle);
+        p4y = 0 - rocket_wall_thickness;
+        p4z = outer_radius * cos(start_angle);
+
+        p5x = outer_radius * sin(start_angle);
+        p5y = 0;
+        p5z = outer_radius * cos(start_angle);
+
+        p6x = outer_radius * sin(end_angle);
+        p6y = 0;
+        p6z = outer_radius * cos(end_angle);
+
+        p7x = outer_radius * sin(end_angle);
+        p7y =  0 - rocket_wall_thickness;
+        p7z = outer_radius * cos(end_angle);
+
+        section_points = [[p03x, p03y, p03z], // 0
+                          [p12x, p12y, p12z], // 1
+                          [p4x, p4y, p4z], // 2
+                          [p5x, p5y, p5z], // 3
+                          [p6x, p6y, p6z], // 4
+                          [p7x, p7y, p7z]]; // 5
+        polyhedron(points=section_points,
+                   faces=[[0, 5, 2], // bottom
+                          [1, 3, 4], // top
+                          [2, 5, 4, 3]]); // outside
+    }
+}
 
 
 module rocket_wall_panel(vertical_index = 0,
-                         rotational_index = 0) {
-    start_angle = (360.0 / rocket_rotational_slice_count) * rotational_index;
-    end_angle = (360.0 / rocket_rotational_slice_count) * (rotational_index + 1);
+                         rotational_index = 0,
+                         door = 0) {
+    angle_per_slice = (360.0 / rocket_rotational_slice_count);
+    // if door is 1, center this panel on 0 degrees
+    start_angle = angle_per_slice * rotational_index - (door * 0.5 * angle_per_slice);
+    end_angle = angle_per_slice * (rotational_index + 1) - (door * 0.5 * angle_per_slice);
+
+    // echo(angle_per_slice=angle_per_slice,rotational_index=rotational_index,start_angle=start_angle,end_angle=end_angle);
+
     low_inner_radius = rocket_outline[vertical_index] - rocket_wall_thickness;
     low_outer_radius = rocket_outline[vertical_index];
     high_inner_radius = rocket_outline[vertical_index + 1] - rocket_wall_thickness;
@@ -97,25 +147,41 @@ door = 0;
 
 if (combined == 1) {
     vertical_slices = len(rocket_outline) - 1;
-    for (vertical_index=[0:1:vertical_slices]) {
-        for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
-            if ((door == 1 && (rotational_index < 1 && vertical_index < 2)) ||
-                (door == 0 && (rotational_index >= 1 || vertical_index >= 2))) {
-                echo(vertical_index=vertical_index,rotational_index=rotational_index);
-                rocket_wall_panel(vertical_index = vertical_index,
-                                  rotational_index = rotational_index);
+    if (door == 0) {
+        for (vertical_index=[0:1:vertical_slices]) {
+            for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+                if (rotational_index >= 1 || vertical_index >= 2) {
+                    rocket_wall_panel(vertical_index = vertical_index,
+                                      rotational_index = rotational_index,
+                                      door = door);
+                }
             }
         }
+        rocket_first_floor();
+    } else {
+        // door
+        rocket_wall_panel(vertical_index = 0,
+                          rotational_index = 0,
+                          door = door);
+        rocket_wall_panel(vertical_index = 1,
+                          rotational_index = 0,
+                          door = door);
     }
 } else {
-    // do one panel of the rocket
-    vertical_slices = len(rocket_outline) - 1; // 10
-    rotational_index = floor(nth / vertical_slices);
-    vertical_index = nth - (rotational_index * vertical_slices);
+    if (nth < 200) {
+        // do one panel of the rocket
+        vertical_slices = len(rocket_outline) - 1;
+        rotational_index = floor(nth / vertical_slices);
+        vertical_index = nth - (rotational_index * vertical_slices);
 
-    if ((door == 1 && (rotational_index < 1 && vertical_index < 2)) ||
-        (door == 0 && (rotational_index >= 1 || vertical_index >= 2))) {
-        rocket_wall_panel(vertical_index = vertical_index,
-                          rotational_index = rotational_index);
+        if ((door == 1 && (rotational_index < 1 && vertical_index < 2)) ||
+            (door == 0 && (rotational_index >= 1 || vertical_index >= 2))) {
+            rocket_wall_panel(vertical_index = vertical_index,
+                              rotational_index = rotational_index,
+                              door = door);
+        }
+    } else if (nth == 200) {
+        // 1st floor
+        rocket_first_floor();
     }
 }
