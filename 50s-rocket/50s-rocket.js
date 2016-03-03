@@ -9,7 +9,6 @@
 //         q.y.toFixed(digits) + ", " + q.z.toFixed(digits)+ " }";
 // }
 
-
 (function() {
     this.doorID = null;
     this.doorSwitchID = null;
@@ -28,7 +27,7 @@
     this.doorOpenness = 0.0;
     this.doorDirection = -0.008;
     this.doorMoving = false;
-    this.doorOpenMax = Math.PI * 120.0 / 180.0;
+    this.doorOpenMax = Math.PI * 119.0 / 180.0;
     this.doorMoveInterval = 40;
     this.doorSwingInterval = null;
 
@@ -166,15 +165,24 @@
         var adjustmentDueToRotation = Vec3.subtract(doorScadPositionInLocalRocketHifi,
                                                     Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot));
 
+
+        // reset the door size
+        // var previousDoorProps = Entities.getEntityProperties(this.doorID, ["type", "naturalDimensions"]);
+        // var naturalDimensions = previousDoorProps.naturalDimensions;
+        // if (previousDoorProps.type == "Model" &&
+        //     naturalDimensions.x != 0 && naturalDimensions.y != 0 && naturalDimensions.z != 0) {
+        //     Entities.editEntity(this.doorID, {
+        //         dimensions: previousDoorProps.naturalDimensions,
+        //         collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar"
+        //     });
+        // }
+
         Entities.editEntity(this.doorID, {
             parentID: this.rocketID,
             parentJointIndex: -1,
             localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, adjustmentDueToRotation),
             localRotation: rampRotation,
-        });
-
-        Entities.editEntity(this.doorID, {
-            collidesWith: "static, dynamic, kinematic, myAvatar, otherAvatar"
+            collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar"
         });
 
         // Entities.addEntity({

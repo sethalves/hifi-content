@@ -197,7 +197,7 @@ if (combined == 1) {
             rocket_wall_panel(vertical_index = vertical_index,
                               rotational_index = rotational_index,
                               door = door,
-                              hull = 1);
+                              hull = 0); // shrink the door slightly (or not)
         }
     } else if (nth == 200) {
         // 1st floor
