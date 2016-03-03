@@ -16,8 +16,9 @@
     this.rocketRotationalSliceCount = 20; // matches global value in 50s-rocket.scad
     this.baseRocketRadius = [4.0, 4.6, 5.0, 5.4, 5.6, 5.4, 5.0, 4.2, 3.4, 2.0, 0.2]; // matches rocket_outline in 50s-rocket.scad
     this.rocketWallThickness = 0.1; // matches rocket_wall_thickness in 50s-rocket.scad
-    this.sliceRadians = Math.PI * (360.0 / this.rocketRotationalSliceCount) / 180.0; // convert to radians
+    this.sliceRadians = 2.0 * Math.PI / this.rocketRotationalSliceCount;
     this.halfSliceRadians = this.sliceRadians / 2.0;
+    this.doorOpenMax = Math.PI * 135.0 / 180.0;
 
     this.vec3toStr = function(v, digits) {
         if (!digits) { digits = 3; }
@@ -44,8 +45,26 @@
         // openscad space + rocket-offset = hifi space
         this.calculateDoorOffset();
         this.calculateRocketOffset();
-        this.positionDoor(1.0);
+        // this.positionDoor(1.0);
+
+        this.doorOpenness = 0.0;
+        this.doorDirection = -0.01;
+
+        var _this = this;
+        Script.setInterval(function() {
+            _this.doorOpenness += _this.doorDirection;
+            if (_this.doorOpenness < 0.0) {
+                _this.doorOpenness = 0.0;
+                _this.doorDirection = -_this.doorDirection;
+            }
+            if (_this.doorOpenness > 1.0) {
+                _this.doorOpenness = 1.0;
+                _this.doorDirection = -_this.doorDirection;
+            }
+            _this.positionDoor(_this.doorOpenness);
+        }, 100);
     };
+
 
     this.calculateDoorOffset = function() {
         // figure out the offset from the registration-point of the door to its rotation point
@@ -108,48 +127,41 @@
         // moved by scad --> hifi door offset
         var doorHiFiPositionInLocalRocketHifi = Vec3.subtract(doorScadPositionInLocalRocketHifi, this.doorOffset);
 
-        print(this.vec3toStr(doorScadPositionInLocalRocketScad));
-        print(this.vec3toStr(doorScadPositionInLocalRocketHifi));
-        print(this.vec3toStr(doorHiFiPositionInLocalRocketHifi));
+        // print(this.vec3toStr(doorScadPositionInLocalRocketScad));
+        // print(this.vec3toStr(doorScadPositionInLocalRocketHifi));
+        // print(this.vec3toStr(doorHiFiPositionInLocalRocketHifi));
 
-
-
-        // opennessRatio
-        var rampRotation = Quat.fromPitchYawRollDegrees(135 * opennessRatio, this.halfSliceRadians, 0);
+        var rampRotation = Quat.fromPitchYawRollRadians(this.doorOpenMax * opennessRatio, this.halfSliceRadians, 0);
         var rampPivot = Vec3.multiplyQbyV(rampRotation, this.doorOffset);
-
-        // var rampHingeOffset = Vec3.subtract(doorHiFiPositionInLocalRocketHifi, rampPivot);
-        // var rampPosition = Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampHingeOffset);
-
-        var rotationAdjustment = Vec3.subtract(doorScadPositionInLocalRocketHifi,
-                                               Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot));
+        var adjustmentDueToRotation = Vec3.subtract(doorScadPositionInLocalRocketHifi,
+                                                    Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot));
 
         Entities.editEntity(this.doorID, {
             parentID: this.rocketID,
             parentJointIndex: -1,
             // localPosition: doorHiFiPositionInLocalRocketHifi,
-            localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, rotationAdjustment),
+            localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, adjustmentDueToRotation),
             // localRotation: Quat.fromPitchYawRollRadians(0, this.halfSliceRadians, 0)
             localRotation: rampRotation
         });
 
-        Entities.addEntity({
-            name: '50s rocket debug',
-            type: 'Sphere',
-            parentID: this.rocketID,
-            parentJointIndex: -1,
-            localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot),
-            dimensions: { x: 0.15, y: 0.15, z: 0.15 }
-        });
+        // Entities.addEntity({
+        //     name: '50s rocket debug',
+        //     type: 'Sphere',
+        //     parentID: this.rocketID,
+        //     parentJointIndex: -1,
+        //     localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot),
+        //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
+        // });
 
-        Entities.addEntity({
-            name: '50s rocket debug',
-            type: 'Sphere',
-            parentID: this.rocketID,
-            parentJointIndex: -1,
-            localPosition: doorScadPositionInLocalRocketHifi,
-            dimensions: { x: 0.15, y: 0.15, z: 0.15 }
-        });
+        // Entities.addEntity({
+        //     name: '50s rocket debug',
+        //     type: 'Sphere',
+        //     parentID: this.rocketID,
+        //     parentJointIndex: -1,
+        //     localPosition: doorScadPositionInLocalRocketHifi,
+        //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
+        // });
 
         // Entities.addEntity({
         //     name: '50s rocket debug',
