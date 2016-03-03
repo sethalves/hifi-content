@@ -18,7 +18,14 @@
     this.rocketWallThickness = 0.1; // matches rocket_wall_thickness in 50s-rocket.scad
     this.sliceRadians = 2.0 * Math.PI / this.rocketRotationalSliceCount;
     this.halfSliceRadians = this.sliceRadians / 2.0;
+
+    // constants that affect door behavior
+    this.doorOpenness = 0.0;
+    this.doorDirection = -0.008;
+    this.doorMoving = false;
     this.doorOpenMax = Math.PI * 135.0 / 180.0;
+    this.doorMoveInterval = 40;
+    this.doorSwingInterval = null;
 
     this.vec3toStr = function(v, digits) {
         if (!digits) { digits = 3; }
@@ -45,24 +52,6 @@
         // openscad space + rocket-offset = hifi space
         this.calculateDoorOffset();
         this.calculateRocketOffset();
-        // this.positionDoor(1.0);
-
-        this.doorOpenness = 0.0;
-        this.doorDirection = -0.01;
-
-        var _this = this;
-        Script.setInterval(function() {
-            _this.doorOpenness += _this.doorDirection;
-            if (_this.doorOpenness < 0.0) {
-                _this.doorOpenness = 0.0;
-                _this.doorDirection = -_this.doorDirection;
-            }
-            if (_this.doorOpenness > 1.0) {
-                _this.doorOpenness = 1.0;
-                _this.doorDirection = -_this.doorDirection;
-            }
-            _this.positionDoor(_this.doorOpenness);
-        }, 100);
     };
 
 
@@ -76,26 +65,11 @@
         // but it all goes wrong.
         var zOffset = zSize / 2.0 - this.rocketWallThickness;
 
-        // var lowX = Math.sin(-this.halfSliceRadians) * this.baseRocketRadius[1];
-        // var highX = Math.sin(this.halfSliceRadians) * this.baseRocketRadius[1];
-        // var xSize = highX - lowX;
-        // // the origin in door-space is the point about which it rotates.  I would change the registration point,
-        // // but it all goes wrong.
-        // var xOffset = xSize / 2.0;
-
-        // this.doorOffset = {
-        //     x: -0.07, // XXX why?
-        //     y: -this.rocketVerticalSliceSize, // door is 2 slices high
-        //     z: 0.01 - zOffset
-        // };
-
         this.doorOffset = {
             x: 0,
             y: -this.rocketVerticalSliceSize, // door is 2 slices high
             z: - zOffset
         };
-
-
     };
 
     this.calculateRocketOffset = function() {
@@ -104,6 +78,34 @@
             y: (20.1 / 2.0) - this.rocketWallThickness, // XXX
             z: 0
         };
+    }
+
+    this.clickDownOnEntity = function(entityID, mouseEvent) {
+        this.toggleDoor();
+    };
+
+    this.toggleDoor = function() {
+        if (this.doorMoving) {
+            return;
+        }
+        this.doorMoving = true;
+        var _this = this;
+        this.doorSwingInterval = Script.setInterval(function() {
+            _this.doorOpenness += _this.doorDirection;
+            if (_this.doorOpenness < 0.0) {
+                _this.doorOpenness = 0.0;
+                _this.doorDirection = -_this.doorDirection;
+                Script.clearInterval(_this.doorSwingInterval);
+                _this.doorMoving = false;
+            }
+            if (_this.doorOpenness > 1.0) {
+                _this.doorOpenness = 1.0;
+                _this.doorDirection = -_this.doorDirection;
+                Script.clearInterval(_this.doorSwingInterval);
+                _this.doorMoving = false;
+            }
+            _this.positionDoor(_this.doorOpenness);
+        }, this.doorMoveInterval);
     }
 
     this.positionDoor = function(opennessRatio) {
@@ -175,6 +177,9 @@
 
     this.unload = function() {
         // Script.update.disconnect(this.update);
+        if (this.doorSwingInterval) {
+            Script.clearInterval(this.doorSwingInterval);
+        }
         this.cleanUp();
     };
 
