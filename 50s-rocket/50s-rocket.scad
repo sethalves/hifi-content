@@ -16,7 +16,8 @@ rocket_outline = [4.0, // 0 // matches baseRocketRadius in 50s-rocket.js
                   2.0, // 9
                   0.2];
 rocket_wall_thickness = 0.1; // matches rocketWallThickness in 50s-rocket.js
-
+rocket_thruster_offset = [0, -1.75, -7];
+rocket_thruster_height = 2;
 
 module rocket_first_floor() {
     for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
@@ -64,11 +65,16 @@ module rocket_first_floor() {
 
 module rocket_wall_panel(vertical_index = 0,
                          rotational_index = 0,
-                         door = 0) {
+                         door = 0,
+                         hull = 0) {
+    // if hull is one, we pull the edges in a bit.  this is so the door will fit in its doorway without
+    // makeing bullet try to resolve interpenetration
+
+    hull_offset = hull * 0.1;
     angle_per_slice = (360.0 / rocket_rotational_slice_count);
     // if door is 1, center this panel on 0 degrees
-    start_angle = angle_per_slice * rotational_index - (door * 0.5 * angle_per_slice);
-    end_angle = angle_per_slice * (rotational_index + 1) - (door * 0.5 * angle_per_slice);
+    start_angle = angle_per_slice * rotational_index - (door * 0.5 * angle_per_slice) + hull * 2;
+    end_angle = angle_per_slice * (rotational_index + 1) - (door * 0.5 * angle_per_slice) - hull * 2;
 
     // echo(angle_per_slice=angle_per_slice,rotational_index=rotational_index,start_angle=start_angle,end_angle=end_angle);
 
@@ -89,37 +95,36 @@ module rocket_wall_panel(vertical_index = 0,
 
 
     p0x = low_inner_radius * sin(start_angle);
-    p0y = rocket_vertical_slice_size * vertical_index;
+    p0y = rocket_vertical_slice_size * vertical_index + hull_offset;
     p0z = low_inner_radius * cos(start_angle);
 
     p1x = high_inner_radius * sin(start_angle);
-    p1y = rocket_vertical_slice_size * (vertical_index + 1);
+    p1y = rocket_vertical_slice_size * (vertical_index + 1) - hull_offset;
     p1z = high_inner_radius * cos(start_angle);
 
     p2x = high_inner_radius * sin(end_angle);
-    p2y = rocket_vertical_slice_size * (vertical_index + 1);
+    p2y = rocket_vertical_slice_size * (vertical_index + 1) - hull_offset;
     p2z = high_inner_radius * cos(end_angle);
 
     p3x = low_inner_radius * sin(end_angle);
-    p3y = rocket_vertical_slice_size * vertical_index;
+    p3y = rocket_vertical_slice_size * vertical_index + hull_offset;
     p3z = low_inner_radius * cos(end_angle);
 
     p4x = low_outer_radius * sin(start_angle);
-    p4y = rocket_vertical_slice_size * vertical_index;
+    p4y = rocket_vertical_slice_size * vertical_index + hull_offset;
     p4z = low_outer_radius * cos(start_angle);
 
     p5x = high_outer_radius * sin(start_angle);
-    p5y = rocket_vertical_slice_size * (vertical_index + 1);
+    p5y = rocket_vertical_slice_size * (vertical_index + 1) - hull_offset;
     p5z = high_outer_radius * cos(start_angle);
 
     p6x = high_outer_radius * sin(end_angle);
-    p6y = rocket_vertical_slice_size * (vertical_index + 1);
+    p6y = rocket_vertical_slice_size * (vertical_index + 1) - hull_offset;
     p6z = high_outer_radius * cos(end_angle);
 
     p7x = low_outer_radius * sin(end_angle);
-    p7y = rocket_vertical_slice_size * vertical_index;
+    p7y = rocket_vertical_slice_size * vertical_index + hull_offset;
     p7z = low_outer_radius * cos(end_angle);
-
 
     for (variable = [rocket_outline]) {
         section_points = [[p0x, p0y, p0z],
@@ -141,6 +146,13 @@ module rocket_wall_panel(vertical_index = 0,
 }
 
 
+module make_thruster(angle) {
+    rotate([0, angle, 0])
+        translate(rocket_thruster_offset)
+        rotate([-90, 0, 0])
+        cylinder(h = rocket_thruster_height, r1 = 2.5, r2 = 2.0, center = true, $fs=0.5);
+}
+
 
 combined = 1; // this can be overridden by the Makefile
 door = 0;
@@ -153,19 +165,25 @@ if (combined == 1) {
                 if (rotational_index >= 1 || vertical_index >= 2) {
                     rocket_wall_panel(vertical_index = vertical_index,
                                       rotational_index = rotational_index,
-                                      door = door);
+                                      door = door,
+                                      hull = 0);
                 }
             }
         }
         rocket_first_floor();
+        make_thruster(0);
+        make_thruster(120);
+        make_thruster(240);
     } else {
         // door
         rocket_wall_panel(vertical_index = 0,
                           rotational_index = 0,
-                          door = door);
+                          door = door,
+                          hull = 0);
         rocket_wall_panel(vertical_index = 1,
                           rotational_index = 0,
-                          door = door);
+                          door = door,
+                          hull = 0);
     }
 } else {
     if (nth < 200) {
@@ -178,10 +196,20 @@ if (combined == 1) {
             (door == 0 && (rotational_index >= 1 || vertical_index >= 2))) {
             rocket_wall_panel(vertical_index = vertical_index,
                               rotational_index = rotational_index,
-                              door = door);
+                              door = door,
+                              hull = 1);
         }
     } else if (nth == 200) {
         // 1st floor
         rocket_first_floor();
+    } else if (nth == 201) {
+        // a foot
+        make_thruster(0);
+    } else if (nth == 202) {
+        // a foot
+        make_thruster(120);
+    } else if (nth == 203) {
+        // a foot
+        make_thruster(240);
     }
 }

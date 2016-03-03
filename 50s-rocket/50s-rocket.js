@@ -11,6 +11,9 @@
 
 
 (function() {
+    this.doorID = null;
+    this.doorSwitchID = null;
+    this.findPartsInterval = null;
 
     this.rocketVerticalSliceSize = 2.0; // matches global value in 50s-rocket.scad
     this.rocketRotationalSliceCount = 20; // matches global value in 50s-rocket.scad
@@ -18,12 +21,14 @@
     this.rocketWallThickness = 0.1; // matches rocket_wall_thickness in 50s-rocket.scad
     this.sliceRadians = 2.0 * Math.PI / this.rocketRotationalSliceCount;
     this.halfSliceRadians = this.sliceRadians / 2.0;
+    this.rocketThrusterOffset = [0, -1.75, -7];
+    this.rocketThrusterHeight = 2;
 
     // constants that affect door behavior
     this.doorOpenness = 0.0;
     this.doorDirection = -0.008;
     this.doorMoving = false;
-    this.doorOpenMax = Math.PI * 135.0 / 180.0;
+    this.doorOpenMax = Math.PI * 120.0 / 180.0;
     this.doorMoveInterval = 40;
     this.doorSwingInterval = null;
 
@@ -32,22 +37,36 @@
         return "{ " + v.x.toFixed(digits) + ", " + v.y.toFixed(digits) + ", " + v.z.toFixed(digits)+ " }";
     }
 
+    this.findParts = function() {
+        var _this = this;
+        this.findPartsInterval = Script.setInterval(function() {
+            var rocketProperties = Entities.getEntityProperties(_this.rocketID, ['position', 'rotation']);
+            var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
+            for (i = 0; i < nearbyEntities.length; i++) {
+                var nearbyID = nearbyEntities[i];
+                var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
+                // print("checking: " + nearbyID + " " + nearbyName);
+                if (nearbyName == '50s rocket door') {
+                    _this.doorID = nearbyID;
+                }
+                if (nearbyName == '50s rocket door switch') {
+                    _this.doorSwitchID = nearbyID;
+                }
+            }
+            if (_this.doorID != null
+                // && _this.doorSwitchID != null
+               ) {
+                Script.clearInterval(_this.findPartsInterval);
+                _this.positionDoor(_this.doorOpenness);
+            }
+        }, 200);
+    };
+
     this.preload = function(entityId) {
         // figure out entityIDs for moving parts
         this.rocketID = entityId;
-        var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
-        var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
-        for (i = 0; i < nearbyEntities.length; i++) {
-            var nearbyID = nearbyEntities[i];
-            var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-            // print("checking: " + nearbyID + " " + nearbyName);
-            if (nearbyName == '50s rocket door') {
-                this.doorID = nearbyID;
-            }
-            if (nearbyName == '50s rocket door switch') {
-                this.doorSwitchID = nearbyID;
-            }
-        }
+
+        this.findParts();
 
         // openscad space + rocket-offset = hifi space
         this.calculateDoorOffset();
@@ -73,10 +92,16 @@
     };
 
     this.calculateRocketOffset = function() {
+        var rocketBodyHeight = this.rocketVerticalSliceSize * 10;
+        var thrusterTallness = (this.rocketThrusterHeight / 2.0) - this.rocketThrusterOffset[1];
+
+        print("total Height = " + (rocketBodyHeight + thrusterTallness));
+        print("thrusterTallness = " + thrusterTallness);
+
         this.rocketOffset = {
             x: 0,
-            y: (20.1 / 2.0) - this.rocketWallThickness, // XXX
-            z: 0
+            y: (rocketBodyHeight + thrusterTallness) / 2 - thrusterTallness,
+            z: -1.75
         };
     }
 
@@ -85,7 +110,13 @@
     };
 
     this.toggleDoor = function() {
+        print("toggleDoor");
+        if (this.doorID == null) {
+            print("this.doorID == null");
+            return;
+        }
         if (this.doorMoving) {
+            print("this.doorMoving");
             return;
         }
         this.doorMoving = true;
@@ -109,8 +140,9 @@
     }
 
     this.positionDoor = function(opennessRatio) {
-        print("DOOR: " + this.doorID);
-
+        if (this.doorID == null) {
+            return;
+        }
         var p0 = {
             x: Math.sin(0.0) * this.baseRocketRadius[0],
             y: 0,
@@ -129,10 +161,6 @@
         // moved by scad --> hifi door offset
         var doorHiFiPositionInLocalRocketHifi = Vec3.subtract(doorScadPositionInLocalRocketHifi, this.doorOffset);
 
-        // print(this.vec3toStr(doorScadPositionInLocalRocketScad));
-        // print(this.vec3toStr(doorScadPositionInLocalRocketHifi));
-        // print(this.vec3toStr(doorHiFiPositionInLocalRocketHifi));
-
         var rampRotation = Quat.fromPitchYawRollRadians(this.doorOpenMax * opennessRatio, this.halfSliceRadians, 0);
         var rampPivot = Vec3.multiplyQbyV(rampRotation, this.doorOffset);
         var adjustmentDueToRotation = Vec3.subtract(doorScadPositionInLocalRocketHifi,
@@ -141,10 +169,12 @@
         Entities.editEntity(this.doorID, {
             parentID: this.rocketID,
             parentJointIndex: -1,
-            // localPosition: doorHiFiPositionInLocalRocketHifi,
             localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, adjustmentDueToRotation),
-            // localRotation: Quat.fromPitchYawRollRadians(0, this.halfSliceRadians, 0)
-            localRotation: rampRotation
+            localRotation: rampRotation,
+        });
+
+        Entities.editEntity(this.doorID, {
+            collidesWith: "static, dynamic, kinematic, myAvatar, otherAvatar"
         });
 
         // Entities.addEntity({
@@ -153,24 +183,6 @@
         //     parentID: this.rocketID,
         //     parentJointIndex: -1,
         //     localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot),
-        //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
-        // });
-
-        // Entities.addEntity({
-        //     name: '50s rocket debug',
-        //     type: 'Sphere',
-        //     parentID: this.rocketID,
-        //     parentJointIndex: -1,
-        //     localPosition: doorScadPositionInLocalRocketHifi,
-        //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
-        // });
-
-        // Entities.addEntity({
-        //     name: '50s rocket debug',
-        //     type: 'Sphere',
-        //     parentID: this.rocketID,
-        //     parentJointIndex: -1,
-        //     localPosition: doorHiFiPositionInLocalRocketHifi,
         //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
         // });
     };
