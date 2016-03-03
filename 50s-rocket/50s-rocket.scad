@@ -145,6 +145,22 @@ module rocket_wall_panel(vertical_index = 0,
     }
 }
 
+module make_table() {
+    table_height = 0.9;
+    // table_outer_radius = rocket_outline[1] - rocket_wall_thickness;
+    radius_a = rocket_outline[0] - rocket_wall_thickness;
+    radius_b = rocket_outline[1] - rocket_wall_thickness;
+    table_outer_radius = (radius_b - radius_a) * (table_height / rocket_vertical_slice_size) + radius_a;
+    rotate([0, 90, 0])
+        translate([0, table_height, 0])
+            rotate([0, 90, 0])
+            difference() {
+                rotate([90, 0, 0])
+                    cylinder(h = 0.3, r1 = table_outer_radius, r2 = table_outer_radius, center = true, $fs=0.5);
+                translate([-table_outer_radius + 0.8, -40, -40])
+                    cube([80, 80, 80]);
+            }
+}
 
 module make_thruster(angle) {
     rotate([0, angle, 0])
@@ -174,6 +190,7 @@ if (combined == 1) {
         make_thruster(0);
         make_thruster(120);
         make_thruster(240);
+        make_table();
     } else {
         // door
         rocket_wall_panel(vertical_index = 0,
@@ -200,16 +217,14 @@ if (combined == 1) {
                               hull = 0); // shrink the door slightly (or not)
         }
     } else if (nth == 200) {
-        // 1st floor
         rocket_first_floor();
     } else if (nth == 201) {
-        // a foot
         make_thruster(0);
     } else if (nth == 202) {
-        // a foot
         make_thruster(120);
     } else if (nth == 203) {
-        // a foot
         make_thruster(240);
+    } else if (nth == 204) {
+        make_table();
     }
 }

@@ -90,7 +90,7 @@
     this.handleMessages = function(channel, message, sender) {
         // if (sender === MyAvatar.sessionUUID) {
 
-        print("GOT MESSAGE, channel='" + channel + "', message='" + message + "'");
+        print("got message, channel='" + channel + "', message='" + message + "'");
 
         if (channel != this.channelKey) {
             return;
@@ -153,7 +153,8 @@
 
     this.findRemote = function() {
         var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
-        var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
+        var rocketScadPosition = Vec3.subtract(rocketProperties.position, this.rocketOffset);
+        var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
         for (i = 0; i < nearbyEntities.length; i++) {
             var nearbyID = nearbyEntities[i];
             var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
