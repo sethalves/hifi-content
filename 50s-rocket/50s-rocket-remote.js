@@ -25,7 +25,7 @@
         setChannelKey: function(id, params) {
             var newChannelKey = params[0];
             this.channelKey = newChannelKey;
-            Messages.subscribe(this.channelKey);
+            // Messages.subscribe(this.channelKey);
         },
 
         startEquip: function(id, params) {
@@ -66,10 +66,12 @@
 
         fire: function() {
             var data = JSON.stringify({
-                action: 'remote clicked',
+                action: 'door',
                 user: MyAvatar.sessionUUID
             });
-            Messages.sendMessage(this.channelKey, data);
+            // Messages.sendMessage(this.channelKey, data);
+            print("rocket door remote clicked, channel = '" + this.channelKey + "'");
+            Entities.callEntityMethod(this.channelKey, "handleMessage", [data]);
         },
 
         unload: function() {
