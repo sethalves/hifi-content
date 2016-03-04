@@ -56,7 +56,7 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 	openscad -D combined=1 -D body=1 -o $@ $^
 
 50s-rocket.obj: 50s-rocket-body.obj 50s-rocket-thrusters.obj 50s-rocket-table.obj
-	wavefront-obj-tool -n -c $^ -o $@
+	wavefront-obj-tool -n -L 50s-rocket.mtl -c $^ -o $@
 
 50s-rocket-collision-hull.obj: $(BODY_PARTS) $(THRUSTER_PARTS)
 	wavefront-obj-tool -c -o $@ $^
@@ -67,7 +67,7 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 	openscad -D combined=1 -D door=1 -o $@ $^
 
 50s-rocket-door.obj: 50s-rocket-door.stl
-	wavefront-obj-tool -n -c $^ -o $@ -S rocket_door_mtl
+	wavefront-obj-tool -n -L 50s-rocket-door.mtl -c $^ -o $@ -S rocket_door_mtl
 
 50s-rocket-door-collision-hull.obj: $(DOOR_PARTS)
 	wavefront-obj-tool -c -o $@ $^
