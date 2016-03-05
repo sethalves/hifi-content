@@ -50,31 +50,6 @@
             return "{ " + v.x.toFixed(digits) + ", " + v.y.toFixed(digits) + ", " + v.z.toFixed(digits)+ " }";
         }
 
-        // this.findParts = function() {
-        //     var _this = this;
-        //     this.findPartsInterval = Script.setInterval(function() {
-        //         var rocketProperties = Entities.getEntityProperties(_this.rocketID, ['position', 'rotation']);
-        //         var nearbyEntities = Entities.findEntities(rocketProperties.position, 20.0);
-        //         for (i = 0; i < nearbyEntities.length; i++) {
-        //             var nearbyID = nearbyEntities[i];
-        //             var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-        //             // print("checking: " + nearbyID + " " + nearbyName);
-        //             if (nearbyName == '50s rocket door') {
-        //                 _this.doorID = nearbyID;
-        //             }
-        //             if (nearbyName == '50s rocket door switch') {
-        //                 _this.doorSwitchID = nearbyID;
-        //             }
-        //         }
-        //         if (_this.doorID != null
-        //             // && _this.doorSwitchID != null
-        //            ) {
-        //             Script.clearInterval(_this.findPartsInterval);
-        //             _this.positionDoor(_this.doorOpenness);
-        //         }
-        //     }, 200);
-        // };
-
         this.randomize = function(number, variability) {
             var allowedDeviation = number * variability; // one side of the deviation range
             var allowedDeviationRange = allowedDeviation * 2; // total range for +/- deviation
@@ -84,7 +59,6 @@
         }
 
         this.preload = function(entityID) {
-            // var _this = this;
             this.rocketID = entityID;
 
             // openscad space + rocket-offset = hifi space
@@ -169,6 +143,8 @@
                 doorProperties["collidesWith"] = "static,dynamic,kinematic,myAvatar,otherAvatar";
                 doorProperties["lifetime"] = 15;
                 doorProperties["script"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js',
+                var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness)
+                doorProperties["registrationPoint"] = { x: 0.5, y: 0.0, z: this.rocketWallThickness / doorZDimension };
                 this.doorID = Entities.addEntity(doorProperties);
 
                 Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
@@ -266,18 +242,19 @@
         this.calculateDoorOffset = function() {
             // figure out the offset from the registration-point of the door to its rotation point
 
-            var lowZ = this.baseRocketRadius[0] - this.rocketWallThickness;
-            var highZ = this.baseRocketRadius[2];
-            var zSize = highZ - lowZ;
-            // the origin in door-space is the point about which it rotates.  I would change the registration point,
-            // but it all goes wrong.
-            var zOffset = zSize / 2.0 - this.rocketWallThickness;
+            // var lowZ = this.baseRocketRadius[0] - this.rocketWallThickness;
+            // var highZ = this.baseRocketRadius[2];
+            // var zSize = highZ - lowZ;
+            // // the origin in door-space is the point about which it rotates.  I would change the registration point,
+            // // but it all goes wrong.
+            // var zOffset = zSize / 2.0 - this.rocketWallThickness;
 
-            this.doorOffset = {
-                x: 0,
-                y: -this.rocketVerticalSliceSize, // door is 2 slices high
-                z: - zOffset
-            };
+            // this.doorOffset = {
+            //     x: 0,
+            //     y: -this.rocketVerticalSliceSize, // door is 2 slices high
+            //     z: - zOffset
+            // };
+            return { x: 0, y: 0, z: 0 }
         };
 
         this.calculateRocketOffset = function() {
