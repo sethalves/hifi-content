@@ -2,9 +2,6 @@
 //
 //
 
-var avatarFront = Quat.getFront(Camera.getOrientation());
-avatarFront.y = 0.0;
-
 var SHOW_TOOL_BAR = true;
 
 if (SHOW_TOOL_BAR) {
@@ -47,7 +44,9 @@ function mousePressEvent(event) {
 
 
 function makeRocket() {
-    var center = Vec3.sum(Vec3.sum(MyAvatar.position, Vec3.multiply(15, avatarFront)), { x: 0, y: 14, z: 0 });
+    var avatarFront = Quat.getFront(Camera.getOrientation());
+    avatarFront.y = 0.0;
+    var center = Vec3.sum(Vec3.sum(MyAvatar.position, Vec3.multiply(15, avatarFront)), { x: 0, y: 5, z: 0 });
 
     Entities.addEntity({
         name: '50s rocket',
@@ -56,11 +55,12 @@ function makeRocket() {
         compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
         collisionsWillMove: false,
         position: center,
+        rotatin: Camera.getOrientation(),
         script: 'http://headache.hungry.com/~seth/hifi/50s-rocket.js',
         dynamic: true,
-        gravity: { x: 0, y: -5.0, z: 0 },
+        gravity: { x: 0, y: -1.0, z: 0 },
         velocity: { x: 0, y: 0.5, z: 0 }, // to make it fall
-        density: 10000,
+        // density: 8000,
 
         // put center where it is in openscad
         // registrationPoint: { x: 0.5,

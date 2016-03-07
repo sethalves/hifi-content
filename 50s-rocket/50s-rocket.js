@@ -41,7 +41,7 @@
         this.doorOpenness = 0.0;
         this.doorDirection = 0.008;
         this.doorMoving = false;
-        this.doorOpenMax = Math.PI * 108.5 / 180.0;
+        this.doorOpenMax = Math.PI * 108.5 / 180.0; // 107.4 ?
         this.doorMoveInterval = 40;
         this.doorSwingInterval = null;
 
@@ -60,9 +60,6 @@
 
         this.preload = function(entityID) {
             this.rocketID = entityID;
-
-            // openscad space + rocket-offset = hifi space
-            this.calculateDoorOffset();
             this.calculateRocketOffset();
 
             // this.channelKey = '555abc';
@@ -142,9 +139,9 @@
                 doorProperties["parentJointIndex"] = -1;
                 doorProperties["collidesWith"] = "static,dynamic,kinematic,myAvatar,otherAvatar";
                 doorProperties["lifetime"] = 15;
-                doorProperties["script"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js',
-                var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness)
-                doorProperties["registrationPoint"] = { x: 0.5, y: 0.0, z: this.rocketWallThickness / doorZDimension };
+                doorProperties["script"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js';
+                var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
+                doorProperties["registrationPoint"] = { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) };
                 this.doorID = Entities.addEntity(doorProperties);
 
                 Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
@@ -167,7 +164,7 @@
 
         this.findRemote = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
-            var rocketScadPosition = Vec3.subtract(rocketProperties.position, this.rocketOffset);
+            var rocketScadPosition = rocketProperties.position;
             var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
             for (i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
@@ -182,7 +179,7 @@
 
         this.findDoor = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
-            var rocketScadPosition = Vec3.subtract(rocketProperties.position, this.rocketOffset);
+            var rocketScadPosition = rocketProperties.position;
             var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
             for (i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
@@ -203,15 +200,16 @@
             var remoteID = Entities.addEntity({
                 type: "Box",
                 name: '50s rocket remote door opener',
-                localPosition: Vec3.sum(Vec3.multiply(this.rocketOffset, -1.0),
-                                        { x: this.baseRocketRadius[0] - 0.2, y: 1.3, z: 0 }),
+                localPosition: { x: this.baseRocketRadius[0] - 0.2, y: 1.3, z: 0 },
                 parentID: this.rocketID,
                 parentJointIndex: -1,
                 dimensions: { x: 0.08, y: 0.16, z: 0.08 },
                 color: { red: 200, green: 0, blue: 20 },
                 shapeType: 'box',
                 dynamic: false,
-                gravity: { x: 0, y: 0, z: 0 },
+                // dynamic: true,
+                // gravity: { x: 0, y: -1, z: 0 },
+                // velocity: { x: 0, y: 0.5, z: 0 }, // to make it fall
                 restitution: 0,
                 damping: 0.5,
                 lifetime: 3600,
@@ -239,33 +237,24 @@
             Entities.callEntityMethod(remoteID, "setChannelKey", this.channelKey);
         }
 
-        this.calculateDoorOffset = function() {
-            // figure out the offset from the registration-point of the door to its rotation point
-
-            // var lowZ = this.baseRocketRadius[0] - this.rocketWallThickness;
-            // var highZ = this.baseRocketRadius[2];
-            // var zSize = highZ - lowZ;
-            // // the origin in door-space is the point about which it rotates.  I would change the registration point,
-            // // but it all goes wrong.
-            // var zOffset = zSize / 2.0 - this.rocketWallThickness;
-
-            // this.doorOffset = {
-            //     x: 0,
-            //     y: -this.rocketVerticalSliceSize, // door is 2 slices high
-            //     z: - zOffset
-            // };
-            return { x: 0, y: 0, z: 0 }
-        };
-
         this.calculateRocketOffset = function() {
             var rocketBodyHeight = this.rocketVerticalSliceSize * 10;
             var thrusterTallness = (this.rocketThrusterHeight / 2.0) - this.rocketThrusterOffset[1];
 
-            this.rocketOffset = {
-                x: 0,
+            // make the rocket-body's registration point line up with openscad's idea of the model-local origin
+            var offset = {
+                x: 0, // the thruster pads are symetric along z axis
+                // upper surface of the lower floor is y origin
                 y: (rocketBodyHeight + thrusterTallness) / 2 - thrusterTallness,
-                z: -1.75
+                z: -1.75 // the thruster pads aren't symetric along z axis
             };
+            var dimensions = { x: 17.124,
+                               y: rocketBodyHeight + thrusterTallness, // 32.75
+                               z: 15.473 };
+
+            Entities.editEntity(this.rocketID, {registrationPoint: {x: (dimensions.x / 2.0 - offset.x) / dimensions.x,
+                                                                    y: (dimensions.y / 2.0 - offset.y) / dimensions.y,
+                                                                    z: (dimensions.z / 2.0 - offset.z) / dimensions.z}});
         }
 
         this.clickDownOnEntity = function(entityID, mouseEvent) {
@@ -322,33 +311,9 @@
                 y: 0,
                 z: Math.cos(this.sliceRadians) * this.baseRocketRadius[0]
             };
-
-            // position in openscad rocket's frame...
-            var doorScadPositionInLocalRocketScad = Vec3.multiply(Vec3.sum(p0, p1), 0.5);
-            // moved by scad --> hifi rocket offset
-            var doorScadPositionInLocalRocketHifi = Vec3.subtract(doorScadPositionInLocalRocketScad, this.rocketOffset);
-            // moved by scad --> hifi door offset
-            var doorHiFiPositionInLocalRocketHifi = Vec3.subtract(doorScadPositionInLocalRocketHifi, this.doorOffset);
-
             var rampRotation = Quat.fromPitchYawRollRadians(this.doorOpenMax * opennessRatio, this.halfSliceRadians, 0);
-            var rampPivot = Vec3.multiplyQbyV(rampRotation, this.doorOffset);
-            var adjustmentDueToRotation = Vec3.subtract(doorScadPositionInLocalRocketHifi,
-                                                        Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot));
-
-
-
-            // Entities.addEntity({
-            //     name: '50s rocket debug',
-            //     type: 'Sphere',
-            //     parentID: this.rocketID,
-            //     parentJointIndex: -1,
-            //     localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, rampPivot),
-            //     dimensions: { x: 0.15, y: 0.15, z: 0.15 }
-            // });
-
-
             return {
-                localPosition: Vec3.sum(doorHiFiPositionInLocalRocketHifi, adjustmentDueToRotation),
+                localPosition: Vec3.multiply(Vec3.sum(p0, p1), 0.5),
                 localRotation: rampRotation
             };
         }
