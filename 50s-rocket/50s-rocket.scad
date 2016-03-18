@@ -18,12 +18,13 @@ rocket_outline = [4.0, // 0 // matches baseRocketRadius in 50s-rocket.js
 rocket_wall_thickness = 0.1; // matches rocketWallThickness in 50s-rocket.js
 rocket_thruster_offset = [0, -1.75, -7];
 rocket_thruster_height = 2;
+rocket_elevator_radius = 2.1;
 
-module rocket_first_floor() {
+module make_rocket_floor(vertical_index) {
     for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
         start_angle = (360.0 / rocket_rotational_slice_count) * rotational_index;
         end_angle = (360.0 / rocket_rotational_slice_count) * (rotational_index + 1);
-        outer_radius = rocket_outline[0];
+        outer_radius = rocket_outline[vertical_index];
 
         p03x = 0;
         p03y = 0 - rocket_wall_thickness;
@@ -59,6 +60,22 @@ module rocket_first_floor() {
                    faces=[[0, 5, 2], // bottom
                           [1, 3, 4], // top
                           [2, 5, 4, 3]]); // outside
+    }
+}
+
+module make_first_floor() {
+    make_rocket_floor(0);
+}
+
+module make_second_floor() {
+    translate([0, 4 * rocket_vertical_slice_size, 0])
+        difference() {
+            make_rocket_floor(4);
+            rotate([90, 0, 0])
+                cylinder(h = rocket_wall_thickness*3,
+                         r1 = rocket_elevator_radius,
+                         r2 = rocket_elevator_radius,
+                         center = true, $fs=0.5);
     }
 }
 
@@ -190,7 +207,8 @@ if (combined == 1) {
                 }
             }
         }
-        rocket_first_floor();
+        make_first_floor();
+        make_second_floor();
     } else if (door == 1) {
         rocket_wall_panel(vertical_index = 0,
                           rotational_index = 0,
@@ -222,7 +240,7 @@ if (combined == 1) {
                               hull = 0); // shrink the door slightly (or not)
         }
     } else if (nth == 200) {
-        rocket_first_floor();
+        make_first_floor();
     } else if (nth == 201) {
         make_thruster(0);
     } else if (nth == 202) {
@@ -231,5 +249,7 @@ if (combined == 1) {
         make_thruster(240);
     } else if (nth == 204) {
         make_table();
+    } else if (nth == 205) {
+        make_second_floor();
     }
 }
