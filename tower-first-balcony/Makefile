@@ -18,6 +18,9 @@ all: first-balcony-collision-hull.obj first-balcony.obj
 first-balcony.stl: first-balcony.scad
 	openscad -D combined=1 -o $@ $^
 
+first-balcony.obj: first-balcony.stl
+	wavefront-obj-tool -m 0.2 -n $^ -o $@ -L first-balcony.mtl -S balcony_mtl
+
 first-balcony-collision-hull.obj: $(PARTS)
 	wavefront-obj-tool -c -o $@ $^
 
