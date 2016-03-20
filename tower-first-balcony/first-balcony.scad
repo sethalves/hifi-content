@@ -9,45 +9,61 @@ module first_balcony_section(inner_radius = 20,
                              angle_start = 0,
                              angle_sweep = 20,
                              subsection,
-                             subsection_count = 4)
+                             subsection_count = 4,
+                             low_collision_box = 0,
+                             high_collision_box = 0)
 {
-    subsection_angle_sweep = angle_sweep / subsection_count;
+    if (low_collision_box == 0 && high_collision_box == 0) {
+        subsection_angle_sweep = angle_sweep / subsection_count;
 
-    p0x = inner_radius * sin(angle_start + (subsection * subsection_angle_sweep));
-    p0y = tower_height - thickness;
-    p0z = inner_radius * cos(angle_start + (subsection * subsection_angle_sweep));
+        p0x = inner_radius * sin(angle_start + (subsection * subsection_angle_sweep));
+        p0y = tower_height - thickness;
+        p0z = inner_radius * cos(angle_start + (subsection * subsection_angle_sweep));
 
-    p1x = outer_radius * sin(angle_start + (subsection * subsection_angle_sweep));
-    p1y = tower_height - thickness;
-    p1z = outer_radius * cos(angle_start + (subsection * subsection_angle_sweep));
+        p1x = outer_radius * sin(angle_start + (subsection * subsection_angle_sweep));
+        p1y = tower_height - thickness;
+        p1z = outer_radius * cos(angle_start + (subsection * subsection_angle_sweep));
 
-    // p2 and p3 are on the left of the section
-    p2x = outer_radius * sin(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
-    p2y = tower_height - thickness;
-    p2z = outer_radius * cos(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
+        // p2 and p3 are on the left of the section
+        p2x = outer_radius * sin(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
+        p2y = tower_height - thickness;
+        p2z = outer_radius * cos(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
 
-    p3x = inner_radius * sin(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
-    p3y = tower_height - thickness;
-    p3z = inner_radius * cos(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
+        p3x = inner_radius * sin(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
+        p3y = tower_height - thickness;
+        p3z = inner_radius * cos(angle_start + (subsection * subsection_angle_sweep) + subsection_angle_sweep);
 
-    section_points = [[p0x, p0y, p0z],
-                      [p1x, p1y, p1z],
-                      [p2x, p2y, p2z],
-                      [p3x, p3y, p3z],
-                      [p0x, p0y + thickness, p0z],
-                      [p1x, p1y + thickness, p1z],
-                      [p2x, p2y + thickness, p2z],
-                      [p3x, p3y + thickness, p3z],
-                      ];
+        section_points = [[p0x, p0y, p0z],
+                          [p1x, p1y, p1z],
+                          [p2x, p2y, p2z],
+                          [p3x, p3y, p3z],
+                          [p0x, p0y + thickness, p0z],
+                          [p1x, p1y + thickness, p1z],
+                          [p2x, p2y + thickness, p2z],
+                          [p3x, p3y + thickness, p3z],
+            ];
 
-    polyhedron(points=section_points,
-               faces=[[3, 2, 1, 0], // bottom
-                      [4, 5, 6, 7], // top
-                      [1, 2, 6, 5], // far
-                      [0, 4, 7, 3], // near
-                      [0, 1, 5, 4], // right
-                      [7, 6, 2, 3]] // left
-               );
+        polyhedron(points=section_points,
+                   faces=[[3, 2, 1, 0], // bottom
+                          [4, 5, 6, 7], // top
+                          [1, 2, 6, 5], // far
+                          [0, 4, 7, 3], // near
+                          [0, 1, 5, 4], // right
+                          [7, 6, 2, 3]] // left
+            );
+    }  else if (low_collision_box == 1) {
+        rotate([0, angle_start, 0]) {
+            translate([inner_radius, 0, 0]) {
+                cube([outer_radius - inner_radius, tower_height, 1], center = false);
+            }
+        }
+    } else if (high_collision_box == 1) {
+        rotate([0, angle_start + angle_sweep - 5, 0]) {
+            translate([inner_radius, 0, 0]) {
+                cube([outer_radius - inner_radius, tower_height, 1], center = false);
+            }
+        }
+    }
 }
 
 
@@ -98,7 +114,9 @@ if (combined == 1) {
                                       angle_start = angle_start + (floor(nth / subsection_count) * section_angle_sweep),
                                       angle_sweep = section_angle_sweep,
                                       subsection = nth - (floor(nth / subsection_count) * subsection_count),
-                                      subsection_count = subsection_count);
+                                      subsection_count = subsection_count,
+                                      low_collision_box = 0,
+                                      high_collision_box = 0);
              // }
         }
 
@@ -128,12 +146,43 @@ if (combined == 1) {
     }
  } else {
     // combined isn't 1, so we are making part of the collision hull.  nth will have been set by the invoker of openscad.
-    first_balcony_section(inner_radius = inner_radius,
-                          outer_radius = outer_radius,
-                          tower_height = tower_height,
-                          thickness = thickness,
-                          angle_start = angle_start + (floor(nth / subsection_count) * section_angle_sweep),
-                          angle_sweep = section_angle_sweep,
-                          subsection = nth - (floor(nth / subsection_count) * subsection_count),
-                          subsection_count = subsection_count);
+
+    if (nth < 32) {
+        first_balcony_section(inner_radius = inner_radius,
+                              outer_radius = outer_radius,
+                              tower_height = tower_height,
+                              thickness = thickness,
+                              angle_start = angle_start + (floor(nth / subsection_count) * section_angle_sweep),
+                              angle_sweep = section_angle_sweep,
+                              subsection = nth - (floor(nth / subsection_count) * subsection_count),
+                              subsection_count = subsection_count,
+                              low_collision_box = 0,
+                              high_collision_box = 0);
+    } else if (nth < 40) {
+        // collision shape before the arch
+        mth = nth - 32;
+        first_balcony_section(inner_radius = inner_radius,
+                              outer_radius = outer_radius,
+                              tower_height = tower_height,
+                              thickness = thickness,
+                              angle_start = angle_start + mth * section_angle_sweep,
+                              angle_sweep = section_angle_sweep,
+                              subsection = 0,
+                              subsection_count = subsection_count,
+                              low_collision_box = 1,
+                              high_collision_box = 0);
+    } else {
+      // collision shape after the arch
+        oth = nth - 40;
+        first_balcony_section(inner_radius = inner_radius,
+                              outer_radius = outer_radius,
+                              tower_height = tower_height,
+                              thickness = thickness,
+                              angle_start = angle_start + oth * section_angle_sweep,
+                              angle_sweep = section_angle_sweep,
+                              subsection = 0,
+                              subsection_count = subsection_count,
+                              low_collision_box = 0,
+                              high_collision_box = 1);
+    }
  }
