@@ -10,9 +10,13 @@ module first_balcony_section(inner_radius = 20,
                              angle_sweep = 20,
                              subsection,
                              subsection_count = 4,
+                             arch_radius,
                              low_collision_box = 0,
                              high_collision_box = 0)
 {
+    section_width = 2 * inner_radius * sin(angle_sweep / 2);
+    collision_box_z = (section_width - (2 * arch_radius)) / 2;
+
     if (low_collision_box == 0 && high_collision_box == 0) {
         subsection_angle_sweep = angle_sweep / subsection_count;
 
@@ -52,15 +56,18 @@ module first_balcony_section(inner_radius = 20,
                           [7, 6, 2, 3]] // left
             );
     }  else if (low_collision_box == 1) {
-        rotate([0, angle_start, 0]) {
+        rotate([0, 180 - angle_start, 0]) {
             translate([inner_radius, 0, 0]) {
-                cube([outer_radius - inner_radius, tower_height, 1], center = false);
+                cube([outer_radius - inner_radius, tower_height - thickness, collision_box_z], center = false);
             }
         }
     } else if (high_collision_box == 1) {
-        rotate([0, angle_start + angle_sweep - 5, 0]) {
-            translate([inner_radius, 0, 0]) {
-                cube([outer_radius - inner_radius, tower_height, 1], center = false);
+        collision_box_sweep = asin(collision_box_z / inner_radius);
+        echo(collision_box_sweep=collision_box_sweep);
+        // rotate([0, 180 - (angle_start + angle_sweep - collision_box_sweep), 0]) {
+        rotate([0, 180 - (angle_start + angle_sweep), 0]) {
+            translate([inner_radius, 0, -collision_box_z]) {
+                cube([outer_radius - inner_radius, tower_height - thickness, collision_box_z], center = false);
             }
         }
     }
@@ -115,6 +122,7 @@ if (combined == 1) {
                                       angle_sweep = section_angle_sweep,
                                       subsection = nth - (floor(nth / subsection_count) * subsection_count),
                                       subsection_count = subsection_count,
+                                      arch_radius = arch_radius,
                                       low_collision_box = 0,
                                       high_collision_box = 0);
              // }
@@ -156,6 +164,7 @@ if (combined == 1) {
                               angle_sweep = section_angle_sweep,
                               subsection = nth - (floor(nth / subsection_count) * subsection_count),
                               subsection_count = subsection_count,
+                              arch_radius = arch_radius,
                               low_collision_box = 0,
                               high_collision_box = 0);
     } else if (nth < 40) {
@@ -168,7 +177,8 @@ if (combined == 1) {
                               angle_start = angle_start + mth * section_angle_sweep,
                               angle_sweep = section_angle_sweep,
                               subsection = 0,
-                              subsection_count = subsection_count,
+                              subsection_count = 1,
+                              arch_radius = arch_radius,
                               low_collision_box = 1,
                               high_collision_box = 0);
     } else {
@@ -181,7 +191,8 @@ if (combined == 1) {
                               angle_start = angle_start + oth * section_angle_sweep,
                               angle_sweep = section_angle_sweep,
                               subsection = 0,
-                              subsection_count = subsection_count,
+                              subsection_count = 1,
+                              arch_radius = arch_radius,
                               low_collision_box = 0,
                               high_collision_box = 1);
     }
