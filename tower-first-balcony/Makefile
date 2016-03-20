@@ -32,5 +32,5 @@ clean:
 	rm -f first-balcony.obj.tmp.obj first-balcony.stl
 
 
-upload: first-balcony.obj first-balcony-collision-hull.obj
+upload: first-balcony.obj first-balcony-collision-hull.obj first-balcony.jpg
 	scp $^ headache:public_html/hifi/
