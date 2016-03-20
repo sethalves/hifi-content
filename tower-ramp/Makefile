@@ -32,5 +32,5 @@ clean:
 	rm -f curved-ramp.obj.tmp.obj curved-ramp.stl
 
 
-upload: curved-ramp.obj curved-ramp-collision-hull.obj curved-ramp.mtl curved-ramp.jpg
+upload: curved-ramp.obj curved-ramp-collision-hull.obj curved-ramp.mtl tower-ramp.jpg
 	scp $^ headache:public_html/hifi/
