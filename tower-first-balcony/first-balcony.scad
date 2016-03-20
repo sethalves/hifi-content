@@ -77,7 +77,10 @@ d = (sin(half_section_angle_sweep) * (inner_radius - 1.0)) -
     (sin(half_section_angle_sweep) * (outer_radius + 1.0));
 minkowski_points = [[0, 0, 0],
                     [-d, 0, cylinder_length],
-                    [d, 0, cylinder_length]];
+                    [d, 0, cylinder_length],
+                    [0, 0.01, 0],
+                    [-d, 0.01, cylinder_length],
+                    [d, 0.01, cylinder_length]];
 
 
 
@@ -114,8 +117,12 @@ if (combined == 1) {
                                tower_height,
                                cylinder_length],
                               center = true);
-                     }
-                     polyhedron(points=minkowski_points, faces=[[0, 1, 2]]);
+                     };
+                     polyhedron(points=minkowski_points, faces=[[0, 1, 2],
+                                                                [5, 4, 3],
+                                                                [0, 3, 4, 1],
+                                                                [4, 5, 2, 1],
+                                                                [0, 2, 5, 3]]);
             }
         }
     }
