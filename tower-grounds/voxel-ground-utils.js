@@ -50,6 +50,22 @@ clampVector = function (low, high, vec) {
     }
 }
 
+minVector = function(minV, newPoint) {
+    return {
+        x: Math.min(minV.x, newPoint.x),
+        y: Math.min(minV.y, newPoint.y),
+        z: Math.min(minV.z, newPoint.z)
+    };
+}
+
+maxVector = function(maxV, newPoint) {
+    return {
+        x: Math.max(maxV.x, newPoint.x),
+        y: Math.max(maxV.y, newPoint.y),
+        z: Math.max(maxV.z, newPoint.z)
+    };
+}
+
 vecHasVolume = function (vec) {
     return (vec.x > 0) && (vec.y > 0) && (vec.z > 0);
 }
@@ -62,8 +78,8 @@ addTerrainAtPosition = function (position) {
         dimensions: { x: plotSize, y: plotSize, z: plotSize },
         voxelVolumeSize: { x: 16, y: 64, z: 16 },
         voxelSurfaceStyle: 0,
-        xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
-        yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
-        zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
+        xTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png",
+        yTextureURL: "http://headache.hungry.com/~seth/hifi/green.png",
+        zTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png"
     });
 }

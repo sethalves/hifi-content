@@ -58,17 +58,19 @@ function cleanup() {
     toolBar.cleanup();
 }
 
-function worldCoordsToMapCoords(worldCoords) {
+function worldCoordsToMapCoords(worldCoords, voxelTerrainMin, voxelTerrainMax) {
     var offset = Vec3.subtract(worldCoords, center);
-    var vec = Vec3.multiply(offset, 1.0 / 16.0);
+    var plotSize = getPlotSize();
+    var vec = Vec3.multiply(offset, 1.0 / plotSize);
     return {
         x: vec.x,
         y: Math.sin(vec.x) * Math.cos(vec.z) * (16.0 / 64.0),
         z: vec.z
     };
 }
-function mapCoordsToWorldCoords(mapCoords) {
-    var vec = Vec3.multiply(mapCoords, 16.0);
+function mapCoordsToWorldCoords(mapCoords, voxelTerrainMin, voxelTerrainMax) {
+    var plotSize = getPlotSize();
+    var vec = Vec3.multiply(mapCoords, plotSize);
     var blah = Vec3.sum(vec, center);
     return blah;
 }
@@ -79,6 +81,7 @@ function deleteTerrain() {
         var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
         var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
         if (props.name == "terrain") {
+            Entities.editEntity(polyVoxID, {locked: false});
             Entities.deleteEntity(polyVoxID);
         }
     }
@@ -119,6 +122,10 @@ function addTerrain() {
 
 
 function setTerrain() {
+    var voxelTerrainMin = { x: 100000, y: 100000, z: 100000 };
+    var voxelTerrainMax = { x: -100000, y: -100000, z: -100000 };
+    var plotSize = getPlotSize();
+    var halfPlotSize = { x: plotSize / 2, y: plotSize / 2, z: plotSize / 2 };
     var voxelTerrains = [];
     nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
     for (voxelTarrainCandidateIndex in nearbyEntities) {
@@ -128,7 +135,8 @@ function setTerrain() {
             // XXX and it's a polyvox with the correct dimensions?
             voxelTerrains.push(polyVoxID);
 
-            var plotSize = getPlotSize();
+            voxelTerrainMin = minVector(voxelTerrainMin, Vec3.subtract(properties.position, halfPlotSize));
+            voxelTerrainMax = maxVector(voxelTerrainMax, Vec3.sum(properties.position, halfPlotSize));
 
             // link neighbors to this plot
             var imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}));
@@ -193,9 +201,9 @@ function setTerrain() {
             var voxelID = voxelTerrains[voxelIndex];
 
             var worldLocation = Entities.voxelCoordsToWorldCoords(voxelID, voxelLocation);
-            var mapLocation = worldCoordsToMapCoords(worldLocation);
+            var mapLocation = worldCoordsToMapCoords(worldLocation, voxelTerrainMin, voxelTerrainMax);
 
-            worldLocation = mapCoordsToWorldCoords(mapLocation);
+            worldLocation = mapCoordsToWorldCoords(mapLocation, voxelTerrainMin, voxelTerrainMax);
             var inPolyVoxLocation = Entities.worldCoordsToVoxelCoords(voxelID, worldLocation);
             var voxelY = inPolyVoxLocation.y;
 
@@ -222,14 +230,25 @@ function setTerrain() {
             voxelZ += 1;
         }
         if (voxelX == 16) {
+            lockTerrain();
             return;
         }
 
-        Script.setTimeout(process, 600);
+        Script.setTimeout(process, 800);
     }
     process();
 }
 
+function lockTerrain() {
+    nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
+    for (voxelTarrainCandidateIndex in nearbyEntities) {
+        var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
+        var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
+        if (props.name == "terrain") {
+            Entities.editEntity(polyVoxID, {locked: true});
+        }
+    }
+}
 
 Controller.mousePressEvent.connect(mousePressEvent);
 // Controller.keyPressEvent.connect(keyPressEvent);
