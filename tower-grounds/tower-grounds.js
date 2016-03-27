@@ -1,26 +1,11 @@
 
 
 Script.include([
-    "libraries/toolBars.js",
-    "libraries/utils.js",
+    "voxel-ground-utils.js"
 ]);
 
-var toolIconUrl = "http://headache.hungry.com/~seth/hifi/";
-var toolHeight = 50;
-var toolWidth = 50;
-var offAlpha = 0.8;
-var onAlpha = 1.0;
-var zeroVec = {x: 0, y: 0, z: 0};
-
-
-var plotSize = 32;
 var center = {x: 0, y: -16, z: 0};
-
-
-
-function floorVector(v) {
-    return {x: Math.floor(v.x), y: Math.floor(v.y), z: Math.floor(v.z)};
-}
+var zeroVec = {x: 0, y: 0, z: 0};
 
 var SHOW_TOOL_BAR = true;
 var toolBar;
@@ -29,6 +14,11 @@ if (SHOW_TOOL_BAR) {
     var HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
     Script.include(HIFI_PUBLIC_BUCKET + "scripts/libraries/toolBars.js");
 
+    var toolIconUrl = "http://headache.hungry.com/~seth/hifi/";
+    var toolHeight = 50;
+    var toolWidth = 50;
+    var offAlpha = 0.8;
+    var onAlpha = 1.0;
     var BUTTON_SIZE = 32;
     var PADDING = 3;
 
@@ -58,31 +48,10 @@ function mousePressEvent(event) {
     });
 
     if (clickedOverlay == setTerrainButton) {
-        print("OK");
         deleteTerrain();
         // addTerrain();
         // setTerrain();
     }
-}
-
-function getTerrainAlignedLocation(pos) {
-    var posDiv16 = Vec3.multiply(pos, 1.0 / 16.0);
-    var posDiv16Floored = floorVector(posDiv16);
-    return Vec3.multiply(posDiv16Floored, 16.0);
-}
-
-function lookupTerrainForLocation(pos) {
-    var baseLocation = getTerrainAlignedLocation(pos);
-    entitiesAtLoc = Entities.findEntities(baseLocation, 1.0);
-    for (var i = 0; i < entitiesAtLoc.length; i++) {
-        var id = entitiesAtLoc[i];
-        var properties = Entities.getEntityProperties(id);
-        if (properties.name == "terrain") {
-            return id;
-        }
-    }
-
-    return false;
 }
 
 function cleanup() {
@@ -104,33 +73,6 @@ function mapCoordsToWorldCoords(mapCoords) {
     return blah;
 }
 
-
-function clampVector(low, high, vec) {
-    if (vec.x < low.x) {
-        vec.x = low.x;
-    }
-    if (vec.x > high.x) {
-        vec.x = high.x;
-    }
-    if (vec.y < low.y) {
-        vec.y = low.y;
-    }
-    if (vec.y > high.y) {
-        vec.y = high.y;
-    }
-    if (vec.z < low.z) {
-        vec.z = low.z;
-    }
-    if (vec.z > high.z) {
-        vec.z = high.z;
-    }
-}
-
-function vecHasVolume(vec) {
-    return (vec.x > 0) && (vec.y > 0) && (vec.z > 0);
-}
-
-
 function deleteTerrain() {
     nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
     for (voxelTarrainCandidateIndex in nearbyEntities) {
@@ -150,22 +92,12 @@ function addTerrain() {
     var worker = function() {
         print("addTerrain: " + voxelX + " " + voxelZ);
         var position = {
-            x: (voxelX - 2) * plotSize,
+            x: (voxelX - 2) * getPlotSize(),
             y: 0,
-            z: (voxelZ - 2) * plotSize
+            z: (voxelZ - 2) * getPlotSize()
         };
 
-        Entities.addEntity({
-            type: "PolyVox",
-            name: "terrain",
-            position: Vec3.sum(center, position),
-            dimensions: { x:plotSize, y:plotSize, z:plotSize },
-            voxelVolumeSize: { x: 16, y: 64, z: 16 },
-            voxelSurfaceStyle: 0,
-            xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
-            yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
-            zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
-        });
+        addTerrainAtPosition(Vec3.sum(center, position));
 
         if (voxelZ == 5) {
             voxelZ = 0;
@@ -196,15 +128,15 @@ function setTerrain() {
             // XXX and it's a polyvox with the correct dimensions?
             voxelTerrains.push(polyVoxID);
 
-            print("A");
+            var plotSize = getPlotSize();
 
             // link neighbors to this plot
-            var imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x:plotSize, y:0, z:0}));
-            var imYNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:plotSize, z:0}));
-            var imZNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:0, z:plotSize}));
-            var imXPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x:-plotSize, y:0, z:0}));
-            var imYPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:-plotSize, z:0}));
-            var imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:0, z:-plotSize}));
+            var imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}));
+            var imYNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: plotSize, z: 0}));
+            var imZNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: plotSize}));
+            var imXPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: -plotSize, y: 0, z: 0}));
+            var imYPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: -plotSize, z: 0}));
+            var imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: -plotSize}));
             var neighborProperties
 
             if (imXNNeighborFor) {
@@ -240,21 +172,21 @@ function setTerrain() {
             }
 
             // link this plot to its neighbors
-            properties.xNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x:-plotSize, y:0, z:0}));
-            properties.yNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:-plotSize, z:0}));
-            properties.zNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:0, z:-plotSize}));
-            properties.xPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x:plotSize, y:0, z:0}));
-            properties.yPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:plotSize, z:0}));
-            properties.zPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x:0, y:0, z:plotSize}));
+            properties.xNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: -plotSize, y: 0, z: 0}));
+            properties.yNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: -plotSize, z: 0}));
+            properties.zNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: -plotSize}));
+            properties.xPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}));
+            properties.yPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: plotSize, z: 0}));
+            properties.zPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: plotSize}));
             Entities.editEntity(polyVoxID, properties);
-
-            print("B");
         }
     }
 
     var voxelX = 0;
     var voxelZ = 0;
     var process = function () {
+        print("setTerrain: " + voxelX + " " + voxelZ);
+
         var voxelLocation = {x: voxelX, y: 8, z: voxelZ};
         for (voxelIndex in voxelTerrains) {
             var onResult, offResult;
@@ -262,16 +194,17 @@ function setTerrain() {
 
             var worldLocation = Entities.voxelCoordsToWorldCoords(voxelID, voxelLocation);
             var mapLocation = worldCoordsToMapCoords(worldLocation);
+
             worldLocation = mapCoordsToWorldCoords(mapLocation);
             var inPolyVoxLocation = Entities.worldCoordsToVoxelCoords(voxelID, worldLocation);
             var voxelY = inPolyVoxLocation.y;
 
-            onCuboidLow = {x: voxelX, y: 0, z: voxelZ};
-            onCuboidSize = {x: 1, y: voxelY, z: 1};
+            var onCuboidLow = {x: voxelX, y: 0, z: voxelZ};
+            var onCuboidSize = {x: 1, y: voxelY, z: 1};
             clampVector(zeroVec, {x: 1, y: 64, z: 1}, onCuboidSize)
 
-            offCuboidLow = {x: voxelX, y: voxelY, z: voxelZ};
-            offCuboidSize = {x: 1, y: 64 - voxelY, z: 1};
+            var offCuboidLow = {x: voxelX, y: voxelY, z: voxelZ};
+            var offCuboidSize = {x: 1, y: 64 - voxelY, z: 1};
             clampVector(zeroVec, {x: 1, y: 64, z: 1}, offCuboidSize)
 
             if (vecHasVolume(onCuboidSize)) {
@@ -292,7 +225,7 @@ function setTerrain() {
             return;
         }
 
-        Script.setTimeout(process, 1500);
+        Script.setTimeout(process, 600);
     }
     process();
 }
