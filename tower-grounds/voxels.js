@@ -1,3 +1,10 @@
+
+Script.include([
+    "voxel-ground-utils.js"
+]);
+
+var smallPlotSize = 16;
+
 var controlHeld = false;
 var shiftHeld = false;
 
@@ -205,21 +212,6 @@ function getTerrainAlignedLocation(pos) {
 }
 
 
-function lookupTerrainForLocation(pos) {
-    var baseLocation = getTerrainAlignedLocation(pos);
-    entitiesAtLoc = Entities.findEntities(baseLocation, 1.0);
-    for (var i = 0; i < entitiesAtLoc.length; i++) {
-        var id = entitiesAtLoc[i];
-        var properties = Entities.getEntityProperties(id);
-        if (properties.name == "terrain") {
-            return id;
-        }
-    }
-
-    return false;
-}
-
-
 function grabLowestJointY() {
     var jointNames = MyAvatar.getJointNames();
     var floorY = MyAvatar.position.y;
@@ -238,14 +230,15 @@ function addTerrainBlock() {
         baseLocation.y -= 16;
     }
 
-    var alreadyThere = lookupTerrainForLocation(baseLocation);
+    var alreadyThere = lookupTerrainForLocation(baseLocation, 16);
     if (alreadyThere) {
+        print("already one here 0");
         // there is already a terrain block under MyAvatar.
         // try in front of the avatar.
         facingPosition = Vec3.sum(MyAvatar.position, Vec3.multiply(8.0, Quat.getFront(Camera.getOrientation())));
         facingPosition = Vec3.sum(facingPosition, {x:8, y:8, z:8});
         baseLocation = getTerrainAlignedLocation(facingPosition);
-        alreadyThere = lookupTerrainForLocation(baseLocation);
+        alreadyThere = lookupTerrainForLocation(baseLocation, 16);
         if (alreadyThere) {
             return null;
         }
@@ -262,24 +255,25 @@ function addTerrainBlock() {
 }
 
 function addTerrainBlockNearLocation(baseLocation) {
-    var alreadyThere = lookupTerrainForLocation(baseLocation);
+    var alreadyThere = lookupTerrainForLocation(baseLocation, 16);
     if (alreadyThere) {
+        print("already one here 1");
         return null;
     }
 
-    addTerrainAtPosition(baseLocation);
+    var polyVoxID = addTerrainAtPosition(baseLocation, smallPlotSize);
 
     //////////
     // stitch together the terrain with x/y/z NeighorID properties
     //////////
 
     // link neighbors to this plot
-    imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:16, y:0, z:0}));
-    imYNNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:16, z:0}));
-    imZNNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:16}));
-    imXPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:-16, y:0, z:0}));
-    imYPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:-16, z:0}));
-    imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:-16}));
+    imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:16, y:0, z:0}), 16);
+    imYNNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:16, z:0}), 16);
+    imZNNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:16}), 16);
+    imXPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:-16, y:0, z:0}), 16);
+    imYPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:-16, z:0}), 16);
+    imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:-16}), 16);
 
     if (imXNNeighborFor) {
         var properties = Entities.getEntityProperties(imXNNeighborFor);
@@ -316,12 +310,12 @@ function addTerrainBlockNearLocation(baseLocation) {
 
     // link this plot to its neighbors
     var properties = Entities.getEntityProperties(polyVoxID);
-    properties.xNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:-16, y:0, z:0}));
-    properties.yNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:-16, z:0}));
-    properties.zNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:-16}));
-    properties.xPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:16, y:0, z:0}));
-    properties.yPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:16, z:0}));
-    properties.zPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:16}));
+    properties.xNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:-16, y:0, z:0}), 16);
+    properties.yNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:-16, z:0}), 16);
+    properties.zNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:-16}), 16);
+    properties.xPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:16, y:0, z:0}), 16);
+    properties.yPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:16, z:0}), 16);
+    properties.zPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:16}), 16);
     Entities.editEntity(polyVoxID, properties);
 
     return polyVoxID;

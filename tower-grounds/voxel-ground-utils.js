@@ -1,12 +1,6 @@
 
-var plotSize = 256;
-
 floorVector = function (v) {
     return {x: Math.floor(v.x), y: Math.floor(v.y), z: Math.floor(v.z)};
-}
-
-getPlotSize = function () {
-    return plotSize;
 }
 
 getTerrainAlignedLocation = function (pos) {
@@ -15,13 +9,13 @@ getTerrainAlignedLocation = function (pos) {
     return Vec3.multiply(posDiv16Floored, 16.0);
 }
 
-lookupTerrainForLocation = function (pos) {
+lookupTerrainForLocation = function (pos, plotSize) {
     var baseLocation = getTerrainAlignedLocation(pos);
     entitiesAtLoc = Entities.findEntities(baseLocation, 1.0);
     for (var i = 0; i < entitiesAtLoc.length; i++) {
         var id = entitiesAtLoc[i];
-        var properties = Entities.getEntityProperties(id);
-        if (properties.name == "terrain") {
+        var properties = Entities.getEntityProperties(id, ["name", "dimensions"]);
+        if (properties.name == "terrain" && properties.dimensions.x == plotSize) {
             return id;
         }
     }
@@ -70,8 +64,8 @@ vecHasVolume = function (vec) {
     return (vec.x > 0) && (vec.y > 0) && (vec.z > 0);
 }
 
-addTerrainAtPosition = function (position) {
-    Entities.addEntity({
+addTerrainAtPosition = function (position, plotSize) {
+    return Entities.addEntity({
         type: "PolyVox",
         name: "terrain",
         position: position,
@@ -79,6 +73,7 @@ addTerrainAtPosition = function (position) {
         voxelVolumeSize: { x: 16, y: 64, z: 16 },
         voxelSurfaceStyle: 0,
         xTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png",
+        // yTextureURL: "http://headache.hungry.com/~seth/hifi/green-16x16.png",
         yTextureURL: "http://headache.hungry.com/~seth/hifi/green.png",
         zTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png"
     });

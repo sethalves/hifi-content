@@ -4,8 +4,13 @@ Script.include([
     "voxel-ground-utils.js"
 ]);
 
-var center = {x: 0, y: -16, z: 0};
+// var center = {x: 0, y: -16, z: 0};
+// var center = {x: 64, y: 50.2, z: 112};
+var center = {x: 64, y: 49.5, z: 112};
 var zeroVec = {x: 0, y: 0, z: 0};
+
+var largePlotSize = 16; // 256;
+var smallPlotSize = 16;
 
 var SHOW_TOOL_BAR = true;
 var toolBar;
@@ -48,9 +53,13 @@ function mousePressEvent(event) {
     });
 
     if (clickedOverlay == setTerrainButton) {
-        deleteTerrain();
-        // addTerrain();
-        // setTerrain();
+        if (false) {
+            deleteTerrain();
+        } else if (false) {
+            addTerrain();
+        } else {
+            setTerrain();
+        }
     }
 }
 
@@ -60,7 +69,7 @@ function cleanup() {
 
 function worldCoordsToMapCoords(worldCoords, voxelTerrainMin, voxelTerrainMax) {
     var offset = Vec3.subtract(worldCoords, center);
-    var plotSize = getPlotSize();
+    var plotSize = largePlotSize;
     var vec = Vec3.multiply(offset, 1.0 / plotSize);
     return {
         x: vec.x,
@@ -69,7 +78,7 @@ function worldCoordsToMapCoords(worldCoords, voxelTerrainMin, voxelTerrainMax) {
     };
 }
 function mapCoordsToWorldCoords(mapCoords, voxelTerrainMin, voxelTerrainMax) {
-    var plotSize = getPlotSize();
+    var plotSize = largePlotSize;
     var vec = Vec3.multiply(mapCoords, plotSize);
     var blah = Vec3.sum(vec, center);
     return blah;
@@ -95,12 +104,16 @@ function addTerrain() {
     var worker = function() {
         print("addTerrain: " + voxelX + " " + voxelZ);
         var position = {
-            x: (voxelX - 2) * getPlotSize(),
+            x: (voxelX - 2) * largePlotSize,
             y: 0,
-            z: (voxelZ - 2) * getPlotSize()
+            z: (voxelZ - 2) * largePlotSize
         };
 
-        addTerrainAtPosition(Vec3.sum(center, position));
+        if (position.x == -256 && position.y == 0 && position.z == 0) {
+            // skip this spot, fill it in with addFineTerrain
+        } else {
+            addTerrainAtPosition(Vec3.sum(center, position), largePlotSize);
+        }
 
         if (voxelZ == 5) {
             voxelZ = 0;
@@ -111,7 +124,7 @@ function addTerrain() {
         if (voxelX == 5) {
             voxelX = 0;
             voxelZ = 0;
-            setTerrain();
+            addFineTerrain();
             return;
         }
 
@@ -120,72 +133,155 @@ function addTerrain() {
     worker();
 }
 
+function addFineTerrain() {
+    var voxelX = 0;
+    var voxelY = 0;
+    var voxelZ = 0;
+    var fineCenter = { x: -256, y: -80, z: 0 };
+    var worker = function() {
+        print("addFineTerrain: " + voxelX + " " + voxelY + " " + voxelZ);
+        var position = {
+            x: (voxelX - 8) * smallPlotSize,
+            y: (voxelY - 1) * smallPlotSize,
+            z: (voxelZ - 8) * smallPlotSize
+        };
+
+        addTerrainAtPosition(Vec3.sum(fineCenter, position), smallPlotSize);
+
+        voxelX += 1;
+        if (voxelX == 16) {
+            voxelX = 0;
+            voxelY += 1;
+        }
+        if (voxelY == 3) {
+            voxelY = 0;
+            voxelZ += 1;
+        }
+        if (voxelZ == 16) {
+            setTerrain();
+            return;
+        }
+        Script.setTimeout(worker, 100);
+    }
+    worker();
+}
+
 
 function setTerrain() {
+    unLockTerrain();
     var voxelTerrainMin = { x: 100000, y: 100000, z: 100000 };
     var voxelTerrainMax = { x: -100000, y: -100000, z: -100000 };
-    var plotSize = getPlotSize();
-    var halfPlotSize = { x: plotSize / 2, y: plotSize / 2, z: plotSize / 2 };
     var voxelTerrains = [];
     nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
     for (voxelTarrainCandidateIndex in nearbyEntities) {
         var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
         var properties = Entities.getEntityProperties(polyVoxID);
         if (properties.name == "terrain") {
-            // XXX and it's a polyvox with the correct dimensions?
+            var plotSize = properties.dimensions.x;
+            var halfPlotSize = { x: plotSize / 2, y: plotSize / 2, z: plotSize / 2 };
+
             voxelTerrains.push(polyVoxID);
 
             voxelTerrainMin = minVector(voxelTerrainMin, Vec3.subtract(properties.position, halfPlotSize));
             voxelTerrainMax = maxVector(voxelTerrainMax, Vec3.sum(properties.position, halfPlotSize));
 
             // link neighbors to this plot
-            var imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}));
-            var imYNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: plotSize, z: 0}));
-            var imZNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: plotSize}));
-            var imXPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: -plotSize, y: 0, z: 0}));
-            var imYPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: -plotSize, z: 0}));
-            var imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: -plotSize}));
-            var neighborProperties
+            var imXNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}), plotSize);
+            var imYNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: plotSize, z: 0}), plotSize);
+            var imZNNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: plotSize}), plotSize);
+            var imXPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: -plotSize, y: 0, z: 0}), plotSize);
+            var imYPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: -plotSize, z: 0}), plotSize);
+            var imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: -plotSize}), plotSize);
 
             if (imXNNeighborFor) {
                 neighborProperties = Entities.getEntityProperties(imXNNeighborFor);
-                neighborProperties.xNNeighborID = polyVoxID;
-                Entities.editEntity(imXNNeighborFor, neighborProperties);
+                if (neighborProperties.dimensions.x == plotSize) {
+                    neighborProperties.xNNeighborID = polyVoxID;
+                    Entities.editEntity(imXNNeighborFor, neighborProperties);
+                }
             }
             if (imYNNeighborFor) {
                 neighborProperties = Entities.getEntityProperties(imYNNeighborFor);
-                neighborProperties.yNNeighborID = polyVoxID;
-                Entities.editEntity(imYNNeighborFor, neighborProperties);
+                if (neighborProperties.dimensions.x == plotSize) {
+                    neighborProperties.yNNeighborID = polyVoxID;
+                    Entities.editEntity(imYNNeighborFor, neighborProperties);
+                }
             }
             if (imZNNeighborFor) {
                 neighborProperties = Entities.getEntityProperties(imZNNeighborFor);
-                neighborProperties.zNNeighborID = polyVoxID;
-                Entities.editEntity(imZNNeighborFor, neighborProperties);
+                if (neighborProperties.dimensions.x == plotSize) {
+                    neighborProperties.zNNeighborID = polyVoxID;
+                    Entities.editEntity(imZNNeighborFor, neighborProperties);
+                }
             }
 
             if (imXPNeighborFor) {
                 neighborProperties = Entities.getEntityProperties(imXPNeighborFor);
-                neighborProperties.xPNeighborID = polyVoxID;
-                Entities.editEntity(imXPNeighborFor, neighborProperties);
+                if (neighborProperties.dimensions.x == plotSize) {
+                    neighborProperties.xPNeighborID = polyVoxID;
+                    Entities.editEntity(imXPNeighborFor, neighborProperties);
+                }
             }
             if (imYPNeighborFor) {
                 neighborProperties = Entities.getEntityProperties(imYPNeighborFor);
-                neighborProperties.yPNeighborID = polyVoxID;
-                Entities.editEntity(imYPNeighborFor, neighborProperties);
+                if (neighborProperties.dimensions.x == plotSize) {
+                    neighborProperties.yPNeighborID = polyVoxID;
+                    Entities.editEntity(imYPNeighborFor, neighborProperties);
+                }
             }
             if (imZPNeighborFor) {
                 neighborProperties = Entities.getEntityProperties(imZPNeighborFor);
-                neighborProperties.zPNeighborID = polyVoxID;
-                Entities.editEntity(imZPNeighborFor, neighborProperties);
+                if (neighborProperties.dimensions.x == plotSize) {
+                    neighborProperties.zPNeighborID = polyVoxID;
+                    Entities.editEntity(imZPNeighborFor, neighborProperties);
+                }
             }
 
             // link this plot to its neighbors
-            properties.xNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: -plotSize, y: 0, z: 0}));
-            properties.yNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: -plotSize, z: 0}));
-            properties.zNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: -plotSize}));
-            properties.xPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}));
-            properties.yPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: plotSize, z: 0}));
-            properties.zPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: plotSize}));
+            var xNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: -plotSize, y: 0, z: 0}), plotSize);
+            var yNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: -plotSize, z: 0}), plotSize);
+            var zNNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: -plotSize}), plotSize);
+            var xPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: plotSize, y: 0, z: 0}), plotSize);
+            var yPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: plotSize, z: 0}), plotSize);
+            var zPNeighborID = lookupTerrainForLocation(Vec3.sum(properties.position, {x: 0, y: 0, z: plotSize}), plotSize);
+
+            if (xNNeighborID) {
+                xNNeighborIDProps = Entities.getEntityProperties(xNNeighborID);
+                if (xNNeighborIDProps.dimensions.x == properties.dimensions.x) {
+                    properties.xNNeighborID = xNNeighborID;
+                }
+            }
+            if (yNNeighborID) {
+                yNNeighborIDProps = Entities.getEntityProperties(yNNeighborID);
+                if (yNNeighborIDProps.dimensions.x == properties.dimensions.x) {
+                    properties.yNNeighborID = yNNeighborID;
+                }
+            }
+            if (zNNeighborID) {
+                zNNeighborIDProps = Entities.getEntityProperties(zNNeighborID);
+                if (zNNeighborIDProps.dimensions.x == properties.dimensions.x) {
+                    properties.zNNeighborID = zNNeighborID;
+                }
+            }
+            if (xPNeighborID) {
+                xPNeighborIDProps = Entities.getEntityProperties(xPNeighborID);
+                if (xPNeighborIDProps.dimensions.x == properties.dimensions.x) {
+                    properties.xPNeighborID = xPNeighborID;
+                }
+            }
+            if (yPNeighborID) {
+                yPNeighborIDProps = Entities.getEntityProperties(yPNeighborID);
+                if (yPNeighborIDProps.dimensions.x == properties.dimensions.x) {
+                    properties.yPNeighborID = yPNeighborID;
+                }
+            }
+            if (zPNeighborID) {
+                zPNeighborIDProps = Entities.getEntityProperties(zPNeighborID);
+                if (zPNeighborIDProps.dimensions.x == properties.dimensions.x) {
+                    properties.zPNeighborID = zPNeighborID;
+                }
+            }
+
             Entities.editEntity(polyVoxID, properties);
         }
     }
@@ -234,9 +330,20 @@ function setTerrain() {
             return;
         }
 
-        Script.setTimeout(process, 800);
+        Script.setTimeout(process, 4000);
     }
     process();
+}
+
+function unLockTerrain() {
+    nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
+    for (voxelTarrainCandidateIndex in nearbyEntities) {
+        var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
+        var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
+        if (props.name == "terrain") {
+            Entities.editEntity(polyVoxID, {locked: false});
+        }
+    }
 }
 
 function lockTerrain() {
