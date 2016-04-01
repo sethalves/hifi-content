@@ -74,14 +74,18 @@ module first_balcony_section(inner_radius = 20,
 }
 
 
-inner_radius = 20;
-outer_radius = 32;
+// inner_radius = 20;
+// outer_radius = 32;
+inner_radius = 24;
+outer_radius = 36;
 tower_height = 20;
 thickness = 3;
 angle_start = 0;
 subsection_count = 4;
+
 sections = 8;
 total_angle_sweep = 270.0;
+
 section_angle_sweep = total_angle_sweep / sections;
 half_section_angle_sweep = section_angle_sweep / 2.0;
 

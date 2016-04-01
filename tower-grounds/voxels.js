@@ -1,5 +1,6 @@
 
 Script.include([
+    "/~/libraries/utils.js",
     "voxel-ground-utils.js"
 ]);
 
@@ -98,6 +99,14 @@ var toolBar = (function () {
             visible: false
         }, false);
 
+        flattenButton = toolBar.addTool({
+            imageURL: toolIconUrl + "voxel-terrain.svg",
+            width: toolWidth,
+            height: toolHeight,
+            alpha: onAlpha,
+            visible: false
+        }, false);
+
         that.setActive(false);
     }
 
@@ -133,6 +142,7 @@ var toolBar = (function () {
         toolBar.showTool(addSphereButton, doShow);
         toolBar.showTool(deleteSphereButton, doShow);
         toolBar.showTool(addTerrainButton, doShow);
+        toolBar.showTool(flattenButton, doShow);
     };
 
     that.mousePressEvent = function (event) {
@@ -183,9 +193,13 @@ var toolBar = (function () {
             return true;
         }
 
-
         if (addTerrainButton === toolBar.clicked(clickedOverlay)) {
             addTerrainBlock();
+            return true;
+        }
+
+        if (flattenButton === toolBar.clicked(clickedOverlay)) {
+            flattenArea();
             return true;
         }
     }
@@ -224,6 +238,67 @@ function grabLowestJointY() {
 }
 
 
+function flattenArea() {
+    var lowPoint = grabLowestJointY();
+    var flattenRadius = 3.0;
+    var sphereRadius = 1.0;
+
+    var terrainIDs = [];
+    var allIDs = Entities.findEntities(MyAvatar.position, 20);
+    for (var i = 0; i < allIDs.length; i++) {
+        var name = Entities.getEntityProperties(allIDs[i], ["name"]).name;
+        if (name == "terrain") {
+            terrainIDs.push(allIDs[i]);
+        }
+    }
+
+    print("terrainIDs = " + terrainIDs);
+
+    // for (var x = -flattenRadius; x < flattenRadius; x += 0.5) {
+    //     for (var z = -flattenRadius; z < flattenRadius; z += 0.5) {
+    //         var spot = {
+    //             x: MyAvatar.position.x + x,
+    //             y: lowPoint + sphereRadius,
+    //             z: MyAvatar.position.z + z
+    //         };
+    //         for (var entityIndex in terrainIDs) {
+    //             var terrainID = terrainIDs[entityIndex];
+    //             Entities.setVoxelSphere(terrainID, spot, sphereRadius, 0);
+    //         }
+    //     }
+    // }
+
+    var lowSpot = {
+        x: MyAvatar.position.x - flattenRadius,
+        y: lowPoint,
+        z: MyAvatar.position.z - flattenRadius
+    };
+    var highSpot = {
+        x: MyAvatar.position.x + flattenRadius,
+        y: lowPoint,
+        z: MyAvatar.position.z + flattenRadius
+    };
+    for (var entityIndex in terrainIDs) {
+        var terrainID = terrainIDs[entityIndex];
+        // Entities.setVoxelSphere(terrainID, spot, sphereRadius, 0);
+        var lowVoxelSpot = Entities.worldCoordsToVoxelCoords(terrainID, lowSpot);
+        var highVoxelSpot = Entities.worldCoordsToVoxelCoords(terrainID, highSpot);
+        var cuboidSize = {
+            x: highVoxelSpot.x - lowVoxelSpot.x,
+            y: 64,
+            z: highVoxelSpot.z - lowVoxelSpot.z
+        };
+
+        print("low = " + vec3toStr(lowVoxelSpot));
+        print("high = " + vec3toStr(highVoxelSpot));
+
+        Entities.editEntity(terrainID, {locked: false});
+        Entities.setVoxelsInCuboid(terrainID, lowVoxelSpot, cuboidSize, 0);
+        Entities.editEntity(terrainID, {locked: true});
+    }
+}
+
+
 function addTerrainBlock() {
     var baseLocation = getTerrainAlignedLocation(Vec3.sum(MyAvatar.position, {x:8, y:8, z:8}));
     if (baseLocation.y > MyAvatar.position.y) {
@@ -232,7 +307,6 @@ function addTerrainBlock() {
 
     var alreadyThere = lookupTerrainForLocation(baseLocation, 16);
     if (alreadyThere) {
-        print("already one here 0");
         // there is already a terrain block under MyAvatar.
         // try in front of the avatar.
         facingPosition = Vec3.sum(MyAvatar.position, Vec3.multiply(8.0, Quat.getFront(Camera.getOrientation())));
@@ -257,7 +331,6 @@ function addTerrainBlock() {
 function addTerrainBlockNearLocation(baseLocation) {
     var alreadyThere = lookupTerrainForLocation(baseLocation, 16);
     if (alreadyThere) {
-        print("already one here 1");
         return null;
     }
 
