@@ -335,28 +335,6 @@ function setTerrain() {
     process();
 }
 
-function unLockTerrain() {
-    nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
-    for (voxelTarrainCandidateIndex in nearbyEntities) {
-        var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
-        var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
-        if (props.name == "terrain") {
-            Entities.editEntity(polyVoxID, {locked: false});
-        }
-    }
-}
-
-function lockTerrain() {
-    nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
-    for (voxelTarrainCandidateIndex in nearbyEntities) {
-        var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
-        var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
-        if (props.name == "terrain") {
-            Entities.editEntity(polyVoxID, {locked: true});
-        }
-    }
-}
-
 Controller.mousePressEvent.connect(mousePressEvent);
 // Controller.keyPressEvent.connect(keyPressEvent);
 // Controller.keyReleaseEvent.connect(keyReleaseEvent);

@@ -78,3 +78,27 @@ addTerrainAtPosition = function (position, plotSize) {
         zTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png"
     });
 }
+
+unLockTerrain = function () {
+    print("unlock");
+    nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
+    for (voxelTarrainCandidateIndex in nearbyEntities) {
+        var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
+        var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
+        if (props.name == "terrain") {
+            Entities.editEntity(polyVoxID, {locked: false});
+        }
+    }
+}
+
+lockTerrain = function () {
+    print("lock");
+    nearbyEntities = Entities.findEntities(MyAvatar.position, 1000.0);
+    for (voxelTarrainCandidateIndex in nearbyEntities) {
+        var polyVoxID = nearbyEntities[voxelTarrainCandidateIndex];
+        var props = Entities.getEntityProperties(polyVoxID, ["name", "position"]);
+        if (props.name == "terrain") {
+            Entities.editEntity(polyVoxID, {locked: true});
+        }
+    }
+}

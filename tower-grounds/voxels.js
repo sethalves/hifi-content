@@ -1,6 +1,7 @@
 
 Script.include([
     "/~/libraries/utils.js",
+    "/~/libraries/toolBars.js",
     "voxel-ground-utils.js"
 ]);
 
@@ -16,7 +17,7 @@ Script.include([
 ]);
 
 var isActive = false;
-var toolIconUrl = "http://headache.hungry.com/~seth/hifi/";
+var toolIconUrl = "http://headache.hungry.com/~seth/hifi/terrain/";
 var toolHeight = 50;
 var toolWidth = 50;
 
@@ -38,9 +39,9 @@ var toolBar = (function () {
         toolBar,
         activeButton,
         addVoxelButton,
-        deleteVoxelButton,
+        // deleteVoxelButton,
         addSphereButton,
-        deleteSphereButton,
+        // deleteSphereButton,
         addTerrainButton;
 
     function initialize() {
@@ -67,13 +68,13 @@ var toolBar = (function () {
             visible: false
         }, false);
 
-        deleteVoxelButton = toolBar.addTool({
-            imageURL: toolIconUrl + "voxel-delete.svg",
-            width: toolWidth,
-            height: toolHeight,
-            alpha: offAlpha,
-            visible: false
-        }, false);
+        // deleteVoxelButton = toolBar.addTool({
+        //     imageURL: toolIconUrl + "voxel-delete.svg",
+        //     width: toolWidth,
+        //     height: toolHeight,
+        //     alpha: offAlpha,
+        //     visible: false
+        // }, false);
 
         addSphereButton = toolBar.addTool({
             imageURL: toolIconUrl + "sphere-add.svg",
@@ -83,13 +84,13 @@ var toolBar = (function () {
             visible: false
         }, false);
 
-        deleteSphereButton = toolBar.addTool({
-            imageURL: toolIconUrl + "sphere-delete.svg",
-            width: toolWidth,
-            height: toolHeight,
-            alpha: offAlpha,
-            visible: false
-        }, false);
+        // deleteSphereButton = toolBar.addTool({
+        //     imageURL: toolIconUrl + "sphere-delete.svg",
+        //     width: toolWidth,
+        //     height: toolHeight,
+        //     alpha: offAlpha,
+        //     visible: false
+        // }, false);
 
         addTerrainButton = toolBar.addTool({
             imageURL: toolIconUrl + "voxel-terrain.svg",
@@ -100,12 +101,38 @@ var toolBar = (function () {
         }, false);
 
         flattenButton = toolBar.addTool({
-            imageURL: toolIconUrl + "voxel-terrain.svg",
+            imageURL: toolIconUrl + "flatten.svg",
             width: toolWidth,
             height: toolHeight,
             alpha: onAlpha,
             visible: false
         }, false);
+
+        smoothButton = toolBar.addTool({
+            imageURL: toolIconUrl + "smooth.svg",
+            width: toolWidth,
+            height: toolHeight,
+            alpha: onAlpha,
+            visible: false
+        }, false);
+
+        lockButton = toolBar.addTool({
+            imageURL: toolIconUrl + "lock.svg",
+            width: toolWidth,
+            height: toolHeight,
+            alpha: onAlpha,
+            visible: false
+        }, false);
+
+        unlockButton = toolBar.addTool({
+            imageURL: toolIconUrl + "unlock.svg",
+            width: toolWidth,
+            height: toolHeight,
+            alpha: onAlpha,
+            visible: false
+        }, false);
+
+
 
         that.setActive(false);
     }
@@ -117,14 +144,14 @@ var toolBar = (function () {
         deletingSpheres = false;
 
         toolBar.setAlpha(offAlpha, addVoxelButton);
-        toolBar.setAlpha(offAlpha, deleteVoxelButton);
+        // toolBar.setAlpha(offAlpha, deleteVoxelButton);
         toolBar.setAlpha(offAlpha, addSphereButton);
-        toolBar.setAlpha(offAlpha, deleteSphereButton);
+        // toolBar.setAlpha(offAlpha, deleteSphereButton);
 
         toolBar.selectTool(addVoxelButton, false);
-        toolBar.selectTool(deleteVoxelButton, false);
+        // toolBar.selectTool(deleteVoxelButton, false);
         toolBar.selectTool(addSphereButton, false);
-        toolBar.selectTool(deleteSphereButton, false);
+        // toolBar.selectTool(deleteSphereButton, false);
     }
 
     that.setActive = function(active) {
@@ -138,11 +165,14 @@ var toolBar = (function () {
     // Sets visibility of tool buttons, excluding the power button
     that.showTools = function(doShow) {
         toolBar.showTool(addVoxelButton, doShow);
-        toolBar.showTool(deleteVoxelButton, doShow);
+        // toolBar.showTool(deleteVoxelButton, doShow);
         toolBar.showTool(addSphereButton, doShow);
-        toolBar.showTool(deleteSphereButton, doShow);
+        // toolBar.showTool(deleteSphereButton, doShow);
         toolBar.showTool(addTerrainButton, doShow);
         toolBar.showTool(flattenButton, doShow);
+        toolBar.showTool(smoothButton, doShow);
+        toolBar.showTool(lockButton, doShow);
+        toolBar.showTool(unlockButton, doShow);
     };
 
     that.mousePressEvent = function (event) {
@@ -163,15 +193,15 @@ var toolBar = (function () {
             return true;
         }
 
-        if (deleteVoxelButton === toolBar.clicked(clickedOverlay)) {
-            var wasDeletingVoxels = deletingVoxels;
-            disableAllButtons()
-            if (!wasDeletingVoxels) {
-                deletingVoxels = true;
-                toolBar.setAlpha(onAlpha, deleteVoxelButton);
-            }
-            return true;
-        }
+        // if (deleteVoxelButton === toolBar.clicked(clickedOverlay)) {
+        //     var wasDeletingVoxels = deletingVoxels;
+        //     disableAllButtons()
+        //     if (!wasDeletingVoxels) {
+        //         deletingVoxels = true;
+        //         toolBar.setAlpha(onAlpha, deleteVoxelButton);
+        //     }
+        //     return true;
+        // }
 
         if (addSphereButton === toolBar.clicked(clickedOverlay)) {
             var wasAddingSpheres = addingSpheres
@@ -183,15 +213,15 @@ var toolBar = (function () {
             return true;
         }
 
-        if (deleteSphereButton === toolBar.clicked(clickedOverlay)) {
-            var wasDeletingSpheres = deletingSpheres;
-            disableAllButtons()
-            if (!wasDeletingSpheres) {
-                deletingSpheres = true;
-                toolBar.setAlpha(onAlpha, deleteSphereButton);
-            }
-            return true;
-        }
+        // if (deleteSphereButton === toolBar.clicked(clickedOverlay)) {
+        //     var wasDeletingSpheres = deletingSpheres;
+        //     disableAllButtons()
+        //     if (!wasDeletingSpheres) {
+        //         deletingSpheres = true;
+        //         toolBar.setAlpha(onAlpha, deleteSphereButton);
+        //     }
+        //     return true;
+        // }
 
         if (addTerrainButton === toolBar.clicked(clickedOverlay)) {
             addTerrainBlock();
@@ -202,6 +232,22 @@ var toolBar = (function () {
             flattenArea();
             return true;
         }
+
+        if (smoothButton === toolBar.clicked(clickedOverlay)) {
+            smoothArea();
+            return true;
+        }
+
+        if (lockButton === toolBar.clicked(clickedOverlay)) {
+            lockTerrain();
+            return true;
+        }
+
+        if (unlockButton === toolBar.clicked(clickedOverlay)) {
+            unLockTerrain();
+            return true;
+        }
+
     }
 
     Window.domainChanged.connect(function() {
@@ -240,7 +286,7 @@ function grabLowestJointY() {
 
 function flattenArea() {
     var lowPoint = grabLowestJointY();
-    var flattenRadius = 3.0;
+    var flattenDistance = 2.0;
     var sphereRadius = 1.0;
 
     var terrainIDs = [];
@@ -254,8 +300,8 @@ function flattenArea() {
 
     print("terrainIDs = " + terrainIDs);
 
-    // for (var x = -flattenRadius; x < flattenRadius; x += 0.5) {
-    //     for (var z = -flattenRadius; z < flattenRadius; z += 0.5) {
+    // for (var x = -flattenDistance; x < flattenDistance; x += 0.5) {
+    //     for (var z = -flattenDistance; z < flattenDistance; z += 0.5) {
     //         var spot = {
     //             x: MyAvatar.position.x + x,
     //             y: lowPoint + sphereRadius,
@@ -269,14 +315,14 @@ function flattenArea() {
     // }
 
     var lowSpot = {
-        x: MyAvatar.position.x - flattenRadius,
+        x: MyAvatar.position.x - flattenDistance,
         y: lowPoint,
-        z: MyAvatar.position.z - flattenRadius
+        z: MyAvatar.position.z - flattenDistance
     };
     var highSpot = {
-        x: MyAvatar.position.x + flattenRadius,
+        x: MyAvatar.position.x + flattenDistance,
         y: lowPoint,
-        z: MyAvatar.position.z + flattenRadius
+        z: MyAvatar.position.z + flattenDistance
     };
     for (var entityIndex in terrainIDs) {
         var terrainID = terrainIDs[entityIndex];
@@ -292,12 +338,12 @@ function flattenArea() {
         print("low = " + vec3toStr(lowVoxelSpot));
         print("high = " + vec3toStr(highVoxelSpot));
 
-        Entities.editEntity(terrainID, {locked: false});
         Entities.setVoxelsInCuboid(terrainID, lowVoxelSpot, cuboidSize, 0);
-        Entities.editEntity(terrainID, {locked: true});
     }
 }
 
+function smoothArea() {
+}
 
 function addTerrainBlock() {
     var baseLocation = getTerrainAlignedLocation(Vec3.sum(MyAvatar.position, {x:8, y:8, z:8}));
