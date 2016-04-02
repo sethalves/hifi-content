@@ -18,14 +18,14 @@ all: landing-pad-collision-hull.obj landing-pad.obj
 # ---
 
 
-platform.stl: 50s-rocket.scad
+platform.stl: landing-platform.scad
 	openscad -D combined=1 -D thrusters=1 -o $@ $^
 
 platform.obj: platform.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S landing_pad_platform_mtl
 
 
-walkway.stl: 50s-rocket.scad
+walkway.stl: landing-platform.scad
 	openscad -D combined=1 -D thrusters=1 -o $@ $^
 
 walkway.obj: walkway.stl
