@@ -10,11 +10,11 @@ var smallPlotSize = 16;
 var controlHeld = false;
 var shiftHeld = false;
 
-var HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
-Script.include([
-    HIFI_PUBLIC_BUCKET + "scripts/libraries/toolBars.js",
-    HIFI_PUBLIC_BUCKET + "scripts/libraries/utils.js",
-]);
+// var HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
+// Script.include([
+//     HIFI_PUBLIC_BUCKET + "scripts/libraries/toolBars.js",
+//     HIFI_PUBLIC_BUCKET + "scripts/libraries/utils.js",
+// ]);
 
 var isActive = false;
 var toolIconUrl = "http://headache.hungry.com/~seth/hifi/terrain/";
