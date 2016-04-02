@@ -16,6 +16,9 @@ width = outer_radius - inner_radius;
 landing_pad_radius = (width / 2) / sin(landing_pad_slice_sweep / 2);
 landing_pad_edge_radius = cos(landing_pad_slice_sweep / 2) * landing_pad_radius;
 
+
+function bit_set(b, n) = floor(n / pow(2, b)) % 2 > 0;
+
 module make_landing_pad() {
     union() {
         for (rotational_index=[0:1:landing_pad_slice_count-1]) {
@@ -65,20 +68,19 @@ module make_landing_pad() {
 
 nth = 0;  // this is overridden by Makefile
 
-
-if (nth == 0 || nth == 1) {
+if (nth == 0 || bit_set(0, nth)) {
     translate([-width / 2, 0, -width / 2])
         cube([width, tower_height, width], center = false);
 }
 
 
-if (nth == 0 || nth == 2) {
+if (nth == 0 || bit_set(1, nth)) {
     translate([width / 2, tower_height - thickness, -width / 2])
         cube([walkway_length, thickness, width], center = false);
 }
 
 
-if (nth == 0 || nth == 3) {
+if (nth == 0 || bit_set(2, nth)) {
     translate([landing_pad_edge_radius + width / 2 + walkway_length, tower_height, 0])
         rotate([0, 90 + landing_pad_slice_sweep / 2, 0])
             make_landing_pad();
