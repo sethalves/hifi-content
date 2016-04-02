@@ -74,8 +74,6 @@ module first_balcony_section(inner_radius = 20,
 }
 
 
-// inner_radius = 20;
-// outer_radius = 32;
 inner_radius = 24;
 outer_radius = 36;
 tower_height = 20;
