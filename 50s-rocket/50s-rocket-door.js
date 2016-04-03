@@ -17,6 +17,14 @@
         },
 
         clickDownOnEntity: function(entityID, mouseEvent) {
+            this.sendSignal();
+        },
+
+        startNearTrigger: function() {
+            this.sendSignal();
+        },
+
+        sendSignal: function(entityID, mouseEvent) {
             var data = JSON.stringify({
                 action: 'door',
                 user: MyAvatar.sessionUUID

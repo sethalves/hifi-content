@@ -28,7 +28,10 @@
 
         this.rocketVerticalSliceSize = 3.0; // matches global value in 50s-rocket.scad
         this.rocketRotationalSliceCount = 20; // matches global value in 50s-rocket.scad
-        this.baseRocketRadius = [4.0, 4.6, 5.0, 5.4, 5.6, 5.4, 5.0, 4.2, 3.4, 2.0, 0.2]; // matches rocket_outline in 50s-rocket.scad
+
+        // matches rocket_outline in 50s-rocket.scad
+        this.baseRocketRadius = [3.8, 4.6, 5.0, 5.4, 5.6, 5.4, 5.0, 4.2, 3.4, 2.0, 0.2];
+
         this.rocketWallThickness = 0.1; // matches rocket_wall_thickness in 50s-rocket.scad
         this.sliceRadians = 2.0 * Math.PI / this.rocketRotationalSliceCount;
         this.halfSliceRadians = this.sliceRadians / 2.0;
@@ -39,9 +42,10 @@
 
         // constants that affect door behavior
         this.doorOpenness = 0.0;
-        this.doorDirection = 0.008;
+        this.doorSpeed = 0.008;
+        this.doorDirection = this.doorSpeed;
         this.doorMoving = false;
-        this.doorOpenMax = Math.PI * 108.5 / 180.0; // 107.4 ?
+        this.doorOpenMax = Math.PI * 106.4 / 180.0;
         this.doorMoveInterval = 40;
         this.doorSwingInterval = null;
 
@@ -125,8 +129,24 @@
         this.maintainDoor = function() {
             if (this.doorID == null) {
                 this.doorID = this.findDoor();
-            }
-            if (this.doorID == null) {
+                if (this.doorID == null) {
+                    print("50s-rocket -- can't find door");
+                    return;
+                }
+
+                // decide if the door was left open or closed
+                var localRotation = Entities.getEntityProperties(this.doorID, ["rotation", "localRotation"]).localRotation;
+                var rotationRPY = Quat.safeEulerAngles(localRotation);
+                if (rotationRPY.x < this.doorOpenMax / 2) {
+                    this.doorOpenness = 0.0;
+                    this.doorDirection = this.doorSpeed;
+                } else {
+                    this.doorOpenness = 1.0;
+                    this.doorDirection = -this.doorSpeed;
+                }
+                this.doorMoving = false;
+
+                // the door should already be in place, but do an edit to fix it up
                 var doorProperties = this.calculateDoorPosition(this.doorOpenness);
                 doorProperties["name"] = '50s rocket door';
                 doorProperties["type"] = 'Model';
@@ -138,22 +158,19 @@
                 doorProperties["parentID"] = this.rocketID;
                 doorProperties["parentJointIndex"] = -1;
                 doorProperties["collidesWith"] = "static,dynamic,kinematic,myAvatar,otherAvatar";
-                doorProperties["lifetime"] = 15;
+                doorProperties["userData"] = "{\"grabbableKey\":{\"wantsTrigger\":true}}";
                 doorProperties["script"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js';
                 var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
                 doorProperties["registrationPoint"] = { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) };
-                this.doorID = Entities.addEntity(doorProperties);
+                Entities.editEntity(this.doorID, doorProperties);
 
                 Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
-                this.doorOpenness = 0.0;
-                this.doorDirection = 0.008;
-                this.doorMoving = false;
-                this.toggleDoorWBaton(); // so it starts closed and initially opens
+
+                // this.toggleDoorWBaton(); // so it starts closed and initially opens
             } else {
-                var doorProperties = Entities.getEntityProperties(this.doorID, ["name", "age"]);
+                var doorProperties = Entities.getEntityProperties(this.doorID, ["name"]);
                 if (doorProperties.name == '50s rocket door') {
                     doorProperties = this.calculateDoorPosition(this.doorOpenness);
-                    doorProperties["lifetime"] = doorProperties.age + 15;
                     Entities.editEntity(this.doorID, doorProperties);
                     Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
                 } else {
@@ -334,9 +351,9 @@
             if (this.maintenanceInterval) {
                 Script.clearInterval(this.maintenanceInterval);
             }
-            if (this.doorID) {
-                Entities.deleteEntity(this.doorID);
-            }
+            // if (this.doorID) {
+            //     Entities.deleteEntity(this.doorID);
+            // }
             // while (true) {
             //     var remoteID = this.findRemote();
             //     if (remoteID) {

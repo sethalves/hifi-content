@@ -8,7 +8,7 @@ rocket_rotational_slice_count = 20; // slices in a full circle -- matches value 
 angle_per_slice = 360.0 / rocket_rotational_slice_count;
 angle_per_half_slice = angle_per_slice / 2;
 
-rocket_outline = [4.0, // 0 // matches baseRocketRadius in 50s-rocket.js
+rocket_outline = [3.8, // 0 // matches baseRocketRadius in 50s-rocket.js
                   4.6, // 1
                   5.0, // 2
                   5.4, // 3

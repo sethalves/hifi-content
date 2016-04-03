@@ -15,7 +15,7 @@
     RocketSwitch.prototype = {
 
         makeRocket: function(center) {
-            Entities.addEntity({
+            this.rocketID = Entities.addEntity({
                 name: '50s rocket',
                 type: 'Model',
                 modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket.obj',
@@ -39,8 +39,28 @@
                     grabbableKey: { grabbable: false }
                 }),
             });
-        },
 
+            // see 50s-rocket.js -- Some of these values are copied out of edit.js after this.maintainDoor has been run.
+            var doorZDimension = 1.2840; // baseRocketRadius[2] - (baseRocketRadius[0] - rocketWallThickness);
+            var registrationPointZ = 0.0769; // rocketWallThickness / doorZDimension
+            this.doorID = Entities.addEntity({
+                name: '50s rocket door',
+                type: 'Model',
+                modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj',
+                compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj',
+                dynamic: false,
+                gravity: { x: 0, y: 0, z: 0 },
+                angularDamping: { x: 0.0, y: 0.0, z: 0.0 },
+                parentID: this.rocketID,
+                parentJointIndex: -1,
+                collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar",
+                script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js',
+                registrationPoint:  { x: 0.5, y: 0.0, z: registrationPointZ },
+                localPosition: { x: 0.587, y: 0.000, z: 3.707 },
+                localRoation: { x: 0, y: 0.07845909893512726, z: 0, w: 0.9969173073768616 },
+                userData: "{\"grabbableKey\":{\"wantsTrigger\":true}}"
+            });
+        },
 
         clickReleaseOnEntity: function(entityID, mouseEvent) {
             if (!mouseEvent.isLeftButton) {
