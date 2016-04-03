@@ -24,9 +24,9 @@ rocket_thruster_offset = [0, -1.75, -7];
 rocket_thruster_height = 2;
 rocket_elevator_radius = 2.1;
 
-port_hole_height = 14.4;
-port_hole_raidus = 1.8;
-
+porthole_height = 14.4;
+porthole_raidus = 1.8;
+porthole_edge_size = 0.1;
 
 module make_rocket_floor_segment(vertical_index, rotational_index) {
     start_angle = angle_per_slice * rotational_index;
@@ -70,7 +70,7 @@ module make_rocket_floor_segment(vertical_index, rotational_index) {
 }
 
 module make_rocket_floor(vertical_index) {
-    for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+    for (rotational_index=[0 : 1 : rocket_rotational_slice_count-1]) {
         make_rocket_floor_segment(vertical_index, rotational_index);
     }
 }
@@ -96,7 +96,9 @@ module make_second_floor_segment(rotational_index) {
 module rocket_wall_panel(vertical_index = 0,
                          rotational_index = 0,
                          door = 0,
-                         hull = 0) {
+                         hull = 0,
+                         rocket_wall_thickness = 0.1,
+                         radial_offset = 0) {
     // if hull is one, we pull the edges in a bit.  this is so the door will fit in its doorway without
     // makeing bullet try to resolve interpenetration
 
@@ -107,10 +109,10 @@ module rocket_wall_panel(vertical_index = 0,
 
     // echo(angle_per_slice=angle_per_slice,rotational_index=rotational_index,start_angle=start_angle,end_angle=end_angle);
 
-    low_inner_radius = rocket_outline[vertical_index] - rocket_wall_thickness;
-    low_outer_radius = rocket_outline[vertical_index];
-    high_inner_radius = rocket_outline[vertical_index + 1] - rocket_wall_thickness;
-    high_outer_radius = rocket_outline[vertical_index + 1];
+    low_inner_radius = rocket_outline[vertical_index] - rocket_wall_thickness + radial_offset;
+    low_outer_radius = rocket_outline[vertical_index] + radial_offset;
+    high_inner_radius = rocket_outline[vertical_index + 1] - rocket_wall_thickness + radial_offset;
+    high_outer_radius = rocket_outline[vertical_index + 1] + radial_offset;
 
 
     //                              p2 ----- p6
@@ -198,12 +200,44 @@ module make_thruster(angle) {
         cylinder(h = rocket_thruster_height, r1 = 2.5, r2 = 2.0, center = true, $fs=0.5);
 }
 
+module make_porthole_edge(angle) {
+    intersection() {
+        rotate([0, angle + angle_per_half_slice, 0]) {
+            translate([0, porthole_height, rocket_outline[3] - 1]) {
+                difference() {
+                    cylinder(h = rocket_wall_thickness + 2,
+                             r1 = porthole_raidus + porthole_edge_size,
+                             r2 = porthole_raidus + porthole_edge_size,
+                             center = false, $fs=0.5);
+                    cylinder(h = rocket_wall_thickness + 2,
+                             r1 = porthole_raidus - porthole_edge_size,
+                             r2 = porthole_raidus - porthole_edge_size,
+                             center = false, $fs=0.5);
+                }
+            }
+        }
+
+        for (rotational_index = [0 : 1 : rocket_rotational_slice_count-1]) {
+            for (vertical_index = [4, 5]) {
+                rocket_wall_panel(vertical_index = vertical_index,
+                                  rotational_index = rotational_index,
+                                  door = 0,
+                                  hull = 0,
+                                  rocket_wall_thickness = rocket_wall_thickness + (porthole_edge_size * 2),
+                                  radial_offset = porthole_edge_size);
+            }
+        }
+    }
+}
+
+
 // these are overridden by the Makefile
 combined = 1;
 body = 0;
 door = 0;
 thrusters = 0;
 table = 0;
+porthole_edges = 0;
 
 
 if (combined == 1) {
@@ -216,33 +250,31 @@ if (combined == 1) {
                         rocket_wall_panel(vertical_index = vertical_index,
                                           rotational_index = rotational_index,
                                           door = door,
-                                          hull = 0);
+                                          hull = 0,
+                                          rocket_wall_thickness = rocket_wall_thickness,
+                                          radial_offset = 0);
                     }
                 }
             }
 
-            // port-holes
-            translate([0, port_hole_height, 0])
+            // portholes
+            translate([0, porthole_height, 0]) {
                 union() {
-                rotate([0, angle_per_half_slice, 0])
-                        cylinder(h = 20,
-                                 r1 = port_hole_raidus,
-                                 r2 = port_hole_raidus,
-                                 center = false, $fs=0.5);
-                rotate([0, 120 + angle_per_half_slice, 0])
-                        cylinder(h = 20,
-                                 r1 = port_hole_raidus,
-                                 r2 = port_hole_raidus,
-                                 center = false, $fs=0.5);;
-                rotate([0, 240 + angle_per_half_slice, 0])
-                        cylinder(h = 20,
-                                 r1 = port_hole_raidus,
-                                 r2 = port_hole_raidus,
-                                 center = false, $fs=0.5);;
+                    for (rot=[0:120:240]) {
+                        rotate([0, rot + angle_per_half_slice, 0])
+                            cylinder(h = 20,
+                                     r1 = porthole_raidus,
+                                     r2 = porthole_raidus,
+                                     center = false, $fs=0.5);
+                    }
+                }
             }
         }
 
+        // first (lower) floor
         make_first_floor();
+
+        // second (upper) floor
         for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
             make_second_floor_segment(rotational_index);
         }
@@ -250,17 +282,26 @@ if (combined == 1) {
         rocket_wall_panel(vertical_index = 0,
                           rotational_index = 0,
                           door = door,
-                          hull = 0);
+                          hull = 0,
+                          rocket_wall_thickness = rocket_wall_thickness,
+                          radial_offset = 0);
         rocket_wall_panel(vertical_index = 1,
                           rotational_index = 0,
                           door = door,
-                          hull = 0);
+                          hull = 0,
+                          rocket_wall_thickness = rocket_wall_thickness,
+                          radial_offset = 0);
     } else if (thrusters == 1) {
         make_thruster(0);
         make_thruster(120);
         make_thruster(240);
     } else if (table == 1) {
         make_table();
+    } else if (porthole_edges == 1) {
+        // porthole edges
+        for (angle=[0, 120, 240]) {
+            make_porthole_edge(angle);
+        }
     }
 } else {
     if (nth < 200) {
@@ -274,7 +315,9 @@ if (combined == 1) {
             rocket_wall_panel(vertical_index = vertical_index,
                               rotational_index = rotational_index,
                               door = door,
-                              hull = 0); // shrink the door slightly (or not)
+                              hull = 0, // shrink the door slightly (or not)
+                              rocket_wall_thickness = rocket_wall_thickness,
+                              radial_offset = 0);
         }
     } else if (nth == 200) {
         make_first_floor();
@@ -287,8 +330,6 @@ if (combined == 1) {
     } else if (nth == 204) {
         make_table();
     } else if (nth < 225) {
-        // for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
-            make_second_floor_segment(nth - 205);
-            // }
+        make_second_floor_segment(nth - 205);
     }
 }

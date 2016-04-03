@@ -23,6 +23,7 @@ BODY_PARTS=$(foreach nth,2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 
 DOOR_PARTS=$(foreach nth,0 1,50s-rocket-door-parts/${nth}.obj)
 THRUSTERS_PARTS=$(foreach nth,201 202 203,50s-rocket-parts/${nth}.obj)
 TABLE_PARTS=$(foreach nth,204,50s-rocket-parts/${nth}.obj)
+PORTHOLD_EDGES_PARTS=$(foreach nth,225,50s-rocket-parts/${nth}.obj)
 
 all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull.obj 50s-rocket-door.obj
 
@@ -48,6 +49,12 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 50s-rocket-table.obj: 50s-rocket-table.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S rocket_table_mtl
 
+50s-rocket-porthole-edges.stl: 50s-rocket.scad
+	openscad -D combined=1 -D porthole_edges=1 -o $@ $^
+
+50s-rocket-porthole-edges.obj: 50s-rocket-porthole-edges.stl
+	wavefront-obj-tool -n -c $^ -o $@ -S rocket_porthole_edges_mtl
+
 
 # ---
 
@@ -55,7 +62,7 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 50s-rocket.stl: 50s-rocket.scad
 	openscad -D combined=1 -D body=1 -o $@ $^
 
-50s-rocket.obj: 50s-rocket-body.obj 50s-rocket-thrusters.obj 50s-rocket-table.obj
+50s-rocket.obj: 50s-rocket-body.obj 50s-rocket-thrusters.obj 50s-rocket-table.obj 50s-rocket-porthole-edges.obj
 	wavefront-obj-tool -n -L 50s-rocket.mtl -c $^ -o $@
 
 50s-rocket-collision-hull.obj: $(BODY_PARTS) $(THRUSTER_PARTS)
@@ -67,7 +74,7 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 	openscad -D combined=1 -D door=1 -o $@ $^
 
 50s-rocket-door.obj: 50s-rocket-door.stl
-	wavefront-obj-tool -n -L 50s-rocket-door.mtl -c $^ -o $@ -S rocket_door_mtl
+	wavefront-obj-tool -n -L 50s-rocket.mtl -c $^ -o $@ -S rocket_door_mtl
 
 50s-rocket-door-collision-hull.obj: $(DOOR_PARTS)
 	wavefront-obj-tool -c -o $@ $^
@@ -78,8 +85,8 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 clean:
 	rm -rf *~ 50s-rocket-parts 50s-rocket-door-parts 50s-rocket-thrusters-parts \
 			50s-rocket-collision-hull.obj 50s-rocket.obj \
-			50s-rocket-body.obj 50s-rocket-body.stl 50s-rocket-table.obj \
-			50s-rocket-table.stl 50s-rocket-thrusters.obj 50s-rocket-thrusters.stl \
+			50s-rocket-body.obj 50s-rocket-body.stl 50s-rocket-table.obj 50s-rocket-porthole-edges.obj \
+			50s-rocket-table.stl 50s-rocket-thrusters.obj 50s-rocket-thrusters.stl 50s-rocket-porthole-edges.stl \
 			50s-rocket-door-collision-hull.obj 50s-rocket-door.obj
 	rm -f 50s-rocket.obj.tmp.obj 50s-rocket.stl
 	rm -f 50s-rocket-door.obj.tmp.obj 50s-rocket-door.stl
@@ -87,7 +94,7 @@ clean:
 upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js \
 		50s-rocket.obj 50s-rocket-door.obj  \
 		50s-rocket-collision-hull.obj 50s-rocket-door-collision-hull.obj \
-		50s-rocket.mtl 50s-rocket-door.mtl \
+		50s-rocket.mtl \
 		make-50s-rocket-es.js
 	scp $^ headache:public_html/hifi/
 
