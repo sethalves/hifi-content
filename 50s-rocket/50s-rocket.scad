@@ -20,6 +20,9 @@ rocket_thruster_offset = [0, -1.75, -7];
 rocket_thruster_height = 2;
 rocket_elevator_radius = 2.1;
 
+port_hole_height = 14.4;
+port_hole_raidus = 1.8;
+
 module make_rocket_floor(vertical_index) {
     for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
         start_angle = (360.0 / rocket_rotational_slice_count) * rotational_index;
@@ -197,16 +200,38 @@ table = 0;
 if (combined == 1) {
     vertical_slices = len(rocket_outline) - 1;
     if (body == 1) {
-        for (vertical_index=[0:1:vertical_slices]) {
-            for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
-                if (rotational_index >= 1 || vertical_index >= 2) {
-                    rocket_wall_panel(vertical_index = vertical_index,
-                                      rotational_index = rotational_index,
-                                      door = door,
-                                      hull = 0);
+        difference() {
+            for (vertical_index=[0:1:vertical_slices]) {
+                for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+                    if (rotational_index >= 1 || vertical_index >= 2) {
+                        rocket_wall_panel(vertical_index = vertical_index,
+                                          rotational_index = rotational_index,
+                                          door = door,
+                                          hull = 0);
+                    }
                 }
             }
+
+            // port-holes
+            translate([0, port_hole_height, 0])
+                union() {
+                    cylinder(h = 20,
+                             r1 = port_hole_raidus,
+                             r2 = port_hole_raidus,
+                             center = false, $fs=0.5);
+                    rotate([0, 120, 0])
+                        cylinder(h = 20,
+                                 r1 = port_hole_raidus,
+                                 r2 = port_hole_raidus,
+                                 center = false, $fs=0.5);;
+                    rotate([0, 240, 0])
+                        cylinder(h = 20,
+                                 r1 = port_hole_raidus,
+                                 r2 = port_hole_raidus,
+                                 center = false, $fs=0.5);;
+            }
         }
+
         make_first_floor();
         make_second_floor();
     } else if (door == 1) {
