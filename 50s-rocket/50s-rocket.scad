@@ -4,6 +4,10 @@
 
 rocket_vertical_slice_size = 3.0; // meters
 rocket_rotational_slice_count = 20; // slices in a full circle -- matches value in 50s-rocket.js
+
+angle_per_slice = 360.0 / rocket_rotational_slice_count;
+angle_per_half_slice = angle_per_slice / 2;
+
 rocket_outline = [4.0, // 0 // matches baseRocketRadius in 50s-rocket.js
                   4.6, // 1
                   5.0, // 2
@@ -23,46 +27,51 @@ rocket_elevator_radius = 2.1;
 port_hole_height = 14.4;
 port_hole_raidus = 1.8;
 
+
+module make_rocket_floor_segment(vertical_index, rotational_index) {
+    start_angle = angle_per_slice * rotational_index;
+    end_angle = angle_per_slice * (rotational_index + 1);
+    outer_radius = rocket_outline[vertical_index];
+
+    p03x = 0;
+    p03y = 0 - rocket_wall_thickness;
+    p03z = 0;
+
+    p12x = 0;
+    p12y = 0;
+    p12z = 0;
+
+    p4x = outer_radius * sin(start_angle);
+    p4y = 0 - rocket_wall_thickness;
+    p4z = outer_radius * cos(start_angle);
+
+    p5x = outer_radius * sin(start_angle);
+    p5y = 0;
+    p5z = outer_radius * cos(start_angle);
+
+    p6x = outer_radius * sin(end_angle);
+    p6y = 0;
+    p6z = outer_radius * cos(end_angle);
+
+    p7x = outer_radius * sin(end_angle);
+    p7y =  0 - rocket_wall_thickness;
+    p7z = outer_radius * cos(end_angle);
+
+    section_points = [[p03x, p03y, p03z], // 0
+                      [p12x, p12y, p12z], // 1
+                      [p4x, p4y, p4z], // 2
+                      [p5x, p5y, p5z], // 3
+                      [p6x, p6y, p6z], // 4
+                      [p7x, p7y, p7z]]; // 5
+    polyhedron(points=section_points,
+               faces=[[0, 5, 2], // bottom
+                      [1, 3, 4], // top
+                      [2, 5, 4, 3]]); // outside
+}
+
 module make_rocket_floor(vertical_index) {
     for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
-        start_angle = (360.0 / rocket_rotational_slice_count) * rotational_index;
-        end_angle = (360.0 / rocket_rotational_slice_count) * (rotational_index + 1);
-        outer_radius = rocket_outline[vertical_index];
-
-        p03x = 0;
-        p03y = 0 - rocket_wall_thickness;
-        p03z = 0;
-
-        p12x = 0;
-        p12y = 0;
-        p12z = 0;
-
-        p4x = outer_radius * sin(start_angle);
-        p4y = 0 - rocket_wall_thickness;
-        p4z = outer_radius * cos(start_angle);
-
-        p5x = outer_radius * sin(start_angle);
-        p5y = 0;
-        p5z = outer_radius * cos(start_angle);
-
-        p6x = outer_radius * sin(end_angle);
-        p6y = 0;
-        p6z = outer_radius * cos(end_angle);
-
-        p7x = outer_radius * sin(end_angle);
-        p7y =  0 - rocket_wall_thickness;
-        p7z = outer_radius * cos(end_angle);
-
-        section_points = [[p03x, p03y, p03z], // 0
-                          [p12x, p12y, p12z], // 1
-                          [p4x, p4y, p4z], // 2
-                          [p5x, p5y, p5z], // 3
-                          [p6x, p6y, p6z], // 4
-                          [p7x, p7y, p7z]]; // 5
-        polyhedron(points=section_points,
-                   faces=[[0, 5, 2], // bottom
-                          [1, 3, 4], // top
-                          [2, 5, 4, 3]]); // outside
+        make_rocket_floor_segment(vertical_index, rotational_index);
     }
 }
 
@@ -70,15 +79,16 @@ module make_first_floor() {
     make_rocket_floor(0);
 }
 
-module make_second_floor() {
-    translate([0, 4 * rocket_vertical_slice_size, 0])
+module make_second_floor_segment(rotational_index) {
+    translate([0, 4 * rocket_vertical_slice_size, 0]) {
         difference() {
-            make_rocket_floor(4);
+            make_rocket_floor_segment(4, rotational_index);
             rotate([90, 0, 0])
                 cylinder(h = rocket_wall_thickness*3,
                          r1 = rocket_elevator_radius,
                          r2 = rocket_elevator_radius,
                          center = true, $fs=0.5);
+        }
     }
 }
 
@@ -91,7 +101,6 @@ module rocket_wall_panel(vertical_index = 0,
     // makeing bullet try to resolve interpenetration
 
     hull_offset = hull * 0.1;
-    angle_per_slice = (360.0 / rocket_rotational_slice_count);
     // if door is 1, center this panel on 0 degrees
     start_angle = angle_per_slice * rotational_index - (door * 0.5 * angle_per_slice) + hull * 2;
     end_angle = angle_per_slice * (rotational_index + 1) - (door * 0.5 * angle_per_slice) - hull * 2;
@@ -215,16 +224,17 @@ if (combined == 1) {
             // port-holes
             translate([0, port_hole_height, 0])
                 union() {
-                    cylinder(h = 20,
-                             r1 = port_hole_raidus,
-                             r2 = port_hole_raidus,
-                             center = false, $fs=0.5);
-                    rotate([0, 120, 0])
+                rotate([0, angle_per_half_slice, 0])
+                        cylinder(h = 20,
+                                 r1 = port_hole_raidus,
+                                 r2 = port_hole_raidus,
+                                 center = false, $fs=0.5);
+                rotate([0, 120 + angle_per_half_slice, 0])
                         cylinder(h = 20,
                                  r1 = port_hole_raidus,
                                  r2 = port_hole_raidus,
                                  center = false, $fs=0.5);;
-                    rotate([0, 240, 0])
+                rotate([0, 240 + angle_per_half_slice, 0])
                         cylinder(h = 20,
                                  r1 = port_hole_raidus,
                                  r2 = port_hole_raidus,
@@ -233,7 +243,9 @@ if (combined == 1) {
         }
 
         make_first_floor();
-        make_second_floor();
+        for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+            make_second_floor_segment(rotational_index);
+        }
     } else if (door == 1) {
         rocket_wall_panel(vertical_index = 0,
                           rotational_index = 0,
@@ -274,7 +286,9 @@ if (combined == 1) {
         make_thruster(240);
     } else if (nth == 204) {
         make_table();
-    } else if (nth == 205) {
-        make_second_floor();
+    } else if (nth < 225) {
+        // for (rotational_index=[0:1:rocket_rotational_slice_count-1]) {
+            make_second_floor_segment(nth - 205);
+            // }
     }
 }
