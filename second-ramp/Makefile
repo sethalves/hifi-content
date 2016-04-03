@@ -2,6 +2,10 @@
 #
 #
 
+# http://headache.hungry.com/~seth/hifi/second-ramp.obj
+# http://headache.hungry.com/~seth/hifi/second-ramp-collision-hull.obj
+
+
 second-ramp-parts/%.stl: second-ramp.scad
 	mkdir -p second-ramp-parts
 	openscad -D combined=0 -D nth="`basename -s .stl $@`" -o $@ $^
@@ -32,5 +36,5 @@ clean:
 	rm -f second-ramp.obj.tmp.obj second-ramp.stl
 
 
-upload: second-ramp.obj second-ramp-collision-hull.obj tower-ramp.jpg
+upload: second-ramp.obj second-ramp-collision-hull.obj
 	scp $^ headache:public_html/hifi/

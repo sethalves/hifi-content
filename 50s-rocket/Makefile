@@ -87,7 +87,8 @@ clean:
 upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js \
 		50s-rocket.obj 50s-rocket-door.obj  \
 		50s-rocket-collision-hull.obj 50s-rocket-door-collision-hull.obj \
-		50s-rocket.mtl 50s-rocket-door.mtl
+		50s-rocket.mtl 50s-rocket-door.mtl \
+		make-50s-rocket-es.js
 	scp $^ headache:public_html/hifi/
 
 # 50s-rocket.png

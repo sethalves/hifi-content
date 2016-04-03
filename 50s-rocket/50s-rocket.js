@@ -114,7 +114,7 @@
             this.baton.claim(
                 function() {
                     _this.maintainDoor();
-                    _this.maintainRemote();
+                    // _this.maintainRemote();
                     _this.baton.release();
                 },
                 function() {
@@ -162,20 +162,20 @@
             }
         }
 
-        this.findRemote = function() {
-            var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
-            var rocketScadPosition = rocketProperties.position;
-            var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
-            for (i = 0; i < nearbyEntities.length; i++) {
-                var nearbyID = nearbyEntities[i];
-                var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-                if (nearbyName == '50s rocket remote door opener') {
-                    Entities.callEntityMethod(nearbyID, "setChannelKey", [this.channelKey]);
-                    return nearbyID;
-                }
-            }
-            return null;
-        }
+        // this.findRemote = function() {
+        //     var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
+        //     var rocketScadPosition = rocketProperties.position;
+        //     var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
+        //     for (i = 0; i < nearbyEntities.length; i++) {
+        //         var nearbyID = nearbyEntities[i];
+        //         var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
+        //         if (nearbyName == '50s rocket remote door opener') {
+        //             Entities.callEntityMethod(nearbyID, "setChannelKey", [this.channelKey]);
+        //             return nearbyID;
+        //         }
+        //     }
+        //     return null;
+        // }
 
         this.findDoor = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
@@ -191,51 +191,51 @@
             return null;
         }
 
-        this.maintainRemote = function() {
-            if (this.findRemote()) {
-                return;
-            }
-            // we didn't find the opener
-            print("50s rocket creating new remote door opener");
-            var remoteID = Entities.addEntity({
-                type: "Box",
-                name: '50s rocket remote door opener',
-                localPosition: { x: this.baseRocketRadius[0] - 0.2, y: 1.3, z: 0 },
-                parentID: this.rocketID,
-                parentJointIndex: -1,
-                dimensions: { x: 0.08, y: 0.16, z: 0.08 },
-                color: { red: 200, green: 0, blue: 20 },
-                shapeType: 'box',
-                dynamic: false,
-                // dynamic: true,
-                // gravity: { x: 0, y: -1, z: 0 },
-                // velocity: { x: 0, y: 0.5, z: 0 }, // to make it fall
-                restitution: 0,
-                damping: 0.5,
-                lifetime: 3600,
-                collisionSoundURL: "http://hifi-content.s3.amazonaws.com/james/pistol/sounds/drop.wav",
-                script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-remote.js',
-                userData: JSON.stringify({
-                    grabbableKey: { grabbable: true },
-                    wearable:{joints:{RightHand:[{x:0.07079616189002991,
-                                                  y:0.20177987217903137,
-                                                  z:0.06374628841876984},
-                                                 {x:-0.5863648653030396,
-                                                  y:-0.46007341146469116,
-                                                  z:0.46949487924575806,
-                                                  w:-0.4733745753765106}],
-                                      LeftHand:[{x:0.1802254319190979,
-                                                 y:0.13442856073379517,
-                                                 z:0.08504903316497803},
-                                                {x:0.2198076844215393,
-                                                 y:-0.7377811074256897,
-                                                 z:0.2780133783817291,
-                                                 w:0.574519157409668}]}}
-                })
-            });
-            Entities.editEntity(remoteID, {parentID: this.NULL_UUID});
-            Entities.callEntityMethod(remoteID, "setChannelKey", this.channelKey);
-        }
+        // this.maintainRemote = function() {
+        //     if (this.findRemote()) {
+        //         return;
+        //     }
+        //     // we didn't find the opener
+        //     print("50s rocket creating new remote door opener");
+        //     var remoteID = Entities.addEntity({
+        //         type: "Box",
+        //         name: '50s rocket remote door opener',
+        //         localPosition: { x: this.baseRocketRadius[0] - 0.2, y: 1.3, z: 0 },
+        //         parentID: this.rocketID,
+        //         parentJointIndex: -1,
+        //         dimensions: { x: 0.08, y: 0.16, z: 0.08 },
+        //         color: { red: 200, green: 0, blue: 20 },
+        //         shapeType: 'box',
+        //         dynamic: false,
+        //         // dynamic: true,
+        //         // gravity: { x: 0, y: -1, z: 0 },
+        //         // velocity: { x: 0, y: 0.5, z: 0 }, // to make it fall
+        //         restitution: 0,
+        //         damping: 0.5,
+        //         lifetime: 3600,
+        //         collisionSoundURL: "http://hifi-content.s3.amazonaws.com/james/pistol/sounds/drop.wav",
+        //         script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-remote.js',
+        //         userData: JSON.stringify({
+        //             grabbableKey: { grabbable: true },
+        //             wearable:{joints:{RightHand:[{x:0.07079616189002991,
+        //                                           y:0.20177987217903137,
+        //                                           z:0.06374628841876984},
+        //                                          {x:-0.5863648653030396,
+        //                                           y:-0.46007341146469116,
+        //                                           z:0.46949487924575806,
+        //                                           w:-0.4733745753765106}],
+        //                               LeftHand:[{x:0.1802254319190979,
+        //                                          y:0.13442856073379517,
+        //                                          z:0.08504903316497803},
+        //                                         {x:0.2198076844215393,
+        //                                          y:-0.7377811074256897,
+        //                                          z:0.2780133783817291,
+        //                                          w:0.574519157409668}]}}
+        //         })
+        //     });
+        //     Entities.editEntity(remoteID, {parentID: this.NULL_UUID});
+        //     Entities.callEntityMethod(remoteID, "setChannelKey", this.channelKey);
+        // }
 
         this.calculateRocketOffset = function() {
             var rocketBodyHeight = this.rocketVerticalSliceSize * 10;
@@ -337,14 +337,14 @@
             if (this.doorID) {
                 Entities.deleteEntity(this.doorID);
             }
-            while (true) {
-                var remoteID = this.findRemote();
-                if (remoteID) {
-                    Entities.deleteEntity(remoteID);
-                } else {
-                    break;
-                }
-            }
+            // while (true) {
+            //     var remoteID = this.findRemote();
+            //     if (remoteID) {
+            //         Entities.deleteEntity(remoteID);
+            //     } else {
+            //         break;
+            //     }
+            // }
             if (this.baton) {
                 this.baton.unload();
             }
