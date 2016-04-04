@@ -133,6 +133,7 @@
                     print("50s-rocket -- can't find door");
                     return;
                 }
+                this.findRemote();
 
                 // decide if the door was left open or closed
                 var localRotation = Entities.getEntityProperties(this.doorID, ["rotation", "localRotation"]).localRotation;
@@ -179,20 +180,21 @@
             }
         }
 
-        // this.findRemote = function() {
-        //     var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
-        //     var rocketScadPosition = rocketProperties.position;
-        //     var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
-        //     for (i = 0; i < nearbyEntities.length; i++) {
-        //         var nearbyID = nearbyEntities[i];
-        //         var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-        //         if (nearbyName == '50s rocket remote door opener') {
-        //             Entities.callEntityMethod(nearbyID, "setChannelKey", [this.channelKey]);
-        //             return nearbyID;
-        //         }
-        //     }
-        //     return null;
-        // }
+        this.findRemote = function() {
+            var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
+            var rocketScadPosition = rocketProperties.position;
+            var nearbyEntities = Entities.findEntities(rocketScadPosition, 60);
+            var success = false;
+            for (i = 0; i < nearbyEntities.length; i++) {
+                var nearbyID = nearbyEntities[i];
+                var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
+                if (nearbyName == '50s rocket remote door opener') {
+                    Entities.callEntityMethod(nearbyID, "setChannelKey", [this.channelKey]);
+                    success = true;
+                }
+            }
+            return success;
+        }
 
         this.findDoor = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);

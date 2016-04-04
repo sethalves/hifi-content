@@ -14,6 +14,18 @@
 
     RocketSwitch.prototype = {
 
+        findRocket: function(center) {
+           var nearbyEntities = Entities.findEntities(center, 100);
+            for (i = 0; i < nearbyEntities.length; i++) {
+                var nearbyID = nearbyEntities[i];
+                var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
+                if (nearbyName == '50s rocket') {
+                    return nearbyID;
+                }
+            }
+            return null;
+        },
+
         makeRocket: function(center) {
             this.rocketID = Entities.addEntity({
                 name: '50s rocket',
@@ -66,18 +78,18 @@
             if (!mouseEvent.isLeftButton) {
                 return;
             }
-            this.newRocket();
+            this.triggerSwitch();
         },
 
         startNearTrigger: function() {
-            this.newRocket();
+            this.triggerSwitch();
         },
 
-        newRocket: function() {
-            print("");
-            print("");
-            print("");
-            print("newRocket");
+        triggerSwitch: function() {
+            if (this.findRocket({ x: 165, y: 70, z: 76})) {
+                this.signalRocketDoor();
+                return;
+            }
             var entityIDs = Entities.findEntities(this.position, 40);
             entityIDs.forEach(function(entityID) {
                 var props = Entities.getEntityProperties(entityID, ["name"]);
@@ -94,20 +106,22 @@
             this.makeRocket({ x: 165, y: 70, z: 76});
         },
 
-        flipSwitch: function() {
-            var rotation = Entities.getEntityProperties(this.entityID, "rotation").rotation;
-            var axis = {
-                x: 0,
-                y: 1,
-                z: 0
-            };
-            var dQ = Quat.angleAxis(180, axis);
-            rotation = Quat.multiply(rotation, dQ);
-
-            Entities.editEntity(this.entityID, {
-                rotation: rotation
-            });
+        setChannelKey: function(id, params) {
+            var newChannelKey = params[0];
+            this.channelKey = newChannelKey;
+            // Messages.subscribe(this.channelKey);
         },
+
+        signalRocketDoor: function() {
+            var data = JSON.stringify({
+                action: 'door',
+                user: MyAvatar.sessionUUID
+            });
+            // Messages.sendMessage(this.channelKey, data);
+            print("rocket door remote clicked, channel = '" + this.channelKey + "'");
+            Entities.callEntityMethod(this.channelKey, "handleMessage", [data]);
+        },
+
         preload: function(entityID) {
             this.entityID = entityID;
             this.position = Entities.getEntityProperties(this.entityID, "position").position;

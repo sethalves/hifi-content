@@ -7,7 +7,6 @@
     // Script.include("../../libraries/constants.js");
 
     var _this;
-    var DISABLE_LASER_THRESHOLD = 0.2;
     var TRIGGER_CONTROLS = [
         Controller.Standard.LT,
         Controller.Standard.RT,
