@@ -230,6 +230,50 @@ module make_porthole_edge(angle) {
     }
 }
 
+module make_door_edge() {
+    outer_radius = rocket_outline[1];
+    door_center = [outer_radius * (sin(0) + sin(angle_per_slice)) / 2,
+                   rocket_vertical_slice_size,
+                   outer_radius * (cos(0) + cos(angle_per_slice)) / 2];
+
+    translate([0, -0.1, 0.1]) {
+        rotate([-2.9, 0, 0]) {
+            difference() {
+
+                translate(door_center) {
+                    scale([1.2, 1.01, 1.2]) {
+                        translate(-door_center) {
+                            for (vertical_index = [0, 1]) {
+                                rocket_wall_panel(vertical_index = vertical_index,
+                                                  rotational_index = 0,
+                                                  door = 0,
+                                                  hull = 0,
+                                                  rocket_wall_thickness = rocket_wall_thickness + (porthole_edge_size * 4),
+                                                  radial_offset = porthole_edge_size * 2);
+                            }
+                        }
+                    }
+                }
+
+                translate(door_center) {
+                    scale([0.90, 0.90, 0.90]) {
+                        translate(-door_center) {
+                            for (vertical_index = [0, 1]) {
+                                rocket_wall_panel(vertical_index = vertical_index,
+                                                  rotational_index = 0,
+                                                  door = 0,
+                                                  hull = 0,
+                                                  rocket_wall_thickness = rocket_wall_thickness + (porthole_edge_size * 16),
+                                                  radial_offset = porthole_edge_size * 8);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 // these are overridden by the Makefile
 combined = 1;
@@ -302,6 +346,8 @@ if (combined == 1) {
         for (angle=[0, 120, 240]) {
             make_porthole_edge(angle);
         }
+        // doorway edge
+        // make_door_edge(); // disabled for now, doesn't look good
     }
 } else {
     if (nth < 200) {
