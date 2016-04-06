@@ -118,12 +118,12 @@
             this.baton.claim(
                 function() {
                     _this.maintainDoor();
-                    // _this.maintainRemote();
                     _this.baton.release();
                 },
                 function() {
                 }
             );
+            _this.maintainRemote();
         }
 
         this.maintainDoor = function() {
@@ -183,7 +183,7 @@
         this.findRemote = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
             var rocketScadPosition = rocketProperties.position;
-            var nearbyEntities = Entities.findEntities(rocketScadPosition, 60);
+            var nearbyEntities = Entities.findEntities(rocketScadPosition, 100);
             var success = false;
             for (i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
@@ -208,6 +208,10 @@
                 }
             }
             return null;
+        }
+
+        this.maintainRemote = function() {
+            this.findRemote();
         }
 
         // this.maintainRemote = function() {

@@ -109,6 +109,7 @@
         setChannelKey: function(id, params) {
             var newChannelKey = params[0];
             this.channelKey = newChannelKey;
+            // print("received new channel key: " + this.channelKey);
             // Messages.subscribe(this.channelKey);
         },
 

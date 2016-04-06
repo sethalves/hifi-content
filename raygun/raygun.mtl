@@ -1,0 +1,11 @@
+newmtl body_mtl
+Ka 0.8 0 0
+Kd 0.8 0 0
+Ks 0.000 0.000 0.000
+d 1.0
+illum 2
+
+newmtl shiney_mtl
+Ka 0.0 0.0 0.5
+Kd 0.0 0.0 0.5
+Ns 10
