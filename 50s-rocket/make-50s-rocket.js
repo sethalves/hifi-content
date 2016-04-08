@@ -55,7 +55,7 @@ function makeRocket() {
         compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
         collisionsWillMove: false,
         position: center,
-        rotatin: Camera.getOrientation(),
+        rotation: Camera.getOrientation(),
         script: 'http://headache.hungry.com/~seth/hifi/50s-rocket.js',
         dynamic: true,
         gravity: { x: 0, y: -1.0, z: 0 },
