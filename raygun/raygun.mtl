@@ -6,6 +6,8 @@ d 1.0
 illum 2
 
 newmtl shiney_mtl
-Ka 0.0 0.0 0.5
-Kd 0.0 0.0 0.5
-Ns 10
+Ka  0.1986  0.0000  0.0000
+Kd  1.0  1.0  1.0
+Ks  1.0  1.0  1.0
+illum 2
+Ns 100.0

@@ -29,8 +29,8 @@ raygun.obj: raygun-body.obj raygun-shiney.obj
 	wavefront-obj-tool -n -L raygun.mtl -c $^ -o $@
 
 
-upload:
-	scp raygun.obj raygun.mtl headache:public_html/hifi/hcEdit
+upload: raygun.obj raygun.mtl raygun.js
+	scp $^ headache:public_html/hifi/raygun/
 
 clean:
 	rm -f *~ raygun-body.obj raygun-body.stl raygun.obj raygun-shiney.obj raygun-shiney.stl
