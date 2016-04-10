@@ -24,7 +24,7 @@ platform.stl: tower-third-floor.scad
 	openscad -D nth=0 -o $@ $^
 
 platform.obj: platform.stl
-	wavefront-obj-tool -n -c $^ -o $@ -S landing_pad_platform_mtl
+	wavefront-obj-tool -n -c $^ -o $@ -S ramp_mtl
 
 # ---
 
@@ -39,7 +39,7 @@ tower-third-floor-collision-hull.obj: $(COLLISION_HULL_PARTS)
 
 clean:
 	rm -rf *~ tower-third-floor-parts tower-third-floor-collision-hull.obj tower-third-floor.obj
-	rm -f platform.obj platform.stl # walkway.obj walkway.stl
+	rm -f platform.obj platform.stl
 	rm -f tower-third-floor.obj.tmp.obj tower-third-floor.stl
 
 

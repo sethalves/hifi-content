@@ -145,8 +145,6 @@ module make_wall(rotational_index, window) {
 
 nth = 0;  // this is overridden by Makefile
 
-echo(nth=nth);
-
 if (nth == 0 || nth == 1) {
     make_third_floor();
 }
