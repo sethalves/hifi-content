@@ -17,7 +17,7 @@ third_floor_radius = (width / 2) / sin(third_floor_slice_sweep / 2);
 third_floor_edge_radius = cos(third_floor_slice_sweep / 2) * third_floor_radius;
 
 wall_thickness = 1.5;
-wall_height = 6;
+wall_height = 10;
 
 
 module make_third_floor() {
