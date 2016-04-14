@@ -48,7 +48,7 @@
 
 
                 userData: JSON.stringify({
-                    grabbableKey: { grabbable: false }
+                    "grabbableKey":{"grabbable":false}, "soundKey":{"url":"http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav","volume":0.4,"loop":true,"playbackGap":0,"playbackGapRange":0}
                 }),
             });
 
