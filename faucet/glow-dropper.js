@@ -36,7 +36,7 @@
                 if (_this.needNewRadiationBall()) {
                     _this.makeRadiationBall();
                 }
-            }, 100000); // 100 seconds
+            }, 10000); // 10 seconds
         },
 
         unload: function() {
