@@ -60,16 +60,26 @@ module spiral_ramp_section(inner_radius = 10,
 }
 
 
-inner_radius = 24;
-outer_radius = 36;
-tower_height = 20;
+
+// these values are from tower-third-floor.scad
+width = 12;
+third_floor_slice_count = 8; // this indirectly controls the size of the pad
+third_floor_slice_sweep = 360 / third_floor_slice_count;
+third_floor_radius = (width / 2) / sin(third_floor_slice_sweep / 2);
+third_floor_edge_radius = cos(third_floor_slice_sweep / 2) * third_floor_radius;
+
+
+inner_radius = third_floor_edge_radius - (third_floor_radius * cos(third_floor_slice_sweep * 1.5));
+outer_radius = inner_radius + width;
+
+tower_height = 13;
 thickness = 3;
 angle_start = 0;
 subsection_count = 4;
 sections = 6;
 total_angle_sweep = 180.0;
 angle_sweep = total_angle_sweep / sections;
-y_rise = 2;
+y_rise = tower_height / sections;
 
 combined = 1; // this can be overridden by the Makefile
 

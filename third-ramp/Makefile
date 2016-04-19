@@ -13,7 +13,7 @@ third-ramp-parts/%.stl: third-ramp.scad
 %.obj: %.stl
 	wavefront-obj-tool -m 0.2 -n $^ -o $@
 
-PARTS=$(foreach nth,0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15,third-ramp-parts/${nth}.obj)
+PARTS=$(foreach nth,0 1 2 3 4 5 6 7 8 9 10 11,third-ramp-parts/${nth}.obj)
 
 all: third-ramp-collision-hull.obj third-ramp.obj
 
