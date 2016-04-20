@@ -1,25 +1,14 @@
-// "use strict";
-//
-//
-//
-
-// quatToStr = function(q, digits) {
-//     if (!digits) { digits = 3; }
-//     return "{ " + q.w.toFixed(digits) + ", " + q.x.toFixed(digits) + ", " +
-//         q.y.toFixed(digits) + ", " + q.z.toFixed(digits)+ " }";
-// }
 
 (function() {
+    Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
+
     var rocket;
 
     Rocket = (function() {
         var _this = this;
 
-        this.HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
-        Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
-        // Script.include(this.HIFI_PUBLIC_BUCKET + "scripts/libraries/virtualBaton.js");
-        // Script.include("http://headache.hungry.com/~seth/hifi/virtualBaton.js");
-        // this.baton = null;
+        this.batonName = null;
+        this.baton = null;
 
         this.doorID = null;
         this.doorSwitchID = null;
@@ -72,12 +61,10 @@
             }, 5000);
 
             this.batonName = 'io.highfidelity.seth.50sRocket:' + this.rocketID;
-
-            // this.baton = virtualBaton({
-            //     batonName: 'io.highfidelity.seth.50sRocket:' + _this.rocketID, // One winner for each entity
-            //     electionTimeout: this.randomize(3000, 0.2),
-            //     recheckInterval: this.randomize(3000, 0.2)
-            // });
+            this.baton = acBaton({
+                batonName: this.batonName,
+                timeScale: 15000
+            });
         };
 
         this.handleMessages = function(id, params) {
@@ -181,20 +168,12 @@
         };
 
         this.toggleDoor = function() {
-            // var _this = this;
-            // this.baton.claim(
-            //     function() {
-            //         _this.toggleDoorWBaton();
-            //         _this.baton.release();
-            //     },
-            //     function() {
-            //     }
-            // );
-
-            runByOne(MyAvatar.sessionUUID, this.batonName, 15000, function() {
-                _this.doMaintenance();
-                _this.toggleDoorWBaton();
-            }, function() {});
+            _this.baton.claim(
+                function () {
+                    _this.doMaintenance();
+                    _this.toggleDoorWBaton();
+                }
+            );
         }
 
         this.toggleDoorWBaton = function() {
@@ -212,14 +191,14 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
-                    releaseBaton(MyAvatar.sessionUUID, _this.batonName);
+                    _this.baton.release();
                 }
                 if (_this.doorOpenness > 1.0) {
                     _this.doorOpenness = 1.0;
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
-                    releaseBaton(MyAvatar.sessionUUID, _this.batonName);
+                    _this.baton.release();
                 }
                 _this.positionDoor(_this.doorOpenness);
             }, _this.doorMoveInterval);
