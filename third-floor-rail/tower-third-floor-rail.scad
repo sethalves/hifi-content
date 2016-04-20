@@ -34,7 +34,7 @@ intersection() {
 
     rotate([0, 90, 0]) {
         translate([0, 0.18, -width / 2]) {
-            cylinder(h=width, r = wall_height, $fn=48);
+            cylinder(h=width, r = 1.0, $fn=48);
         }
     }
 }
