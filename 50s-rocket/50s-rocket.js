@@ -17,7 +17,8 @@
         this.NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
 
         this.HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
-        Script.include(this.HIFI_PUBLIC_BUCKET + "scripts/libraries/virtualBaton.js");
+        Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
+        // Script.include(this.HIFI_PUBLIC_BUCKET + "scripts/libraries/virtualBaton.js");
         // Script.include("http://headache.hungry.com/~seth/hifi/virtualBaton.js");
         // this.baton = null;
 
@@ -75,14 +76,17 @@
             this.channelKey = this.rocketID;
 
             this.maintenanceInterval = Script.setInterval(function() {
-                _this.doMaintenance();
+                // _this.doMaintenance();
+                _this.findRemote();
             }, 5000);
 
-            this.baton = virtualBaton({
-                batonName: 'io.highfidelity.seth.50sRocket:' + _this.rocketID, // One winner for each entity
-                electionTimeout: this.randomize(3000, 0.2),
-                recheckInterval: this.randomize(3000, 0.2)
-            });
+            this.batonName = 'io.highfidelity.seth.50sRocket:' + this.rocketID;
+
+            // this.baton = virtualBaton({
+            //     batonName: 'io.highfidelity.seth.50sRocket:' + _this.rocketID, // One winner for each entity
+            //     electionTimeout: this.randomize(3000, 0.2),
+            //     recheckInterval: this.randomize(3000, 0.2)
+            // });
         };
 
         // this.handleMessages = function(channel, message, sender) {
@@ -115,14 +119,20 @@
 
         this.doMaintenance = function() {
             // var _this = this;
-            this.baton.claim(
-                function() {
-                    _this.maintainDoor();
-                    _this.baton.release();
-                },
-                function() {
-                }
-            );
+            // this.baton.claim(
+            //     function() {
+            //         _this.maintainDoor();
+            //         _this.baton.release();
+            //     },
+            //     function() {
+            //     }
+            // );
+
+            // runByOne(this.batonName, 15000, function() {
+            //     _this.maintainDoor();
+            // }, function() {});
+
+            _this.maintainDoor();
             _this.maintainRemote();
         }
 
@@ -133,7 +143,6 @@
                     print("50s-rocket -- can't find door");
                     return;
                 }
-                this.findRemote();
 
                 // decide if the door was left open or closed
                 var localRotation = Entities.getEntityProperties(this.doorID, ["rotation", "localRotation"]).localRotation;
@@ -286,14 +295,19 @@
 
         this.toggleDoor = function() {
             // var _this = this;
-            this.baton.claim(
-                function() {
-                    _this.toggleDoorWBaton();
-                    _this.baton.release();
-                },
-                function() {
-                }
-            );
+            // this.baton.claim(
+            //     function() {
+            //         _this.toggleDoorWBaton();
+            //         _this.baton.release();
+            //     },
+            //     function() {
+            //     }
+            // );
+
+            runByOne(this.batonName, 15000, function() {
+                _this.doMaintenance();
+                _this.toggleDoorWBaton();
+            }, function() {});
         }
 
         this.toggleDoorWBaton = function() {
@@ -312,12 +326,14 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
+                    releaseBaton(_this.batonName);
                 }
                 if (_this.doorOpenness > 1.0) {
                     _this.doorOpenness = 1.0;
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
+                    releaseBaton(_this.batonName);
                 }
                 _this.positionDoor(_this.doorOpenness);
             }, _this.doorMoveInterval);
@@ -368,9 +384,9 @@
             //         break;
             //     }
             // }
-            if (this.baton) {
-                this.baton.unload();
-            }
+            // if (this.baton) {
+            //     this.baton.unload();
+            // }
         };
 
         // Script.scriptEnding.connect(this.scriptEnding);
