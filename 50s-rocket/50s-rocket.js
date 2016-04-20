@@ -14,7 +14,6 @@
 
     Rocket = (function() {
         var _this = this;
-        this.NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
 
         this.HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
         Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
@@ -101,7 +100,7 @@
 
         this.doMaintenance = function() {
             _this.maintainDoor();
-            _this.maintainRemote();
+            _this.findRemote();
         }
 
         this.maintainDoor = function() {
@@ -111,20 +110,20 @@
                     print("50s-rocket -- can't find door");
                     return;
                 }
-
-                // decide if the door was left open or closed
-                var localRotation = Entities.getEntityProperties(this.doorID, ["rotation", "localRotation"]).localRotation;
-                var rotationRPY = Quat.safeEulerAngles(localRotation);
-                if (rotationRPY.x < this.doorOpenMax / 2) {
-                    this.doorOpenness = 0.0;
-                    this.doorDirection = this.doorSpeed;
-                } else {
-                    this.doorOpenness = 1.0;
-                    this.doorDirection = -this.doorSpeed;
-                }
-                this.doorMoving = false;
-                Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
             }
+
+            // decide if the door was left open or closed
+            var localRotation = Entities.getEntityProperties(this.doorID, ["rotation", "localRotation"]).localRotation;
+            var rotationRPY = Quat.safeEulerAngles(localRotation);
+            if (rotationRPY.x < this.doorOpenMax / 2) {
+                this.doorOpenness = 0.0;
+                this.doorDirection = this.doorSpeed;
+            } else {
+                this.doorOpenness = 1.0;
+                this.doorDirection = -this.doorSpeed;
+            }
+            this.doorMoving = false;
+            Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
         }
 
         this.findRemote = function() {
@@ -155,10 +154,6 @@
                 }
             }
             return null;
-        }
-
-        this.maintainRemote = function() {
-            this.findRemote();
         }
 
         this.calculateRocketOffset = function() {
