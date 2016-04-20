@@ -157,36 +157,36 @@
                 this.doorMoving = false;
 
                 // the door should already be in place, but do an edit to fix it up
-                var doorProperties = this.calculateDoorPosition(this.doorOpenness);
-                doorProperties["name"] = '50s rocket door';
-                doorProperties["type"] = 'Model';
-                doorProperties["modelURL"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj';
-                doorProperties["compoundShapeURL"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj';
-                doorProperties["dynamic"] = false;
-                doorProperties["gravity"] = { x: 0, y: 0, z: 0 };
-                doorProperties["angularDamping"] = { x: 0.0, y: 0.0, z: 0.0 };
-                doorProperties["parentID"] = this.rocketID;
-                doorProperties["parentJointIndex"] = -1;
-                doorProperties["collidesWith"] = "static,dynamic,kinematic,myAvatar,otherAvatar";
-                doorProperties["userData"] = "{\"grabbableKey\":{\"wantsTrigger\":true}}";
-                doorProperties["script"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js';
-                var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
-                doorProperties["registrationPoint"] = { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) };
-                Entities.editEntity(this.doorID, doorProperties);
+                // var doorProperties = this.calculateDoorPosition(this.doorOpenness);
+                // doorProperties["name"] = '50s rocket door';
+                // doorProperties["type"] = 'Model';
+                // doorProperties["modelURL"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj';
+                // doorProperties["compoundShapeURL"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj';
+                // doorProperties["dynamic"] = false;
+                // doorProperties["gravity"] = { x: 0, y: 0, z: 0 };
+                // doorProperties["angularDamping"] = { x: 0.0, y: 0.0, z: 0.0 };
+                // doorProperties["parentID"] = this.rocketID;
+                // doorProperties["parentJointIndex"] = -1;
+                // doorProperties["collidesWith"] = "static,dynamic,kinematic,myAvatar,otherAvatar";
+                // doorProperties["userData"] = "{\"grabbableKey\":{\"wantsTrigger\":true}}";
+                // doorProperties["script"] = 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js';
+                // var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
+                // doorProperties["registrationPoint"] = { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) };
+                // Entities.editEntity(this.doorID, doorProperties);
 
                 Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
-
-                // this.toggleDoorWBaton(); // so it starts closed and initially opens
-            } else {
-                var doorProperties = Entities.getEntityProperties(this.doorID, ["name"]);
-                if (doorProperties.name == '50s rocket door') {
-                    doorProperties = this.calculateDoorPosition(this.doorOpenness);
-                    Entities.editEntity(this.doorID, doorProperties);
-                    Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
-                } else {
-                    this.doorID = null;
-                }
             }
+
+            //  else {
+            //     var doorProperties = Entities.getEntityProperties(this.doorID, ["name"]);
+            //     if (doorProperties.name == '50s rocket door') {
+            //         doorProperties = this.calculateDoorPosition(this.doorOpenness);
+            //         Entities.editEntity(this.doorID, doorProperties);
+            //         Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
+            //     } else {
+            //         this.doorID = null;
+            //     }
+            // }
         }
 
         this.findRemote = function() {
@@ -304,7 +304,7 @@
             //     }
             // );
 
-            runByOne(this.batonName, 15000, function() {
+            runByOne(MyAvatar.sessionUUID, this.batonName, 15000, function() {
                 _this.doMaintenance();
                 _this.toggleDoorWBaton();
             }, function() {});
@@ -326,14 +326,14 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
-                    releaseBaton(_this.batonName);
+                    releaseBaton(MyAvatar.sessionUUID, _this.batonName);
                 }
                 if (_this.doorOpenness > 1.0) {
                     _this.doorOpenness = 1.0;
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
-                    releaseBaton(_this.batonName);
+                    releaseBaton(MyAvatar.sessionUUID, _this.batonName);
                 }
                 _this.positionDoor(_this.doorOpenness);
             }, _this.doorMoveInterval);
@@ -351,7 +351,21 @@
                 z: Math.cos(this.sliceRadians) * this.baseRocketRadius[0]
             };
             var rampRotation = Quat.fromPitchYawRollRadians(this.doorOpenMax * opennessRatio, this.halfSliceRadians, 0);
+            var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
             return {
+                // name: '50s rocket door',
+                // type: 'Model',
+                // modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj',
+                // compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj',
+                // dynamic: false,
+                // gravity: { x: 0, y: 0, z: 0 },
+                // angularDamping: { x: 0.0, y: 0.0, z: 0.0 },
+                // parentID: this.rocketID,
+                // parentJointIndex: -1,
+                // collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar",
+                // userData: "{\"grabbableKey\":{\"wantsTrigger\":true}}",
+                // script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js',
+                registrationPoint: { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) },
                 localPosition: Vec3.multiply(Vec3.sum(p0, p1), 0.5),
                 localRotation: rampRotation
             };
