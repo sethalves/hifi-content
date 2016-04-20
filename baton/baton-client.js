@@ -1,9 +1,41 @@
+//
+//
+//
 
+acBaton = function (options) {
+    var _this = this;
+    this.onGrant = null;
+    this.onRelease = null;
+    this.onDenied = null;
 
-runByOne = function(participant, batonName, maxTime, grantedThunk, deniedThunk) {
-    var react;
+    var batonName = options.batonName || "unknown",
+        participant = options.instanceId || MyAvatar.sessionUUID,
+        timeScale = options.timeScale || 1000, // ms
+        exports = options.exports || {};
 
-    react = function(channel, message, sender) {
+    exports.claim = function claim(onGrant, onRelease, onDenied) {
+        _this.onGrant = onGrant;
+        _this.onRelease = onRelease;
+        _this.onDenied = onDenied;
+        Messages.sendMessage("baton", JSON.stringify({
+            command: "claim",
+            name: batonName,
+            participant: participant,
+            time: timeScale
+        }));
+        return exports;
+    };
+
+    exports.release = function release() {
+        Messages.sendMessage("baton", JSON.stringify({
+            command: "release",
+            name: batonName,
+            participant: participant
+        }));
+        return exports;
+    };
+
+    var messageHandler = function(channel, message, sender) {
         if (channel != "baton") {
             return;
         }
@@ -33,29 +65,29 @@ runByOne = function(participant, batonName, maxTime, grantedThunk, deniedThunk) 
 
         if (command == "grant") {
             print("GRANTED " + batonName);
-            Messages.messageReceived.disconnect(react);
-            grantedThunk();
+            if (_this.onGrant) {
+                _this.onGrant();
+            }
         } else if (command == "deny") {
             print("DENIED " + batonName);
-            Messages.messageReceived.disconnect(react);
-            deniedThunk();
+            if (_this.onDenied) {
+                _this.onDenied();
+            }
+        } else if (command == "release") {
+            print("RELEASED " + batonName);
+            if (_this.onRelease) {
+                _this.onRelease();
+            }
         }
-    }
+    };
 
-    Messages.messageReceived.connect(react);
+    exports.unload = function unload() { // Disconnect from everything.
+        messages.messageReceived.disconnect(messageHandler);
+        return exports;
+    };
+
     Messages.subscribe("baton");
-    Messages.sendMessage("baton", JSON.stringify({
-        command: "claim",
-        name: batonName,
-        participant: participant,
-        time: maxTime
-    }));
-}
+    Messages.messageReceived.connect(messageHandler);
 
-releaseBaton = function(participant, batonName) {
-    Messages.sendMessage("baton", JSON.stringify({
-        command: "release",
-        name: batonName,
-        participant: participant
-    }));
+    return exports;
 }
