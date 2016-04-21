@@ -72,7 +72,6 @@
 
         this.handleMessages = function(id, params) {
             message = params[0];
-            print("got message: '" + message + "'");
 
             var data = null;
             try {
@@ -173,7 +172,6 @@
         this.toggleDoor = function() {
             _this.baton.claim(
                 function () { // onGrant
-                    print("CLAIM");
                     _this.doMaintenance();
                     _this.toggleDoorWBaton();
                 },
@@ -202,7 +200,6 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
-                    print("DONE MOVING DOOR #0");
                     _this.baton.release();
                     collide = true;
                 }
@@ -211,7 +208,6 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
-                    print("DONE MOVING DOOR #1");
                     _this.baton.release();
                     collide = true;
                 }
