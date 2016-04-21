@@ -11,18 +11,29 @@ acBaton = function (options) {
     var batonName = options.batonName || "unknown",
         participant = options.instanceId || MyAvatar.sessionUUID,
         timeScale = options.timeScale || 1000, // ms
+        serverResponseTimeout = options.serverTimeOut || 2000, // ms
         exports = options.exports || {};
 
-    exports.claim = function claim(onGrant, onRelease, onDenied) {
+    exports.claim = function claim(onGrant, onRelease, onDenied, onNoServerResponse) {
         _this.onGrant = onGrant;
         _this.onRelease = onRelease;
         _this.onDenied = onDenied;
+        _this.onNoServerResponse = onNoServerResponse;
+
         Messages.sendMessage("baton", JSON.stringify({
             command: "claim",
             name: batonName,
             participant: participant,
             time: timeScale
         }));
+
+        _this.responseTimeout = Script.setTimeout(function() {
+            // no response from server.  just go ahead
+            print("NO RESPONSE " + batonName);
+            if (_this.onNoServerResponse) {
+                _this.onNoServerResponse();
+            }
+        }, serverResponseTimeout);
         return exports;
     };
 
@@ -62,6 +73,8 @@ acBaton = function (options) {
         if (participant != messageParticipant) {
             return;
         }
+
+        Script.clearTimeout(_this.responseTimeout);
 
         if (command == "grant") {
             print("GRANTED " + batonName);

@@ -27,43 +27,61 @@ Messages.messageReceived.connect(function(channel, message, sender) {
         batons[batonName] = [owner, timeout];
     }
 
+    this.grantOrRegrant = function(participant, maxTime, batonName, baton, owner) {
+        print("GRANT: '" + batonName + "' to " + participant);
+        // the baton will be granted (or regranted)
+        owner = participant;
+        // if there's an old timeout, clear it
+        timeout = _this.batonTimeout(baton);
+        if (timeout) {
+            Script.clearTimeout(timeout);
+        }
+        // set new timeout
+        timeout = Script.setTimeout(function() {
+            print("TIMEOUT: '" + batonName + "'");
+            if (batonName in batons) {
+                delete batons[batonName];
+                Messages.sendMessage("baton", JSON.stringify({
+                    command: "timeout",
+                    name: batonName,
+                    participant: participant
+                }));
+            }
+        }, maxTime);
+        _this.setBaton(batonName, participant, timeout);
+        Messages.sendMessage("baton", JSON.stringify({
+            command: "grant",
+            name: batonName,
+            participant: participant
+        }));
+    }
+
+    this.deny = function() {
+        print("DENY: '" + batonName + "' from " + participant);
+        Messages.sendMessage("baton", JSON.stringify({
+            command: "deny",
+            name: batonName,
+            participant: participant
+        }));
+    }
+
     this.grant = function (participant, maxTime, batonName) {
         var baton = batons[batonName];
         var owner = _this.batonOwner(baton);
-        if (!owner || owner == participant) {
-            print("GRANT: '" + batonName + "' to " + participant);
-            // the baton will be granted (or regranted)
-            owner = participant;
-            // if there's an old timeout, clear it
-            timeout = _this.batonTimeout(baton);
-            if (timeout) {
-                Script.clearTimeout(timeout);
-            }
-            // set new timeout
-            timeout = Script.setTimeout(function() {
-                print("TIMEOUT: '" + batonName + "'");
-                if (batonName in batons) {
-                    delete batons[batonName];
-                    Messages.sendMessage("baton", JSON.stringify({
-                        command: "timeout",
-                        name: batonName,
-                        participant: participant
-                    }));
-                }
-            }, maxTime);
-            _this.setBaton(batonName, participant, timeout);
-            Messages.sendMessage("baton", JSON.stringify({
-                command: "grant",
-                name: batonName,
-                participant: participant
-            }));
+        if (!owner) {
+            _this.grantOrRegrant(participant, maxTime, batonName, baton, owner);
         } else {
-            print("DENY: '" + batonName + "' from " + participant);
-            Messages.sendMessage("baton", JSON.stringify({
-                command: "deny",
-                name: batonName,
-                participant: participant
-            }));
+            _this.deny(participant, batonName);
+        }
+    };
+
+    this.regrant = function (participant, maxTime, batonName) {
+        var baton = batons[batonName];
+        var owner = _this.batonOwner(baton);
+        if (owner == participant) {
+            _this.grantOrRegrant(participant, maxTime, batonName, baton, owner);
+        } else {
+            _this.deny(participant, batonName);
         }
     };
 
@@ -112,6 +130,13 @@ Messages.messageReceived.connect(function(channel, message, sender) {
             return;
         }
         this.grant(participant, maxTime, batonName);
+    } else if (command == "reclaim") {
+        var maxTime = messageParsed.time;
+        if (!maxTime) {
+            print("invalid reclaim message: " + message);
+            return;
+        }
+        this.regrant(participant, maxTime, batonName);
     } else if (command == "release") {
         this.release(participant, batonName);
     }
