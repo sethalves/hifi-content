@@ -73,6 +73,9 @@ acBaton = function (options) {
         if (participant != messageParticipant) {
             return;
         }
+        if (sender == MyAvatar.sessionUUID) {
+            return;
+        }
 
         Script.clearTimeout(_this.responseTimeout);
 
