@@ -196,6 +196,7 @@
             _this.doorMoving = true;
             _this.doorSwingInterval = Script.setInterval(function() {
                 _this.doorOpenness += _this.doorDirection;
+                var collide = false;
                 if (_this.doorOpenness < 0.0) {
                     _this.doorOpenness = 0.0;
                     _this.doorDirection = -_this.doorDirection;
@@ -203,6 +204,7 @@
                     _this.doorMoving = false;
                     print("DONE MOVING DOOR #0");
                     _this.baton.release();
+                    collide = true;
                 }
                 if (_this.doorOpenness > 1.0) {
                     _this.doorOpenness = 1.0;
@@ -211,12 +213,13 @@
                     _this.doorMoving = false;
                     print("DONE MOVING DOOR #1");
                     _this.baton.release();
+                    collide = true;
                 }
-                _this.positionDoor(_this.doorOpenness);
+                _this.positionDoor(_this.doorOpenness, collide);
             }, _this.doorMoveInterval);
         }
 
-        this.calculateDoorPosition = function(opennessRatio) {
+        this.calculateDoorPosition = function(opennessRatio, collide) {
             var p0 = {
                 x: Math.sin(0.0) * this.baseRocketRadius[0],
                 y: 0,
@@ -229,20 +232,25 @@
             };
             var rampRotation = Quat.fromPitchYawRollRadians(this.doorOpenMax * opennessRatio, this.halfSliceRadians, 0);
             var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
+            var collidesWith = "";
+            if (collide) {
+                collidesWith = "static,dynamic,kinematic,myAvatar,otherAvatar";
+            }
+
             return {
-                collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar",
+                collidesWith: collidesWith,
                 registrationPoint: { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) },
                 localPosition: Vec3.multiply(Vec3.sum(p0, p1), 0.5),
                 localRotation: rampRotation
             };
         }
 
-        this.positionDoor = function(opennessRatio) {
+        this.positionDoor = function(opennessRatio, collide) {
             if (this.doorID == null) {
                 return;
             }
 
-            Entities.editEntity(this.doorID, this.calculateDoorPosition(opennessRatio));
+            Entities.editEntity(this.doorID, this.calculateDoorPosition(opennessRatio, collide));
         };
 
         this.unload = function() {
