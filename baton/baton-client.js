@@ -29,7 +29,7 @@ acBaton = function (options) {
 
         _this.responseTimeout = Script.setTimeout(function() {
             // no response from server.  just go ahead
-            print("NO RESPONSE " + batonName);
+            print("no response from server for baton " + batonName);
             if (_this.onNoServerResponse) {
                 _this.onNoServerResponse();
             }
@@ -80,17 +80,14 @@ acBaton = function (options) {
         Script.clearTimeout(_this.responseTimeout);
 
         if (command == "grant") {
-            print("GRANTED " + batonName);
             if (_this.onGrant) {
                 _this.onGrant();
             }
         } else if (command == "deny") {
-            print("DENIED " + batonName);
             if (_this.onDenied) {
                 _this.onDenied();
             }
         } else if (command == "release") {
-            print("RELEASED " + batonName);
             if (_this.onRelease) {
                 _this.onRelease();
             }

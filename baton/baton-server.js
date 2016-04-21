@@ -28,7 +28,6 @@ Messages.messageReceived.connect(function(channel, message, sender) {
     }
 
     this.grantOrRegrant = function(participant, maxTime, batonName, baton, owner) {
-        print("GRANT: '" + batonName + "' to " + participant);
         // the baton will be granted (or regranted)
         owner = participant;
         // if there's an old timeout, clear it
@@ -38,7 +37,6 @@ Messages.messageReceived.connect(function(channel, message, sender) {
         }
         // set new timeout
         timeout = Script.setTimeout(function() {
-            print("TIMEOUT: '" + batonName + "'");
             if (batonName in batons) {
                 delete batons[batonName];
                 Messages.sendMessage("baton", JSON.stringify({
@@ -57,7 +55,6 @@ Messages.messageReceived.connect(function(channel, message, sender) {
     }
 
     this.deny = function() {
-        print("DENY: '" + batonName + "' from " + participant);
         Messages.sendMessage("baton", JSON.stringify({
             command: "deny",
             name: batonName,
@@ -95,7 +92,6 @@ Messages.messageReceived.connect(function(channel, message, sender) {
             print(participant + " tried to release baton " + batonName + ", which is owned by " + _this.batonOwner(baton));
             return;
         }
-        print("RELEASE: '" + batonName + "' by " + participant);
         Script.clearTimeout(_this.batonTimeout(baton));
         delete batons[batonName];
         Messages.sendMessage("baton", JSON.stringify({
