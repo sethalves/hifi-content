@@ -38,14 +38,13 @@
                 script: 'http://headache.hungry.com/~seth/hifi/50s-rocket.js',
                 dynamic: true,
                 gravity: { x: 0, y: -1.0, z: 0 },
-                velocity: { x: 0, y: 0.5, z: 0 }, // to make it fall
+                velocity: { x: 0, y: -0.5, z: 0 }, // to make it fall
                 // density: 8000,
 
                 // put center where it is in openscad
                 // registrationPoint: { x: 0.5,
                 //                      y: 0.0049751, // model height is 20.1, this is (/ 0.1 20.1)
                 //                      z: 0.5 },
-
 
                 userData: JSON.stringify({
                     "grabbableKey":{"grabbable":false}, "soundKey":{"url":"http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav","volume":0.4,"loop":true,"playbackGap":0,"playbackGapRange":0}
@@ -68,7 +67,7 @@
                 collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar",
                 script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js',
                 registrationPoint:  { x: 0.5, y: 0.0, z: registrationPointZ },
-                localPosition: { x: 0.587, y: 0.000, z: 3.707 },
+                localPosition: { x: 0.58713, y: 0.000, z: 3.707 },
                 localRoation: { x: 0, y: 0.07845909893512726, z: 0, w: 0.9969173073768616 },
                 userData: "{\"grabbableKey\":{\"wantsTrigger\":true}}"
             });

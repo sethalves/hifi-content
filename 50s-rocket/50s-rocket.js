@@ -58,6 +58,7 @@
 
             this.maintenanceInterval = Script.setInterval(function() {
                 _this.findRemote();
+                _this.doorID = _this.findDoor();
             }, 5000);
 
             this.batonName = 'io.highfidelity.seth.50sRocket:' + this.rocketID;
@@ -65,6 +66,8 @@
                 batonName: this.batonName,
                 timeScale: 15000
             });
+
+            this.doMaintenance();
         };
 
         this.handleMessages = function(id, params) {
@@ -86,8 +89,8 @@
         }
 
         this.doMaintenance = function() {
-            _this.maintainDoor();
-            _this.findRemote();
+            this.maintainDoor();
+            this.findRemote();
         }
 
         this.maintainDoor = function() {
@@ -110,7 +113,6 @@
                 this.doorDirection = -this.doorSpeed;
             }
             this.doorMoving = false;
-            Entities.callEntityMethod(this.doorID, "setChannelKey", [this.channelKey]);
         }
 
         this.findRemote = function() {
@@ -132,11 +134,12 @@
         this.findDoor = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
             var rocketScadPosition = rocketProperties.position;
-            var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1]);
+            var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1] * 2);
             for (i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
                 var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
                 if (nearbyName == '50s rocket door') {
+                    Entities.callEntityMethod(nearbyID, "setChannelKey", [this.channelKey]);
                     return nearbyID;
                 }
             }
@@ -169,7 +172,14 @@
 
         this.toggleDoor = function() {
             _this.baton.claim(
-                function () {
+                function () { // onGrant
+                    print("CLAIM");
+                    _this.doMaintenance();
+                    _this.toggleDoorWBaton();
+                },
+                null, // onRelease
+                null, // onDenied
+                function () { // onNoServerResponse
                     _this.doMaintenance();
                     _this.toggleDoorWBaton();
                 }
@@ -191,6 +201,7 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
+                    print("DONE MOVING DOOR #0");
                     _this.baton.release();
                 }
                 if (_this.doorOpenness > 1.0) {
@@ -198,6 +209,7 @@
                     _this.doorDirection = -_this.doorDirection;
                     Script.clearInterval(_this.doorSwingInterval);
                     _this.doorMoving = false;
+                    print("DONE MOVING DOOR #1");
                     _this.baton.release();
                 }
                 _this.positionDoor(_this.doorOpenness);
@@ -218,6 +230,7 @@
             var rampRotation = Quat.fromPitchYawRollRadians(this.doorOpenMax * opennessRatio, this.halfSliceRadians, 0);
             var doorZDimension = this.baseRocketRadius[2] - (this.baseRocketRadius[0] - this.rocketWallThickness);
             return {
+                collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar",
                 registrationPoint: { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) },
                 localPosition: Vec3.multiply(Vec3.sum(p0, p1), 0.5),
                 localRotation: rampRotation

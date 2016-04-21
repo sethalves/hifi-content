@@ -13,7 +13,6 @@
         setChannelKey: function(id, params) {
             var newChannelKey = params[0];
             _this.channelKey = newChannelKey;
-            // Messages.subscribe(_this.channelKey);
         },
 
         clickDownOnEntity: function(entityID, mouseEvent) {
@@ -29,7 +28,7 @@
                 action: 'door',
                 user: MyAvatar.sessionUUID
             });
-            // Messages.sendMessage(_this.channelKey, data);
+            print("DOOR SIGNAL");
             Entities.callEntityMethod(_this.channelKey, "handleMessage", [data]);
         }
     }
