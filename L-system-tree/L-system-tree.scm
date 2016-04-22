@@ -19,37 +19,58 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
         (seth cout)
         )
 
+(cond-expand
+ (chibi
+  (import (chibi match)))
+ (chicken
+  (import (matchable))))
+
 
 (define fn 16)
 
-(define (make-segment base-width base-length position rotation tree-definition depth skip-trunk skip-leaves port output-type)
-
+(define (scad-translate translation)
   ;; output an openscad translate command
-  (define (translate v)
-    (display (format "translate([~a, ~a, ~a])\n"
-                     (vector-ref v 0) (vector-ref v 1) (vector-ref v 2))
-             port))
+  (format "translate([~a, ~a, ~a])\n"
+          (vector-ref translation 0)
+          (vector-ref translation 1)
+          (vector-ref translation 2)))
 
+(define (scad-rotate rotation)
   ;; output an openscad rotate command
-  (define (rotate v)
-    (let ((eu-rot (radians->degrees (quaternion->euler~zyx v))))
-      (display (format "rotate([~a, ~a, ~a])\n"
-                       (vector-ref eu-rot 0)
-                       (vector-ref eu-rot 1)
-                       (vector-ref eu-rot 2))
-               port)))
+  (let ((eu-rot (radians->degrees (quaternion->euler~zyx rotation))))
+    (format "rotate([~a, ~a, ~a])\n"
+            (vector-ref eu-rot 0)
+            (vector-ref eu-rot 1)
+            (vector-ref eu-rot 2))))
 
+(define (scad-spheroid translation rotation scale)
+  (string-append
+   (scad-translate translation)
+   (scad-rotate rotation)
+   (format "resize([~a, ~a, ~a]) sphere(r = 1, $fn=~a);\n"
+           (vector-ref scale 0) (vector-ref scale 1) (vector-ref scale 2)fn)))
+
+
+(define (scad-cylinder translation rotation base-radius top-radius length)
+  (string-append
+   (scad-translate translation)
+   (scad-rotate rotation)
+   (format "rotate([-90, 0, 0])\n")
+   (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false, $fn=~a);\n"
+           length base-radius top-radius fn)))
+
+
+(define (make-segment base-width base-length position rotation tree-definition
+                      depth skip-trunk skip-leaves port output-type)
   (cond
    ((= (string-length tree-definition) 0) #t) ;; done
    ((or (eqv? #\o (string-ref tree-definition 0))
         (eqv? #\O (string-ref tree-definition 0)))
     (cond ((not skip-leaves)
            ;; leaf ball
-           (translate position)
-           (rotate rotation)
            (if (eqv? #\o (string-ref tree-definition 0))
-               (display (format "resize([10, 2.5, 10]) sphere(r = 1, $fn=~a);\n" fn) port)
-               (display (format "resize([10, 8, 10]) sphere(r = 2, $fn=~a);\n" fn) port))
+               (display (scad-spheroid position rotation (vector 10 2.5 10)) port)
+               (display (scad-spheroid position rotation (vector 10 8 10)) port))
            (display "\n" port))))
    (else
     ;; branch
@@ -68,12 +89,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                                       port output-type))))
 
       (cond ((not skip-trunk)
-             (translate position)
-             (rotate rotation)
-             (display (format "rotate([-90, 0, 0])\n") port)
-             (display (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false, $fn=~a);\n\n"
-                              my-length my-thickness child-thickness fn)
-                      port)))
+             (display (scad-cylinder position rotation my-thickness child-thickness my-length) port)))
       (cond
        ((eq? output-type 'hull) #t) ;; don't recurse
        ((eqv? #\i (string-ref tree-definition 0))
