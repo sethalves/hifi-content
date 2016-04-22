@@ -3,8 +3,8 @@
 #
 
 # size of one segment.  the final image will be of size: (WIDTH * 4, HEIGTH * 3)
-WIDTH=800
-HEIGTH=800
+WIDTH=400
+HEIGTH=400
 
 %.pnm: %.png
 	pngtopnm $^ > $@
