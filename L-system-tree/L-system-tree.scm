@@ -26,51 +26,157 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
   (import (matchable))))
 
 
+
+;;;;;;; scad output
+
 (define fn 16)
 
-(define (scad-translate translation)
+(define (scad-translate translation thunk)
   ;; output an openscad translate command
-  (format "translate([~a, ~a, ~a])\n"
-          (vector-ref translation 0)
-          (vector-ref translation 1)
-          (vector-ref translation 2)))
+  (string-append
+   (format "translate([~a, ~a, ~a]) {\n"
+           (vector-ref translation 0)
+           (vector-ref translation 1)
+           (vector-ref translation 2))
+   (thunk)
+   (format "}\n")))
 
-(define (scad-rotate rotation)
+(define (scad-rotate rotation thunk)
   ;; output an openscad rotate command
   (let ((eu-rot (radians->degrees (quaternion->euler~zyx rotation))))
-    (format "rotate([~a, ~a, ~a])\n"
-            (vector-ref eu-rot 0)
-            (vector-ref eu-rot 1)
-            (vector-ref eu-rot 2))))
+    (string-append
+     (format "rotate([~a, ~a, ~a]) {\n"
+             (vector-ref eu-rot 0)
+             (vector-ref eu-rot 1)
+             (vector-ref eu-rot 2))
+     (thunk)
+     (format "}\n"))))
 
-(define (scad-spheroid translation rotation scale)
+(define (scad-scale scale thunk)
+  ;; output an openscad scale command
   (string-append
-   (scad-translate translation)
-   (scad-rotate rotation)
-   (format "resize([~a, ~a, ~a]) sphere(r = 1, $fn=~a);\n"
-           (vector-ref scale 0) (vector-ref scale 1) (vector-ref scale 2)fn)))
+   (format "scale([~a, ~a, ~a]) {\n"
+           (vector-ref scale 0)
+           (vector-ref scale 1)
+           (vector-ref scale 2))
+   (thunk)
+   (format "}\n")))
 
+(define (scad-transform translation rotation scale thunk)
+  (scad-translate translation
+                  (lambda ()
+                    (scad-rotate rotation
+                                 (lambda ()
+                                   (scad-scale scale
+                                               thunk))))))
 
-(define (scad-cylinder translation rotation base-radius top-radius length)
+(define (scad-sphere . maybe-radius)
+  (let ((radius (if (null? maybe-radius) 1.0 (car maybe-radius))))
+    (format "sphere(r = ~a, $fn=~a);\n" radius fn)))
+
+(define (scad-cylinder base-radius top-radius length)
   (string-append
-   (scad-translate translation)
-   (scad-rotate rotation)
    (format "rotate([-90, 0, 0])\n")
    (format "cylinder(h = ~a, r1 = ~a, r2 = ~a, center = false, $fn=~a);\n"
            length base-radius top-radius fn)))
 
 
+
+;;;;;;; povray output
+
+
+(define current-translation (make-parameter (vector 0 0 0)))
+(define current-rotation (make-parameter (euler->quaternion (vector 0 0 0))))
+(define current-scale (make-parameter (euler->quaternion (vector 1 1 1))))
+
+(define (pov-ray-translate translation thunk)
+   (parameterize ((current-translation translation))
+                 (thunk)))
+
+(define (pov-ray-rotate rotation thunk)
+  (parameterize ((current-rotation rotation))
+                (thunk)))
+
+(define (pov-ray-scale scale thunk)
+   (parameterize ((current-scale scale))
+                 (thunk)))
+
+(define (pov-ray-transform translation rotation scale thunk)
+  (pov-ray-translate translation
+                  (lambda ()
+                    (pov-ray-rotate rotation
+                                 (lambda ()
+                                   (pov-ray-scale scale
+                                               thunk))))))
+
+(define (pov-ray-transform-string)
+  (let ((translation (current-translation))
+        (rotation (radians->degrees (quaternion->euler~zyx (current-rotation))))
+        (scale (current-scale)))
+    (string-append
+     (format "    scale<~a,~a,~a>\n"
+             (vector-ref scale 0)
+             (vector-ref scale 1)
+             (vector-ref scale 2))
+     (format "    rotate<~a,~a,~a>\n"
+             (vector-ref rotation 0)
+             (vector-ref rotation 1)
+             (vector-ref rotation 2))
+     (format "    translate<~a,~a,~a>\n"
+             (vector-ref translation 0)
+             (vector-ref translation 1)
+             (vector-ref translation 2)))))
+
+
+(define (pov-ray-sphere . maybe-radius)
+  (let ((radius (if (null? maybe-radius) 1.0 (car maybe-radius))))
+    (string-append
+     (format "sphere(r = ~a, $fn=~a\n" radius fn)
+     (pov-ray-transform-string)
+
+     "    texture{ pigment{color rgb<0,1.0,0>}"
+     "             normal {bumps 0.75 scale 0.015}"
+     "    }"
+
+     (format ");\n"))))
+
+
+(define (pov-ray-cylinder base-radius top-radius length)
+  (string-append
+   (format "cone{<0,0,0>,~a,<0,~a,0>,~a\n" base-radius length top-radius)
+   (pov-ray-transform-string)
+
+   "    texture{ pigment{color rgb<0.65,0.16,0.16>}"
+   "             normal {bumps 0.75 scale 0.015}"
+   "    }"
+
+
+   (format "}\n")))
+
+
+;;;;;;;;;;;;;;;;;;;;
+;;
+;; tree generation
+;;
+;;;;;;;;;;;;;;;;;;;;
+
 (define (make-segment base-width base-length position rotation tree-definition
-                      depth skip-trunk skip-leaves port output-type)
+                      depth skip-trunk skip-leaves port output-type
+                      transform sphere cylinder)
   (cond
    ((= (string-length tree-definition) 0) #t) ;; done
    ((or (eqv? #\o (string-ref tree-definition 0))
         (eqv? #\O (string-ref tree-definition 0)))
     (cond ((not skip-leaves)
            ;; leaf ball
-           (if (eqv? #\o (string-ref tree-definition 0))
-               (display (scad-spheroid position rotation (vector 10 2.5 10)) port)
-               (display (scad-spheroid position rotation (vector 10 8 10)) port))
+           (display
+            (transform position
+                       rotation
+                       (if (eqv? #\o (string-ref tree-definition 0))
+                           (vector 8 2.5 8)
+                           (vector 8 6 8))
+                       sphere)
+            port)
            (display "\n" port))))
    (else
     ;; branch
@@ -86,10 +192,16 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                                       (substring tree-definition 1)
                                       (+ depth 1)
                                       skip-trunk skip-leaves
-                                      port output-type))))
+                                      port output-type transform sphere cylinder))))
 
       (cond ((not skip-trunk)
-             (display (scad-cylinder position rotation my-thickness child-thickness my-length) port)))
+             (display
+              (transform position
+                         rotation
+                         (vector 1 1 1)
+                         (lambda ()
+                           (cylinder my-thickness child-thickness my-length)))
+              port)))
       (cond
        ((eq? output-type 'hull) #t) ;; don't recurse
        ((eqv? #\i (string-ref tree-definition 0))
@@ -140,6 +252,14 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
         (error "unknown tree definition character: "
                (string (string-ref tree-definition 0)))))))))
 
+
+;;;;;;;;;;;;;;;;;;;;
+;;
+;; main program
+;;
+;;;;;;;;;;;;;;;;;;;;
+
+
 (define (main-program)
   (define (usage why)
     (cout why "\n")
@@ -150,6 +270,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (cout "   -w --base-width n             Thickness of truck.  default 10\n")
     (cout "   -h --hull                     output obj collision hull\n")
     (cout "   -o --output filename          File to write to\n")
+    (cout "   -v --povray                   output in pov-ray format\n")
     (cout "   -t --tree ixyo                Define the shape of the tree\n")
     (cout "      i = no branching\n")
     (cout "      y = one becomes 2\n")
@@ -165,7 +286,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   ((-h --hull))
                   (-t tree-definition)
                   (-o output-file)
-                  ((--skip-trunk --skip-leaves))
+                  ((--skip-trunk --skip-leaves -v --povray --pov-ray))
                   (-?) (-h))))
          (pos zero-vector)
          (rot zero-vector)
@@ -176,6 +297,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
          (skip-trunk #f)
          (skip-leaves #f)
          (output-file #f)
+         (output-povray #f)
          (output-port (current-output-port))
          (extra-arguments '()))
 
@@ -195,6 +317,8 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
           (set! skip-trunk #t))
          ((--skip-leaves)
           (set! skip-leaves #t))
+         ((-v --povray --pov-ray)
+          (set! output-povray #t))
          ((-w)
           (set! base-width (string->number (cadr arg))))
          ((-h --hull)
@@ -218,7 +342,12 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   skip-trunk skip-leaves
                   output-port
                   (cond (output-as-hull 'hull)
-                        (else 'normal)))
+                        (else 'normal))
+
+                  (if output-povray pov-ray-transform scad-transform)
+                  (if output-povray pov-ray-sphere scad-sphere)
+                  (if output-povray pov-ray-cylinder scad-cylinder)
+                  )
     ))
 
 (main-program)
