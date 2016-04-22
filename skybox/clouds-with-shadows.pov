@@ -18,23 +18,8 @@ camera {
 
  angle 90
 
-// #switch(frame_number)
-// #case (0)
-//   look_at camloc + x
-//  #case(1)
-//   look_at camloc + -x
-//  #case(2)
-//   look_at camloc + y
-//  #case(3)
-//   look_at camloc + -y
-//  #case(4)
-//   look_at camloc + z
-//  #case(5)
-//   look_at camloc + -z
-//  #end
-
 #if(frame_number=0)
-    look_at camloc + x
+    look_at camloc + y
 #end
 
 #if(frame_number=1)
@@ -42,19 +27,19 @@ camera {
 #end
 
 #if(frame_number=2)
-    look_at camloc + y
-#end
-
-#if(frame_number=3)
-    look_at camloc + -y
-#end
-
-#if(frame_number=4)
     look_at camloc + z
 #end
 
-#if(frame_number=5)
+#if(frame_number=3)
+    look_at camloc + x
+#end
+
+#if(frame_number=4)
     look_at camloc + -z
+#end
+
+#if(frame_number=5)
+    look_at camloc + -y
 #end
 
 }
