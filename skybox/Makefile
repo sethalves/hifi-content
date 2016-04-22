@@ -17,7 +17,7 @@ L_SYSTEM_TREE=../L-system-tree/L-system-tree
 
 ###
 
-all: skybox.png
+all: trees-skybox.png
 
 clouds-with-shadows0.png clouds-with-shadows1.png clouds-with-shadows2.png clouds-with-shadows3.png clouds-with-shadows4.png clouds-with-shadows5.png: clouds-with-shadows.pov clouds-with-shadows.ini
 	povray +W${WIDTH} +H${HEIGTH} clouds-with-shadows.ini
