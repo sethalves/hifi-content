@@ -131,14 +131,14 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 (define (pov-ray-sphere . maybe-radius)
   (let ((radius (if (null? maybe-radius) 1.0 (car maybe-radius))))
     (string-append
-     (format "sphere(r = ~a, $fn=~a\n" radius fn)
+     (format "sphere{<0,0,0>, ~a\n" radius)
      (pov-ray-transform-string)
 
      "    texture{ pigment{color rgb<0,1.0,0>}"
      "             normal {bumps 0.75 scale 0.015}"
      "    }"
 
-     (format ");\n"))))
+     (format "}\n"))))
 
 
 (define (pov-ray-cylinder base-radius top-radius length)
@@ -306,13 +306,13 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
        (case (car arg)
          ((-? -h) (usage ""))
          ((-p --position)
-          (set! pos (vector (string->number (list-ref args 1))
-                            (string->number (list-ref args 2))
-                            (string->number (list-ref args 3)))))
+          (set! pos (vector (string->number (list-ref arg 1))
+                            (string->number (list-ref arg 2))
+                            (string->number (list-ref arg 3)))))
          ((-r --rotation)
-          (set! rot (vector (string->number (list-ref args 1))
-                            (string->number (list-ref args 2))
-                            (string->number (list-ref args 3)))))
+          (set! rot (vector (string->number (list-ref arg 1))
+                            (string->number (list-ref arg 2))
+                            (string->number (list-ref arg 3)))))
          ((--skip-trunk)
           (set! skip-trunk #t))
          ((--skip-leaves)
