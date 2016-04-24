@@ -3,8 +3,8 @@
 #
 
 # size of one segment.  the final image will be of size: (WIDTH * 4, HEIGTH * 3)
-WIDTH=400
-HEIGTH=400
+WIDTH=600
+HEIGTH=600
 
 L_SYSTEM_TREE=../L-system-tree/L-system-tree
 

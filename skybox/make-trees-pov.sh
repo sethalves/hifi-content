@@ -6,7 +6,7 @@ cat skybox-header.pov > trees.pov
 
 pi=`echo "4*a(1)" | bc -l`
 
-for ((i=1;i<=300;i++));
+for ((i=1;i<=400;i++));
 do
     A=$(( ( RANDOM % 360 ) ))
     rad=`echo "$A*($pi/180)" | bc -l`
@@ -20,7 +20,9 @@ do
     R=$(( ( RANDOM % 360 ) ))
     W=$(( ( RANDOM % 3 )  + 3))
 
-    ${L_SYSTEM_TREE} -p $X $Y $Z -r 0 $R 0 -v -w $W -t iixxyiO -o tree.pov
+    S=$(( ( RANDOM % 2 )  + 2))
+
+    ${L_SYSTEM_TREE} -s 0.$S -p $X $Y $Z -r 0 $R 0 -v -w $W -t iixxyiO -o tree.pov
     cat tree.pov >> trees.pov
     rm tree.pov
 done
