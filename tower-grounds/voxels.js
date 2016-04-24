@@ -395,35 +395,28 @@ function addTerrainBlockNearLocation(baseLocation) {
     imZPNeighborFor = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:-16}), 16);
 
     if (imXNNeighborFor) {
-        var properties = Entities.getEntityProperties(imXNNeighborFor);
-        properties.xNNeighborID = polyVoxID;
-        Entities.editEntity(imXNNeighborFor, properties);
+        Entities.editEntity(imXNNeighborFor, {locked: false});
+        Entities.editEntity(imXNNeighborFor, {xNNeighborID: polyVoxID, locked: true});
     }
     if (imYNNeighborFor) {
-        var properties = Entities.getEntityProperties(imYNNeighborFor);
-        properties.yNNeighborID = polyVoxID;
-        Entities.editEntity(imYNNeighborFor, properties);
+        Entities.editEntity(imYNNeighborFor, {locked: false});
+        Entities.editEntity(imYNNeighborFor, {yNNeighborID: polyVoxID, locked: true});
     }
     if (imZNNeighborFor) {
-        var properties = Entities.getEntityProperties(imZNNeighborFor);
-        properties.zNNeighborID = polyVoxID;
-        Entities.editEntity(imZNNeighborFor, properties);
+        Entities.editEntity(imZNNeighborFor, {locked: false});
+        Entities.editEntity(imZNNeighborFor, {zNNeighborID: polyVoxID, locked: true});
     }
-
     if (imXPNeighborFor) {
-        var properties = Entities.getEntityProperties(imXPNeighborFor);
-        properties.xPNeighborID = polyVoxID;
-        Entities.editEntity(imXPNeighborFor, properties);
+        Entities.editEntity(imXPNeighborFor, {locked: false});
+        Entities.editEntity(imXPNeighborFor, {xPNeighborID: polyVoxID, locked: true});
     }
     if (imYPNeighborFor) {
-        var properties = Entities.getEntityProperties(imYPNeighborFor);
-        properties.yPNeighborID = polyVoxID;
-        Entities.editEntity(imYPNeighborFor, properties);
+        Entities.editEntity(imYPNeighborFor, {locked: false});
+        Entities.editEntity(imYPNeighborFor, {yPNeighborID: polyVoxID, locked: true});
     }
     if (imZPNeighborFor) {
-        var properties = Entities.getEntityProperties(imZPNeighborFor);
-        properties.zPNeighborID = polyVoxID;
-        Entities.editEntity(imZPNeighborFor, properties);
+        Entities.editEntity(imZPNeighborFor, {locked: false});
+        Entities.editEntity(imZPNeighborFor, {zPNeighborID: polyVoxID, locked: true});
     }
 
 

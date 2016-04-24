@@ -72,10 +72,12 @@ addTerrainAtPosition = function (position, plotSize) {
         dimensions: { x: plotSize, y: plotSize, z: plotSize },
         voxelVolumeSize: { x: 16, y: 64, z: 16 },
         voxelSurfaceStyle: 0,
-        xTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png",
-        // yTextureURL: "http://headache.hungry.com/~seth/hifi/green-16x16.png",
-        yTextureURL: "http://headache.hungry.com/~seth/hifi/green.png",
-        zTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png"
+        xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
+        yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
+        zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
+        // xTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png",
+        // yTextureURL: "http://headache.hungry.com/~seth/hifi/green.png",
+        // zTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png"
     });
 }
 

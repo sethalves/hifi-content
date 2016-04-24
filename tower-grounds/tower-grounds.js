@@ -6,7 +6,7 @@ Script.include([
 
 // var center = {x: 0, y: -16, z: 0};
 // var center = {x: 64, y: 50.2, z: 112};
-var center = {x: 64, y: 49.5, z: 112};
+var center = {x: 64, y: -0.5, z: 112};
 var zeroVec = {x: 0, y: 0, z: 0};
 
 var largePlotSize = 16; // 256;
