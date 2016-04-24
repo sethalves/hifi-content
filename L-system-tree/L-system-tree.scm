@@ -160,7 +160,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 ;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(define (make-segment base-width base-length position rotation tree-definition
+(define (make-segment base-width base-length position rotation scale tree-definition
                       depth skip-trunk skip-leaves port output-type
                       transform sphere cylinder)
   (cond
@@ -173,22 +173,23 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
             (transform position
                        rotation
                        (if (eqv? #\o (string-ref tree-definition 0))
-                           (vector 8 2.5 8)
-                           (vector 8 6 8))
+                           (vector (* 8 scale) (* 2.5 scale) (* 8 scale))
+                           (vector (* 8 scale) (* 6 scale) (* 8 scale)))
                        sphere)
             port)
            (display "\n" port))))
    (else
     ;; branch
-    (let* ((my-length (- base-length depth))
-           (my-thickness (/ base-width (+ depth 1.)))
-           (child-thickness (/ base-width (+ depth 2.)))
+    (let* ((my-length (* (- base-length depth) scale))
+           (my-thickness (* (/ base-width (+ depth 1.)) scale))
+           (child-thickness (* (/ base-width (+ depth 2.)) scale))
            (tip-offset (vector3-rotate (vector 0 my-length 0) rotation))
            (tip (vector3-sum position tip-offset))
            (new-child (lambda (r) ;; r is euler radians
                         (make-segment base-width base-length tip
                                       (combine-rotations (euler->quaternion r)
                                                          rotation)
+                                      scale
                                       (substring tree-definition 1)
                                       (+ depth 1)
                                       skip-trunk skip-leaves
@@ -267,6 +268,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (cout "   The output file should already exist, it will be appended to.\n")
     (cout "   -p --position x y z           Set the position of the trunk\n")
     (cout "   -r --rotation x y z           Set the rotation of the trunk\n")
+    (cout "   -s --scale s                  Scale size of tree\n")
     (cout "   -w --base-width n             Thickness of truck.  default 10\n")
     (cout "   -h --hull                     output obj collision hull\n")
     (cout "   -o --output filename          File to write to\n")
@@ -282,6 +284,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 
   (let* ((args (parse-command-line
                 `(((-p --position -r --rotation) x y z)
+                  ((-s --scale) s)
                   ((-w --base-width) width)
                   ((-h --hull))
                   (-t tree-definition)
@@ -290,6 +293,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   (-?) (-h))))
          (pos zero-vector)
          (rot zero-vector)
+         (scale 1.0)
          (base-width 2.0)
          (base-length 10.0)
          (output-as-hull #f)
@@ -313,6 +317,8 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
           (set! rot (vector (string->number (list-ref arg 1))
                             (string->number (list-ref arg 2))
                             (string->number (list-ref arg 3)))))
+         ((-s --scale)
+          (set! scale (string->number (cadr arg))))
          ((--skip-trunk)
           (set! skip-trunk #t))
          ((--skip-leaves)
@@ -338,6 +344,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 
     (make-segment base-width base-length pos
                   (euler->quaternion (degrees->radians rot))
+                  scale
                   tree-definition 0
                   skip-trunk skip-leaves
                   output-port
