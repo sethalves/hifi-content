@@ -419,16 +419,15 @@ function addTerrainBlockNearLocation(baseLocation) {
         Entities.editEntity(imZPNeighborFor, {zPNeighborID: polyVoxID, locked: true});
     }
 
-
     // link this plot to its neighbors
-    var properties = Entities.getEntityProperties(polyVoxID);
-    properties.xNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:-16, y:0, z:0}), 16);
-    properties.yNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:-16, z:0}), 16);
-    properties.zNNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:-16}), 16);
-    properties.xPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:16, y:0, z:0}), 16);
-    properties.yPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:16, z:0}), 16);
-    properties.zPNeighborID = lookupTerrainForLocation(Vec3.sum(baseLocation, {x:0, y:0, z:16}), 16);
-    Entities.editEntity(polyVoxID, properties);
+    Entities.editEntity(polyVoxID, {
+        xNNeighborID: imXPNeighborFor
+        yNNeighborID: imYPNeighborFor
+        zNNeighborID: imZPNeighborFor
+        xPNeighborID: imXNNeighborFor
+        yPNeighborID: imYNNeighborFor
+        zPNeighborID: imZNNeighborFor
+    });
 
     return polyVoxID;
 }
