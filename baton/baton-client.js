@@ -14,14 +14,14 @@ acBaton = function (options) {
         serverResponseTimeout = options.serverTimeOut || 2000, // ms
         exports = options.exports || {};
 
-    exports.claim = function claim(onGrant, onRelease, onDenied, onNoServerResponse) {
+    exports.claimOrReclaim = function claimOrReclaim(command, onGrant, onRelease, onDenied, onNoServerResponse) {
         _this.onGrant = onGrant;
         _this.onRelease = onRelease;
         _this.onDenied = onDenied;
         _this.onNoServerResponse = onNoServerResponse;
 
         Messages.sendMessage("baton", JSON.stringify({
-            command: "claim",
+            command: command,
             name: batonName,
             participant: participant,
             time: timeScale
@@ -35,6 +35,14 @@ acBaton = function (options) {
             }
         }, serverResponseTimeout);
         return exports;
+    };
+
+    exports.claim = function claim(onGrant, onRelease, onDenied, onNoServerResponse) {
+        return exports.claimOrReclaim("claim", onGrant, onRelease, onDenied, onNoServerResponse);
+    };
+
+    exports.reclaim = function reclaim(onGrant, onRelease, onDenied, onNoServerResponse) {
+        return exports.claimOrReclaim("reclaim", onGrant, onRelease, onDenied, onNoServerResponse);
     };
 
     exports.release = function release() {
