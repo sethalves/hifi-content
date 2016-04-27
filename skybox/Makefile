@@ -60,6 +60,9 @@ trees-row2.pnm: trees5.pnm blank.pnm
 trees-skybox.pnm: trees-row0.pnm trees-row1.pnm trees-row2.pnm
 	pnmcat -tb $^ > $@
 
+grass.png: trees5.png
+	cp $^ $@
+
 
 ###
 
@@ -67,5 +70,5 @@ clean:
 	rm -f *~ *.pnm *.png
 	rm -f tree.pov trees.pov
 
-upload: trees-skybox.png # skybox.png
+upload: trees-skybox.png grass.png # skybox.png
 	scp $^ headache:public_html/hifi/
