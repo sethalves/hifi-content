@@ -44,7 +44,7 @@ function Timer() {
         wantDebug = true,
         CHECK_INTERVAL = 10.00,
         SEARCH_INTERVAL = 1000,
-        GRAVITY_RANGE = 10.0,
+        GRAVITY_RANGE = 20.0,
         GRAVITY_STRENGTH = 1.0,
         MIN_VELOCITY = 0.05,
         timeoutID = null,
