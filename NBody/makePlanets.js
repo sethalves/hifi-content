@@ -35,7 +35,8 @@ var toolBar = new ToolBar(0, 0, ToolBar.HORIZONTAL, "highfidelity.makePlanets.js
     };
 });
 
-var diceIconURL = "https://s3-us-west-1.amazonaws.com/hifi-content/eric/images/dice.png"
+// var diceIconURL = "https://s3-us-west-1.amazonaws.com/hifi-content/eric/images/dice.png"
+var diceIconURL = "http://headache.hungry.com/~seth/hifi/NBody/gravity.svg"
 var button = toolBar.addOverlay("image", {
     x: screenSize.x / 2 + PADDING,
     y: screenSize.y - (BUTTON_SIZE + PADDING),
@@ -72,7 +73,7 @@ function onButtonClick() {
     earth = Entities.addEntity({
         type: "Model",
 	name: "Earth",
-        modelURL: "http://headache.hungry.com/~seth/hifi/earth-noclouds.fbx",
+        modelURL: "http://headache.hungry.com/~seth/hifi/NBody/earth.fbx",
 	position: inFrontOfMe(2 * EARTH_SIZE),
 	dimensions: { x: EARTH_SIZE, y: EARTH_SIZE, z: EARTH_SIZE },
         shapeType: "sphere"
@@ -80,7 +81,7 @@ function onButtonClick() {
     moon = Entities.addEntity({
         type: "Model",
 	name: "Moon",
-        modelURL: "http://headache.hungry.com/~seth/hifi/New-Moon.fbx",
+        modelURL: "http://headache.hungry.com/~seth/hifi/NBody/moon.fbx",
 	position: inFrontOfMe(EARTH_SIZE - MOON_SIZE),
 	dimensions: { x: MOON_SIZE, y: MOON_SIZE, z: MOON_SIZE },
 	dynamic: true,
