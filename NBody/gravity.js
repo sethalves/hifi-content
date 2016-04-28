@@ -46,12 +46,12 @@ function Timer() {
         SEARCH_INTERVAL = 1000,
         GRAVITY_RANGE = 10.0,
         GRAVITY_STRENGTH = 1.0,
-        MIN_VELOCITY = 0.1,
+        MIN_VELOCITY = 0.05,
         timeoutID = null,
         timeSinceLastSearch = 0,
         timer = new Timer(),
         simulate = false,
-        spheres;
+        spheres = [];
 
     var printDebug = function(message) {
         if (wantDebug) {
@@ -68,7 +68,18 @@ function Timer() {
     }
 
     var findSpheres = function(position) {
-        spheres = Entities.findEntities(position, GRAVITY_RANGE);
+        var entities = Entities.findEntities(position, GRAVITY_RANGE);
+        spheres = [];
+        for (var i = 0; i < entities.length; i++) {
+            if (entityID == spheres[i]) {
+                // this entity doesn't experience its own gravity.
+                continue;
+            }
+            var props = Entities.getEntityProperties(entities[i]);
+            if (props.shapeType == "sphere") {
+                spheres.push(entities[i]);
+            }
+        }
         print("FOUND " + spheres.length + " SPHERES");
     }
 
@@ -77,36 +88,33 @@ function Timer() {
             return;
         }
 
+        var properties = Entities.getEntityProperties(entityID);
+
+        // update the list of nearby spheres
         var deltaTime = timer.elapsed() / 1000.0;
         if (deltaTime == 0.0) {
             return;
         }
-        var properties = Entities.getEntityProperties(entityID);
         timeSinceLastSearch += CHECK_INTERVAL;
         if (timeSinceLastSearch >= SEARCH_INTERVAL) {
             findSpheres(properties.position);
             timeSinceLastSearch = 0;
         }
-        var spheres = Entities.findEntities(properties.position, GRAVITY_RANGE);
+
         var deltaVelocity = { x: 0, y: 0, z: 0 };
         var otherCount = 0;
         var mass = mass2(properties.dimensions);
 
         for (var i = 0; i < spheres.length; i++) {
-            if (entityID != spheres[i]) {
-                otherProperties = Entities.getEntityProperties(spheres[i]);
-                if (otherProperties.type == "Sphere") {
-                    otherCount++;
-                    var radius = Vec3.distance(properties.position, otherProperties.position);
-                    var otherMass = mass2(otherProperties.dimensions);
-                    var r = (greatestDimension(properties.dimensions) +
-                             greatestDimension(otherProperties.dimensions)) / 2;
-                    if (radius > r) {
-                        var n0 = Vec3.normalize(Vec3.subtract(otherProperties.position, properties.position));
-                        var n1 = Vec3.multiply(deltaTime * GRAVITY_STRENGTH * otherMass / (radius * radius), n0);
-                        deltaVelocity = Vec3.sum(deltaVelocity, n1);
-                    }
-                }
+            otherProperties = Entities.getEntityProperties(spheres[i]);
+            otherCount++;
+            var radius = Vec3.distance(properties.position, otherProperties.position);
+            var otherMass = mass2(otherProperties.dimensions);
+            var r = (greatestDimension(properties.dimensions) + greatestDimension(otherProperties.dimensions)) / 2;
+            if (radius > r) {
+                var n0 = Vec3.normalize(Vec3.subtract(otherProperties.position, properties.position));
+                var n1 = Vec3.multiply(deltaTime * GRAVITY_STRENGTH * otherMass / (radius * radius), n0);
+                deltaVelocity = Vec3.sum(deltaVelocity, n1);
             }
         }
         Entities.editEntity(entityID, { velocity: Vec3.sum(properties.velocity, deltaVelocity) });
