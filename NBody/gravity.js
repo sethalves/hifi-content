@@ -46,7 +46,7 @@ function Timer() {
         SEARCH_INTERVAL = 1000,
         GRAVITY_RANGE = 20.0,
         GRAVITY_STRENGTH = 1.0,
-        MIN_VELOCITY = 0.05,
+        MIN_VELOCITY = 0.01,
         timeoutID = null,
         timeSinceLastSearch = 0,
         timer = new Timer(),
@@ -76,11 +76,11 @@ function Timer() {
                 continue;
             }
             var props = Entities.getEntityProperties(entities[i]);
-            if (props.shapeType == "sphere") {
+            if (props && (props.shapeType == "sphere" || props.type == "Sphere")) {
                 spheres.push(entities[i]);
             }
         }
-        print("FOUND " + spheres.length + " SPHERES");
+        // print("FOUND " + spheres.length + " SPHERES");
     }
 
     var applyGravity = function() {
@@ -89,6 +89,9 @@ function Timer() {
         }
 
         var properties = Entities.getEntityProperties(entityID);
+        if (!properties || !properties.position) {
+            return;
+        }
 
         // update the list of nearby spheres
         var deltaTime = timer.elapsed() / 1000.0;
@@ -107,6 +110,9 @@ function Timer() {
 
         for (var i = 0; i < spheres.length; i++) {
             otherProperties = Entities.getEntityProperties(spheres[i]);
+            if (!otherProperties || !otherProperties.position) {
+                continue; // sphere was deleted
+            }
             otherCount++;
             var radius = Vec3.distance(properties.position, otherProperties.position);
             var otherMass = mass2(otherProperties.dimensions);
@@ -159,7 +165,7 @@ function Timer() {
         if (channel === 'Hifi-Object-Manipulation') {
             try {
                 var parsedMessage = JSON.parse(message);
-                if (parsedMessage.action === 'grab') {
+                if (parsedMessage.action === 'grab' && parsedMessage.grabbedEntity == entityID) {
                     print("Gravity simulation stopped due to grab");
                     simulate = false;
                 }
