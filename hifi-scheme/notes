@@ -1,0 +1,173 @@
+-*- org -*-
+
+
+
+* gambit
+
+
+http://gambitscheme.org/wiki/index.php/Main_Page
+https://github.com/feeley/gambit
+
+sudo apt-get install autoconf
+sudo apt-get build-dep gambc
+
+git clone git@github.com:feeley/gambit.git
+
+
+cd gambit
+./configure --enable-single-host
+make -j4 from-scratch
+make check
+sudo make install
+
+* asmjs
+
+http://asmjs.org/
+
+* gambit scheme target
+
+search for "gambit inline-host-statement inline-host-declaration inline-host-expression"
+
+http://gambit-list.iro.umontreal.narkive.com/JUxGilJn/javascript-backend
+
+
+
+I have now changed the safety to avoid the need for (not safe).
+
+Also, the procedures ##inline-host-expression and ##inline-host-statement have been generalized to allow parameters.  The Nth parameter after the code string will be inserted where there is a @N@ reference in the code string.
+
+Finally the ##inline-host-declaration procedure has been added to allow inserting toplevel host code in the generated code.
+
+Below is an example.  Note the use of the Gambit_scm2js and Gambit_js2scm functions to convert values between their JavaScript and Scheme representations.
+
+Marc
+
+
+(declare (extended-bindings)) ;; to inline the ##inline-host-... procedures
+
+(##inline-host-declaration #<<host-code-end
+
+function out(x) { console.log(x); }
+
+host-code-end
+)
+
+(define (out x)
+  (##inline-host-statement "out(Gambit_scm2js(@1@));" x))
+
+(define (add x y)
+  (##inline-host-expression
+   "Gambit_js2scm(Gambit_scm2js(@1@) + Gambit_scm2js(@2@))" x y))
+
+(out "hello!")
+
+(out #t)
+
+(out (add 11 22))
+
+;; Output:
+;;
+;; % gsc -c -target js test.scm
+;; % node test.js
+;; hello!
+;; true
+;; 33
+
+
+
+
+
+
+(declare (extended-bindings) (not safe))
+
+(define (get-name)
+(##inline-host-expression "prompt('enter name?')"))
+
+(define (console.log text)
+(##inline-host-statement "console.log(Gambit_r1);\n"))
+
+(define name (get-name))
+
+(console.log name)
+
+
+
+
+(define js
+(##inline-host-expression "Gambit_js2scm(eval)"))
+
+This creates a Scheme callable function which performs a JavaScript eval. Then, in your code you can say:
+
+(define alert (js "alert"))
+(alert "hello!")
+
+This will “convert” the JavaScript “alert” function to a Scheme function.
+
+For the other way around (exporting a Scheme function callable from JavaScript), the js function can be used like this:
+
+(define setglo (js "function (name,val) { window[name] = val; }"))
+
+then
+
+(setglo "foo" (lambda (n) (* n n)))
+
+And then in JavaScript land your can call (foo 10).
+Post by Bob Coleman
+Also, is it possible to access the value of the -target flag in scheme? I would like to define some functions differently based on whether the program is being built for the C or javascript backend.
+Define this macro:
+
+(##define-macro (case-target . clauses)
+(let ((target (if (and (pair? ##compilation-options)
+(pair? (car ##compilation-options)))
+(let ((t (assq 'target ##compilation-options)))
+(if t (cadr t) 'c))
+'c)))
+(let loop ((clauses clauses))
+(if (pair? clauses)
+(let* ((clause (car clauses))
+(cases (car clause)))
+(if (or (eq? cases 'else)
+(memq target cases))
+`(begin ,@(cdr clause))
+(loop (cdr clauses))))
+`(begin)))))
+
+and use it like this:
+
+(case-target
+((c)
+(define foo (c-lambda () int "foo")))
+((js)
+(define foo (lambda () (##inline-host-expression "42")))))
+
+
+
+
+(declare
+ (standard-bindings)
+ (extended-bindings)
+ ;; (not safe)
+ ;; (fixnum)
+ ;; (block)
+ )
+
+
+
+;; (define (Scene.getSunColor)
+;;   (##inline-host-expression "Scene.getSunColor()"))
+
+
+(define (print x)
+  ;; (##inline-host-statement "print(@1@);" x)
+  (##inline-host-statement "console.log(@1@);" x)
+  )
+
+
+* test.js
+
+/home/seth/src/hifi-content/hifi-scheme/test.js
+
+
+[04/30 14:45:37] [WARNING] [UncaughtException] ReferenceError: Can't find variable: g_make_interned_symbol in file:///home/seth/src/hifi-content/hifi-scheme/test.js:23
+[04/30 14:45:37] [WARNING] [Backtrace]
+[04/30 14:45:37] [WARNING]     <global>() at file:///home/seth/src/hifi-content/hifi-scheme/test.js:23
