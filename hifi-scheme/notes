@@ -19,6 +19,12 @@ cd gambit
 make -j4 from-scratch
 make check
 sudo make install
+cd lib
+rm -f _gambit.js
+make _gambit.js
+sudo cp _gambit.js /usr/local/Gambit/lib/
+
+
 
 * asmjs
 
