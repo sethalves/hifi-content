@@ -10,5 +10,5 @@ faucet.obj: faucet.stl
 clean:
 	rm -f *~ faucet.stl faucet.obj
 
-upload: faucet.obj faucet.mtl glow-dropper.js
+upload: faucet.obj faucet.mtl glow-dropper.js faucet-hull.obj
 	scp $^ headache:public_html/hifi/
