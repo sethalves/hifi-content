@@ -1,7 +1,7 @@
 
 Script.include([
-    "/~/libraries/utils.js",
-    "/~/libraries/toolBars.js",
+    "/~/system/libraries/utils.js",
+    "/~/system/libraries/toolBars.js",
     "voxel-ground-utils.js"
 ]);
 

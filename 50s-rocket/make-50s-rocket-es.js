@@ -5,7 +5,7 @@
 
 (function() {
     var _this;
-    var utilitiesScript = Script.resolvePath("/~/libraries/utils.js");
+    var utilitiesScript = Script.resolvePath("/~/system/libraries/utils.js");
     Script.include(utilitiesScript);
     RocketSwitch = function() {
         _this = this;

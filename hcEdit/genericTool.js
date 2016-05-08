@@ -8,8 +8,7 @@
 
 
 genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
-    Script.include("/~/libraries/utils.js");
-    Script.include("/~/libraries/constants.js");
+    Script.include("/~/system/libraries/utils.js");
 
     var TRIGGER_CONTROLS = [
         Controller.Standard.LT,
