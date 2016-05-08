@@ -1,13 +1,35 @@
 #!/usr/bin/python
 
-import sys, json
+import sys
+import json
+import uuid
 
-result = {'success':'true','message':'The Command Completed Successfully'};
 
-myjson = json.load(sys.stdin)
-# Do something with 'myjson' object
+urlBase = 'http://headache.hungry.com/~seth/hifi/hifi-openscad'
 
-print >> sys.stderr, 'HERE'
+# https://docs.python.org/2/library/json.html
+# https://docs.python.org/2/library/json.html#json-to-py-table
+inputEntities = json.load(sys.stdin)
+
+newModelID = uuid.uuid4();
+visualFile = str(newModelID) + '-visual.obj';
+collisionFile = str(newModelID) + '-hull.obj';
+inputsFile = str(newModelID) + '-inputs.obj';
+
+print >> sys.stderr, '-----------------'
+for inputEntity in inputEntities:
+    entityType = inputEntity['type']
+    entityTranslation = inputEntity['translation']
+    entityRotation = inputEntity['rotation']
+    entityScale = inputEntity['scale']
+    entityColor = inputEntity['color']
+
+    print >> sys.stderr, entityType, entityTranslation, entityRotation, entityScale, entityColor
+
 
 print 'Content-Type: application/json\n\n'
-print json.dumps(result)    # or "json.dump(result, sys.stdout)"
+print json.dumps({
+    'success':'true',
+    'modelURL': urlBase + '/models/' + visualFile,
+    'collisionURL': urlBase + '/models/' + collisionFile
+})
