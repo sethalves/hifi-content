@@ -11,35 +11,21 @@
         this.batonName = 'io.highfidelity.seth.solid-modeler:' + this.entityID;
         this.baton = acBaton({
             batonName: this.batonName,
-            timeScale: 15000
+            timeScale: 120000
         });
 
     }
 
     this.turnOn = function () {
         Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 0 }});
-        // var _this = this;
-        // this.baton.claim(
-        //     function () { // onGrant
-        //         // https://en.wikipedia.org/wiki/XMLHttpRequest
-        //         var req = new XMLHttpRequest();
-        //         req.responseType = 'json';
-        //         req.open("POST", "http://headache.hungry.com/~seth/hifi/hifi-openscad/invoke-scad.cgi", false);
-        //         // "application/json"
-        //         req.send(JSON.stringify({something: "ok"}));
-        //         if (req.status == 200) {
-        //             print("success: " + req.response);
-        //             _this.turnOff();
-        //             _this.baton.release();
-        //         } else {
-        //             print("Error loading data: " + req.status + " " + req.statusText + ", " + req.errorCode);
-        //             _this.turnOff();
-        //             _this.baton.release();
-        //         }
-        //     });
 
-        this.findInputs();
+        // this.findInputs();
 
+        var _this = this;
+        this.baton.claim(
+            function () { // onGrant
+                _this.findInputs();
+            });
     }
 
     this.turnOff = function () {
@@ -116,7 +102,7 @@
             Entities.addEntity({
                 type: 'Model',
                 modelURL: modelURL,
-                position: Vec3.sum(platformPosition, { x: 0, y: 1.5, z: -2 }),
+                position: Vec3.sum(platformPosition, { x: 0, y: 1.0, z: -2 }),
                 userData: JSON.stringify({"grabbableKey":{"grabbable":true}})
             });
             _this.turnOff();
@@ -124,6 +110,7 @@
             print("Error loading data: " + req.status + " " + req.statusText + ", " + req.errorCode);
             _this.turnOff();
         }
+        _this.baton.release();
     }
 
 
