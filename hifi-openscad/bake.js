@@ -11,7 +11,7 @@
         this.batonName = 'io.highfidelity.seth.solid-modeler:' + this.entityID;
         this.baton = acBaton({
             batonName: this.batonName,
-            timeScale: 120000
+            timeScale: 240000,
         });
 
     }
