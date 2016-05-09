@@ -95,10 +95,10 @@
             }
         }
 
-        this.invokeOpenScad(inputs);
+        this.invokeOpenScad(inputs, platformPosition);
     }
 
-    this.invokeOpenScad = function (inputs) {
+    this.invokeOpenScad = function (inputs, platformPosition) {
         var _this = this;
         var req = new XMLHttpRequest();
         req.responseType = 'json';
@@ -111,6 +111,14 @@
                 var key = keys[keyIndex];
                 print("    " + key + " = " + req.response[key]);
             }
+
+            var modelURL = req.response.modelURL;
+            Entities.addEntity({
+                type: 'Model',
+                modelURL: modelURL,
+                position: Vec3.sum(platformPosition, { x: 0, y: 0, z: 2 }),
+                userData: JSON.stringify({"grabbableKey":{"grabbable":true}})
+            });
             _this.turnOff();
         } else {
             print("Error loading data: " + req.status + " " + req.statusText + ", " + req.errorCode);
