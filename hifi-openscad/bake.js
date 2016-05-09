@@ -116,7 +116,7 @@
             Entities.addEntity({
                 type: 'Model',
                 modelURL: modelURL,
-                position: Vec3.sum(platformPosition, { x: 0, y: 1, z: -2 }),
+                position: Vec3.sum(platformPosition, { x: 0, y: 1.5, z: -2 }),
                 userData: JSON.stringify({"grabbableKey":{"grabbable":true}})
             });
             _this.turnOff();

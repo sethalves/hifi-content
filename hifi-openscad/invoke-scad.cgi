@@ -23,6 +23,7 @@ stlFile = str(newModelID) + '.stl';
 # record the inputs we got
 inputsHandle = open(fsBase + '/models/' + inputsFile, 'w')
 inputsHandle.write(json.dumps(inputEntities, indent = 4));
+print >> inputsHandle
 inputsHandle.close()
 
 # generate openscad input
@@ -46,8 +47,8 @@ for inputEntity in inputEntities:
 
     scad = """
     translate([{0}, {1}, {2}])
-      scale([{3}, {4}, {5}])
-        rotate([{6}, {7}, {8}])
+      rotate([{6}, {7}, {8}])
+        scale([{3}, {4}, {5}])
           color([{9}, {10}, {11}, 1])
             {12};
 
