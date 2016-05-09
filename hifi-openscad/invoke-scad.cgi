@@ -38,11 +38,11 @@ for inputEntity in inputEntities:
     # print >> sys.stderr, entityType, entityTranslation, entityRotation, entityScale, entityColor
 
     if (entityType == 'cube'):
-        item = 'cube([1, 1, 1])';
+        item = 'cube(1, center=true)';
     elif (entityType == 'sphere'):
-        item = 'sphere([0.5, 0.5, 0.5], center=true, $fn=24)';
+        item = 'sphere(0.5, center=true, $fn=24)';
     else:
-        item = 'cube([1, 1, 1], center=true)';
+        item = 'cube(1, center=true)';
 
     scad = """
     translate([{0}, {1}, {2}])
