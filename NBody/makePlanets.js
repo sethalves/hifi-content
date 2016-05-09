@@ -27,7 +27,7 @@ HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
 Script.include(["/~/system/libraries/toolBars.js"]);
 var toolBar = new ToolBar(0, 0, ToolBar.HORIZONTAL, "highfidelity.makePlanets.js");
 
-var makePlanetsIconURL = "http://headache.hungry.com/~seth/hifi/NBody/gravity.svg"
+var makePlanetsIconURL = "https://s3-us-west-1.amazonaws.com/hifi-content/seth/production/NBody/gravity.svg"
 var button = toolBar.addOverlay("image", {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
@@ -60,7 +60,7 @@ function onButtonClick() {
     earth = Entities.addEntity({
         type: "Model",
         name: "Earth",
-        modelURL: "http://headache.hungry.com/~seth/hifi/NBody/earth.fbx",
+        modelURL: "https://s3-us-west-1.amazonaws.com/hifi-content/seth/production/NBody/earth.fbx",
         position: inFrontOfMe(2 * EARTH_SIZE),
         dimensions: { x: EARTH_SIZE, y: EARTH_SIZE, z: EARTH_SIZE },
         shapeType: "sphere",
@@ -71,7 +71,7 @@ function onButtonClick() {
     moon = Entities.addEntity({
         type: "Model",
         name: "Moon",
-        modelURL: "http://headache.hungry.com/~seth/hifi/NBody/moon.fbx",
+        modelURL: "https://s3-us-west-1.amazonaws.com/hifi-content/seth/production/NBody/moon.fbx",
         position: inFrontOfMe(EARTH_SIZE - MOON_SIZE),
         dimensions: { x: MOON_SIZE, y: MOON_SIZE, z: MOON_SIZE },
         dynamic: true,
