@@ -4,9 +4,9 @@
 
 all:
 
-upload: makePlanets.js gravity.js gravity.svg earth.fbx moon.fbx
+upload: earth.fbx gravity.js gravity.svg makePlanets.js moon.fbx planet-rezzer-ES.js
 	scp $^ headache:public_html/hifi/NBody/
 
-upload-s3: gravity.js earth.fbx moon.fbx planet-rezzer-ES.js gravity.svg
+upload-s3: earth.fbx gravity.js gravity.svg makePlanets.js moon.fbx planet-rezzer-ES.js
 	s3cmd put $^ s3://hifi-content/seth/production/NBody/
 	s3cmd setacl s3://hifi-content/seth/production/NBody/ --acl-public --recursive

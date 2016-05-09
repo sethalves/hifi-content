@@ -27,7 +27,7 @@ HIFI_PUBLIC_BUCKET = "http://s3.amazonaws.com/hifi-public/";
 Script.include(["/~/system/libraries/toolBars.js"]);
 var toolBar = new ToolBar(0, 0, ToolBar.HORIZONTAL, "highfidelity.makePlanets.js");
 
-var makePlanetsIconURL = "https://s3-us-west-1.amazonaws.com/hifi-content/seth/production/NBody/gravity.svg"
+var makePlanetsIconURL = Script.resolvePath("gravity.svg");
 var button = toolBar.addOverlay("image", {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
