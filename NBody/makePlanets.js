@@ -64,6 +64,7 @@ function onButtonClick() {
         position: inFrontOfMe(2 * EARTH_SIZE),
         dimensions: { x: EARTH_SIZE, y: EARTH_SIZE, z: EARTH_SIZE },
         shapeType: "sphere",
+        lifetime: 86400, // 1 day
         angularDamping: 0,
         angularVelocity: { x: 0, y: 0.1, z: 0 },
     });
