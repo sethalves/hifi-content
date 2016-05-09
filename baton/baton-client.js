@@ -11,7 +11,7 @@ acBaton = function (options) {
     var batonName = options.batonName || "unknown",
         participant = options.instanceId || MyAvatar.sessionUUID,
         timeScale = options.timeScale || 1000, // ms
-        serverResponseTimeout = options.serverTimeOut || 2000, // ms
+        serverResponseTimeout = options.serverTimeOut || 0, // ms
         exports = options.exports || {};
 
     exports.claimOrReclaim = function claimOrReclaim(command, onGrant, onRelease, onDenied, onNoServerResponse) {
@@ -27,13 +27,15 @@ acBaton = function (options) {
             time: timeScale
         }));
 
-        _this.responseTimeout = Script.setTimeout(function() {
-            // no response from server.  just go ahead
-            print("no response from server for baton " + batonName);
-            if (_this.onNoServerResponse) {
-                _this.onNoServerResponse();
-            }
-        }, serverResponseTimeout);
+        if (serverResponseTimeout > 0) {
+            _this.responseTimeout = Script.setTimeout(function() {
+                // no response from server.  just go ahead
+                print("no response from server for baton " + batonName);
+                if (_this.onNoServerResponse) {
+                    _this.onNoServerResponse();
+                }
+            }, serverResponseTimeout);
+        }
         return exports;
     };
 
