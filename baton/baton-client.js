@@ -27,6 +27,7 @@ acBaton = function (options) {
             time: timeScale
         }));
 
+        _this.responseTimeout = null;
         if (serverResponseTimeout > 0) {
             _this.responseTimeout = Script.setTimeout(function() {
                 // no response from server.  just go ahead
@@ -87,7 +88,9 @@ acBaton = function (options) {
             return;
         }
 
-        Script.clearTimeout(_this.responseTimeout);
+        if (_this.responseTimeout) {
+            Script.clearTimeout(_this.responseTimeout);
+        }
 
         if (command == "grant") {
             if (_this.onGrant) {
