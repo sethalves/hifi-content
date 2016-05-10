@@ -99,8 +99,9 @@ p.wait()
 print >> sys.stderr, p.returncode
 
 
-# headache% wavefront-obj-tool -n 71d3df7f-79f8-4efc-9757-7214cf23d06a.stl -o 71d3df7f-79f8-4efc-9757-7214cf23d06a.obj
 cmd = ['/usr/local/bin/wavefront-obj-tool', '-n', fsBase + '/models/' + stlFile, '-o', fsBase + '/models/' + visualFile]
+# cmd = ['/usr/bin/meshlabserver', '-i', fsBase + '/models/' + stlFile, '-o', fsBase + '/models/' + visualFile]
+
 print >> sys.stderr, cmd
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 for line in p.stdout:
