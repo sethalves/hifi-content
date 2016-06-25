@@ -1,10 +1,9 @@
 
-edges = 1; // set by Makefile
-canvas = 1; // set by Makefile
 
-if (edges == 1) {
-    difference() {
-        cube([0.9, 1.06, 0.15], center = true);
-        cube([0.8, 0.96, 0.2], center = true);
-    }
+width = 0.5; // set by Makefile
+height = 0.5; // set by Makefile
+
+difference() {
+    cube([width + 0.1, height + 0.1, 0.15], center = true);
+    cube([width, height, 0.2], center = true);
 }
