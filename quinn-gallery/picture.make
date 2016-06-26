@@ -19,7 +19,7 @@ canvas.obj: ../$(FRAME)/canvas.obj.m4
 $(NAME).obj: $(FRAME).obj canvas.obj
 	wavefront-obj-tool -n -L $(FRAME).mtl -c $^ -o $@
 
-export:
+export: all
 	mkdir -p ../export/$(NAME)/
 	cp $(NAME).obj $(FRAME).mtl canvas.png ../export/$(NAME)/
 
