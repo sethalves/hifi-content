@@ -19,11 +19,9 @@ canvas.obj: ../$(FRAME)/canvas.obj.m4
 $(NAME).obj: $(FRAME).obj canvas.obj
 	wavefront-obj-tool -n -L $(FRAME).mtl -c $^ -o $@
 
-upload: all
-	ssh headache.hungry.com "mkdir -p public_html/hifi/quinn-gallery/$(NAME)/"
-	scp $(NAME).obj headache.hungry.com:public_html/hifi/quinn-gallery/$(NAME)/
-	scp $(FRAME).mtl headache.hungry.com:public_html/hifi/quinn-gallery/$(NAME)/
-	scp canvas.png headache.hungry.com:public_html/hifi/quinn-gallery/$(NAME)/
+export:
+	mkdir -p ../export/$(NAME)/
+	cp $(NAME).obj $(FRAME).mtl canvas.png ../export/$(NAME)/
 
 clean:
 	rm -f *~
