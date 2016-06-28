@@ -42,15 +42,16 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             this.hand = params[0] == "left" ? 0 : 1;
             this.targetEntity = null;
             this.active = false;
+            this.canActivate = false; // to avoid firing right as the thing is equipped
         },
 
         continueEquip: function(id, params) {
             if (!this.equipped) {
                 return;
             }
-            this.updateProps();
             this.toggleWithTriggerPressure();
             if (this.active && this.toolFunctionContinue) {
+                this.updateProps();
                 this.toolFunctionContinue();
             }
         },
@@ -60,7 +61,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             this.position = toolProperties.position;
             this.rotation = toolProperties.rotation;
 
-            this.firingDirection = Quat.getFront(this.rotation);
+            this.firingDirection = Vec3.multiply(-1.0, Quat.getFront(this.rotation));
             var upVec = Quat.getUp(this.rotation);
             this.barrelPoint = Vec3.sum(this.position, Vec3.multiply(upVec, this.laserOffsets.y));
             this.laserTip = Vec3.sum(this.barrelPoint, Vec3.multiply(this.firingDirection, this.laserLength));
@@ -72,6 +73,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
 
             if (this.triggerValue < RELOAD_THRESHOLD) {
                 this.targetEntity = null;
+                this.targetAvatar = null;
                 this.canActivate = true;
                 if (this.active && this.toolFunctionStop) {
                     this.toolFunctionStop();
@@ -80,6 +82,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             }
             if (this.canActivate === true && this.triggerValue > 0.55) {
                 this.canActivate = false;
+                this.updateProps();
                 this.activate();
             }
         },
@@ -105,29 +108,29 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
                 volume: this.activateSoundVolume
             });
 
-            var pickRay = {
+            this.pickRay = {
                 origin: this.barrelPoint,
                 direction: this.firingDirection
             };
 
-            print("pickRay direction =" + this.firingDirection.x + " " + this.firingDirection.y + " " + this.firingDirection.z);
-            Entities.addEntity({
-                type: "Sphere",
-                position: pickRay.origin,
-                color: {red: 200, green: 0, blue: 0},
-                dimensions: 0.05,
-                lifetime: 1.0
-            });
-            Entities.addEntity({
-                type: "Sphere",
-                position: Vec3.sum(pickRay.origin, pickRay.direction),
-                color: {red: 0, green: 200, blue: 0},
-                dimensions: 0.05,
-                lifetime: 1.0
-            });
+            // print("pickRay direction =" + this.firingDirection.x + " " + this.firingDirection.y + " " + this.firingDirection.z);
+            // Entities.addEntity({
+            //     type: "Sphere",
+            //     position: this.pickRay.origin,
+            //     color: {red: 200, green: 0, blue: 0},
+            //     dimensions: 0.02,
+            //     lifetime: 1.0
+            // });
+            // Entities.addEntity({
+            //     type: "Sphere",
+            //     position: Vec3.sum(this.pickRay.origin, this.pickRay.direction),
+            //     color: {red: 0, green: 200, blue: 0},
+            //     dimensions: 0.02,
+            //     lifetime: 1.0
+            // });
 
 
-            var intersection = Entities.findRayIntersection(pickRay, true);
+            var intersection = Entities.findRayIntersection(this.pickRay, true);
             if (intersection.intersects) {
                 this.targetEntity = intersection.entityID;
                 this.toolActivationProperties = Entities.getEntityProperties(this.entityID);
@@ -140,7 +143,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
                 this.entityDistance = -1;
             }
 
-            intersection = AvatarManager.findRayIntersection(pickRay, [], [MyAvatar.sessionUUID]);
+            intersection = AvatarManager.findRayIntersection(this.pickRay, [], [MyAvatar.sessionUUID]);
             if (intersection.intersects) {
                 this.targetAvatar = intersection.avatarID;
                 this.avatarDistance = intersection.distance;
