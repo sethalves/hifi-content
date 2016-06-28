@@ -14,7 +14,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
         Controller.Standard.LT,
         Controller.Standard.RT,
     ];
-    var RELOAD_THRESHOLD = 0.95;
+    var RELOAD_THRESHOLD = 0.3;
 
     Tool = function() {
         _this = this;
@@ -78,7 +78,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
                 }
                 this.active = false;
             }
-            if (this.canActivate === true && this.triggerValue === 1) {
+            if (this.canActivate === true && this.triggerValue > 0.55) {
                 this.canActivate = false;
                 this.activate();
             }
@@ -92,12 +92,12 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             });
         },
 
-        triggerPress: function(hand, value) {
-            if (this.hand === hand && value === 1) {
-                // We are pulling trigger on the hand we have the tool in, so activate
-                this.activate();
-            }
-        },
+        // triggerPress: function(hand, value) {
+        //     if (this.hand === hand && value > 0.5) {
+        //         // We are pulling trigger on the hand we have the tool in, so activate
+        //         this.activate();
+        //     }
+        // },
 
         activate: function() {
             Audio.playSound(this.activateSound, {
@@ -110,16 +110,45 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
                 direction: this.firingDirection
             };
 
-            var intersection = Entities.findRayIntersectionBlocking(pickRay, true);
+            print("pickRay direction =" + this.firingDirection.x + " " + this.firingDirection.y + " " + this.firingDirection.z);
+            Entities.addEntity({
+                type: "Sphere",
+                position: pickRay.origin,
+                color: {red: 200, green: 0, blue: 0},
+                dimensions: 0.05,
+                lifetime: 1.0
+            });
+            Entities.addEntity({
+                type: "Sphere",
+                position: Vec3.sum(pickRay.origin, pickRay.direction),
+                color: {red: 0, green: 200, blue: 0},
+                dimensions: 0.05,
+                lifetime: 1.0
+            });
+
+
+            var intersection = Entities.findRayIntersection(pickRay, true);
             if (intersection.intersects) {
                 this.targetEntity = intersection.entityID;
                 this.toolActivationProperties = Entities.getEntityProperties(this.entityID);
                 this.entityActivationProperties = intersection.properties;
+                this.entityDistance = intersection.distance;
             } else {
                 this.targetEntity = null;
                 this.toolActivationProperties = null;
                 this.entityActivationProperties = null;
+                this.entityDistance = -1;
             }
+
+            intersection = AvatarManager.findRayIntersection(pickRay, [], [MyAvatar.sessionUUID]);
+            if (intersection.intersects) {
+                this.targetAvatar = intersection.avatarID;
+                this.avatarDistance = intersection.distance;
+            } else {
+                this.targetAvatar = null;
+                this.avatarDistance = -1;
+            }
+
             this.active = true;
             if (this.toolFunctionStart) {
                 this.toolFunctionStart();
