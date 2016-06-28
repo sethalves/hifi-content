@@ -32,5 +32,10 @@ raygun.obj: raygun-body.obj raygun-shiney.obj
 upload: raygun.obj raygun.mtl raygun.js
 	scp $^ headache:public_html/hifi/raygun/
 
+unupload:
+	scp headache:public_html/hifi/raygun/raygun.obj ./
+	scp headache:public_html/hifi/raygun/raygun.mtl ./
+	scp headache:public_html/hifi/raygun/raygun.js ./
+
 clean:
 	rm -f *~ raygun-body.obj raygun-body.stl raygun.obj raygun-shiney.obj raygun-shiney.stl
