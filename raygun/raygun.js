@@ -22,6 +22,7 @@
     );
 
     rayGun.createRay = function() {
+        this.rayCreatedTime = Date.now();
         this.rayID = Entities.addEntity({
             name: "raygun beam",
             type: "Box",
@@ -35,18 +36,16 @@
             parentJointIndex: -1,
             localRotation: {x: 0, y: 0, z: 0, w: 1},
             localPosition: {x: 0, y: 0.008, z: 0.12},
-            lifetime: 5
+            lifetime: 0.1
         });
-
-        this.lastRayUpdateTime = Date.now();
     };
 
     rayGun.updateRay = function() {
-        var now = Date.now();
-        if (now - this.lastRayUpdateTime > 2 * 1000) { // 2 seconds
-            var age = Entities.getEntityProperties(this.rayID, "age").age;
-            Entities.editEntity(this.rayID, { lifetime: age + 5 });
-        }
+        // var now = Date.now();
+        // if (now - this.rayCreatedTime > 0.5 * 1000) { // 0.5 seconds
+        //     var age = Entities.getEntityProperties(this.rayID, "age").age;
+        //     Entities.editEntity(this.rayID, { lifetime: age + 5 });
+        // }
     };
 
     return rayGun;
