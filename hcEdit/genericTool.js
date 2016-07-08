@@ -10,6 +10,8 @@
 genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
     Script.include("/~/system/libraries/utils.js");
 
+    var _this;
+
     var TRIGGER_CONTROLS = [
         Controller.Standard.LT,
         Controller.Standard.RT,
@@ -166,8 +168,31 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             return this.entityID;
         },
 
+        makeDebugBall: function() {
+            var pos = Vec3.sum(Entities.getEntityProperties(_this.entityID, ["position"]).position, {x:0, y:0.1, z:0});
+            _this.debugBall = Entities.addEntity({
+                name: "genericTool status",
+                type: "Sphere",
+                position: pos,
+                color: {red: 255, green: 0, blue: 0},
+                dimensions: {x:0.06, y:0.06, z:0.06},
+                lifetime: 60.0,
+                ignoreForCollisions: 1
+            });
+
+            print("genericTool debug -- " + _this.debugBall + " " + vec3toStr(pos));
+
+            if (_this.debugBall == "{00000000-0000-0000-0000-000000000000}") {
+                // try again
+                Script.setTimeout(_this.makeDebugBall, 250);
+            }
+        },
+
         preload: function(entityID) {
             this.entityID = entityID;
+
+            // create debug indicator
+            Script.setTimeout(this.makeDebugBall, 8000);
         },
 
         unload: function() {
