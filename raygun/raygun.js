@@ -25,8 +25,9 @@
                 Entities.addEntity({
                     type: "Sphere",
                     position: hitPoint,
-                    color: {red: 0, green: 200, blue: 0},
-                    dimensions: 0.2,
+                    color: {red: 0, green: 200, blue: 200},
+                    visible: false,
+                    dimensions: 0.6,
                     lifetime: 1.0
                 });
             } else {

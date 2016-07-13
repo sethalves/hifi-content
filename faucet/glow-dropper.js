@@ -8,7 +8,7 @@
 
     Dropper.prototype = {
         needNewRadiationBall: function() {
-            var entityIDs = Entities.findEntities(_this.getLocation(), 0.3);
+            var entityIDs = Entities.findEntities(_this.getLocation(), 0.1);
             for (var i = 0; i < entityIDs.length; i++) {
                 var entityID = entityIDs[i];
                 var props = Entities.getEntityProperties(entityID, ["name"]);
@@ -60,6 +60,7 @@
                     "green": 227,
                     "red": 118
                 },
+                restitution: 1.0,
                 "dimensions": {
                     "x": 0.065536007285118103,
                     "y": 0.065536007285118103,
