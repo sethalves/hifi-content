@@ -112,7 +112,7 @@ p.wait()
 
 # if the fake X server isn't running, start it up
 if p.returncode != 0:
-    cmd = ['/usr/bin/Xvfb', ':100']
+    cmd = ['/usr/bin/Xvfb', '-screen', '0', '20x20x8', ':100']
     print >> sys.stderr, cmd
     p = subprocess.Popen(cmd) # nothing depends on output or return value, so it will run in the background
 
