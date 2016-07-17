@@ -28,12 +28,8 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             SoundCache.getSound("https://hifi-public.s3.amazonaws.com/sounds/Switches%20and%20sliders/lamp_switch_2.wav");
         this.activateSoundVolume = 0.2;
 
-        this.laserOffsets = {
-            y: 0.095
-        };
-        this.firingOffsets = {
-            z: 0.16
-        }
+        this.laserOffsets = { x: 0, y: 0.095, z: 0 };
+        this.firingOffsets = { x: 0, y: 0, z: 0.16 };
     };
 
     Tool.prototype = {

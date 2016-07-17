@@ -1,0 +1,14 @@
+newmtl toolHandleMaterial
+Ka 0.16 0.16 0.16
+Kd 0.16 0.16 0.16
+Ns 10
+
+newmtl hangPictureIconMaterial
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 1.0
+illum 2
+map_Ka hangPictureIcon.png
+map_Kd hangPictureIcon.png
+
