@@ -421,11 +421,11 @@ function addTerrainBlockNearLocation(baseLocation) {
 
     // link this plot to its neighbors
     Entities.editEntity(polyVoxID, {
-        xNNeighborID: imXPNeighborFor
-        yNNeighborID: imYPNeighborFor
-        zNNeighborID: imZPNeighborFor
-        xPNeighborID: imXNNeighborFor
-        yPNeighborID: imYNNeighborFor
+        xNNeighborID: imXPNeighborFor,
+        yNNeighborID: imYPNeighborFor,
+        zNNeighborID: imZPNeighborFor,
+        xPNeighborID: imXNNeighborFor,
+        yPNeighborID: imYNNeighborFor,
         zPNeighborID: imZNNeighborFor
     });
 
