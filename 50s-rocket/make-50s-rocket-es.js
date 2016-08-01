@@ -32,6 +32,7 @@
                 type: 'Model',
                 modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket.obj',
                 compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
+                shapeType: "compound",
                 collisionsWillMove: false,
                 position: center,
                 rotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
@@ -102,7 +103,7 @@
                 position: this.position
             });
 
-            this.makeRocket({ x: 165, y: 70, z: 76});
+            this.makeRocket({ x: 165, y: 22, z: 76});
         },
 
         setChannelKey: function(id, params) {
