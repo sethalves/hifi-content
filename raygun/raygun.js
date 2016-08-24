@@ -1,6 +1,7 @@
 
+/*global Entities, genericTool, Script, Vec3 */
+
 (function() {
-    var _this;
     Script.include("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
 
     var rayGun;
