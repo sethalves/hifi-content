@@ -4,10 +4,10 @@
 
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
-/*global print, MyAvatar, Entities, AnimationCache, SoundCache, Scene, Camera, Overlays, Audio, HMD, AvatarList, AvatarManager, Controller, UndoStack, Window, Account, GlobalServices, Script, ScriptDiscoveryService, LODManager, Menu, Vec3, Quat, AudioDevice, Paths, Clipboard, Settings, XMLHttpRequest, randFloat, randInt */
+/*global Script, AvatarManager, Controller, Entities, MyAvatar, Overlays, Quat, SoundCache, Vec3 */
 
 
-genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
+var genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
     Script.include("/~/system/libraries/utils.js");
 
     var _this;
@@ -18,7 +18,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
     ];
     var RELOAD_THRESHOLD = 0.3;
 
-    Tool = function() {
+    var Tool = function() {
         _this = this;
         this.equipped = false;
         this.forceMultiplier = 1;
@@ -175,8 +175,6 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
                 lifetime: 60.0,
                 ignoreForCollisions: 1
             });
-
-            print("genericTool debug -- " + _this.debugBall + " " + vec3toStr(pos));
 
             if (_this.debugBall == "{00000000-0000-0000-0000-000000000000}") {
                 // try again
