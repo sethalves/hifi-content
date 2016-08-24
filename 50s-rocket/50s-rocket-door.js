@@ -2,10 +2,12 @@
 //
 //
 
+/*global Entities, MyAvatar */
+
 (function() {
     var _this;
 
-    RocketDoor = function() {
+    var RocketDoor = function() {
         _this = this;
     };
 
@@ -31,7 +33,7 @@
             print("DOOR SIGNAL");
             Entities.callEntityMethod(_this.channelKey, "handleMessage", [data]);
         }
-    }
+    };
 
     return new RocketDoor();
 });

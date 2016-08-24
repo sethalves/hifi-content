@@ -2,6 +2,8 @@
 //
 //
 
+/*global Messages, Script */
+
 
 var batons = {}; // hash key is baton-name, value is [owner, timeout] -- owner is a participant, timeout is msecs
 
@@ -14,24 +16,24 @@ Messages.messageReceived.connect(function(channel, message, sender) {
             return baton[0];
         }
         return null;
-    }
+    };
 
     this.batonTimeout = function(baton) {
         if (baton) {
             return baton[1];
         }
         return null;
-    }
+    };
 
     this.setBaton = function(batonName, owner, timeout) {
         batons[batonName] = [owner, timeout];
-    }
+    };
 
     this.grantOrRegrant = function(participant, maxTime, batonName, baton, owner) {
         // the baton will be granted (or regranted)
         owner = participant;
         // if there's an old timeout, clear it
-        timeout = _this.batonTimeout(baton);
+        var timeout = _this.batonTimeout(baton);
         if (timeout) {
             Script.clearTimeout(timeout);
         }
@@ -52,7 +54,7 @@ Messages.messageReceived.connect(function(channel, message, sender) {
             name: batonName,
             participant: participant
         }));
-    }
+    };
 
     this.deny = function() {
         Messages.sendMessage("baton", JSON.stringify({
@@ -60,7 +62,7 @@ Messages.messageReceived.connect(function(channel, message, sender) {
             name: batonName,
             participant: participant
         }));
-    }
+    };
 
     this.grant = function (participant, maxTime, batonName) {
         var baton = batons[batonName];
@@ -120,19 +122,19 @@ Messages.messageReceived.connect(function(channel, message, sender) {
     }
 
     if (command == "claim") {
-        var maxTime = messageParsed.time;
-        if (!maxTime) {
+        var maxClaimTime = messageParsed.time;
+        if (!maxClaimTime) {
             print("invalid claim message: " + message);
             return;
         }
-        this.grant(participant, maxTime, batonName);
+        this.grant(participant, maxClaimTime, batonName);
     } else if (command == "reclaim") {
-        var maxTime = messageParsed.time;
-        if (!maxTime) {
+        var maxReclaimTime = messageParsed.time;
+        if (!maxReclaimTime) {
             print("invalid reclaim message: " + message);
             return;
         }
-        this.regrant(participant, maxTime, batonName);
+        this.regrant(participant, maxReclaimTime, batonName);
     } else if (command == "release") {
         this.release(participant, batonName);
     }

@@ -1,10 +1,12 @@
 
+/*global Entities, Script, acBaton, Quat, Vec3 */
+
 (function() {
     Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
 
     var rocket;
 
-    Rocket = (function() {
+    var Rocket = (function() {
         var _this = this;
 
         this.batonName = null;
@@ -40,7 +42,7 @@
         this.vec3toStr = function(v, digits) {
             if (!digits) { digits = 3; }
             return "{ " + v.x.toFixed(digits) + ", " + v.y.toFixed(digits) + ", " + v.z.toFixed(digits)+ " }";
-        }
+        };
 
         this.randomize = function(number, variability) {
             var allowedDeviation = number * variability; // one side of the deviation range
@@ -48,7 +50,7 @@
             var randomDeviation = Math.random() * allowedDeviationRange;
             var result = number - allowedDeviation + randomDeviation;
             return result;
-        }
+        };
 
         this.preload = function(entityID) {
             this.rocketID = entityID;
@@ -71,7 +73,7 @@
         };
 
         this.handleMessages = function(id, params) {
-            message = params[0];
+            var message = params[0];
 
             var data = null;
             try {
@@ -85,17 +87,17 @@
                     this.toggleDoor();
                 }
             }
-        }
+        };
 
         this.doMaintenance = function() {
             this.maintainDoor();
             this.findRemote();
-        }
+        };
 
         this.maintainDoor = function() {
-            if (this.doorID == null) {
+            if (this.doorID === null) {
                 this.doorID = this.findDoor();
-                if (this.doorID == null) {
+                if (this.doorID === null) {
                     print("50s-rocket -- can't find door");
                     return;
                 }
@@ -112,14 +114,14 @@
                 this.doorDirection = -this.doorSpeed;
             }
             this.doorMoving = false;
-        }
+        };
 
         this.findRemote = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
             var rocketScadPosition = rocketProperties.position;
             var nearbyEntities = Entities.findEntities(rocketScadPosition, 100);
             var success = false;
-            for (i = 0; i < nearbyEntities.length; i++) {
+            for (var i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
                 var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
                 if (nearbyName == '50s rocket remote door opener') {
@@ -128,13 +130,13 @@
                 }
             }
             return success;
-        }
+        };
 
         this.findDoor = function() {
             var rocketProperties = Entities.getEntityProperties(this.rocketID, ['position', 'rotation']);
             var rocketScadPosition = rocketProperties.position;
             var nearbyEntities = Entities.findEntities(rocketScadPosition, this.baseRocketRadius[1] * 2);
-            for (i = 0; i < nearbyEntities.length; i++) {
+            for (var i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
                 var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
                 if (nearbyName == '50s rocket door') {
@@ -143,7 +145,7 @@
                 }
             }
             return null;
-        }
+        };
 
         this.calculateRocketOffset = function() {
             var rocketBodyHeight = this.rocketVerticalSliceSize * 10;
@@ -163,7 +165,7 @@
             Entities.editEntity(this.rocketID, {registrationPoint: {x: (dimensions.x / 2.0 - offset.x) / dimensions.x,
                                                                     y: (dimensions.y / 2.0 - offset.y) / dimensions.y,
                                                                     z: (dimensions.z / 2.0 - offset.z) / dimensions.z}});
-        }
+        };
 
         this.clickDownOnEntity = function(entityID, mouseEvent) {
             // this.toggleDoor();
@@ -182,10 +184,10 @@
                     _this.toggleDoorWBaton();
                 }
             );
-        }
+        };
 
         this.toggleDoorWBaton = function() {
-            if (this.doorID == null) {
+            if (this.doorID === null) {
                 return;
             }
             if (_this.doorMoving) {
@@ -213,7 +215,7 @@
                 }
                 _this.positionDoor(_this.doorOpenness, collide);
             }, _this.doorMoveInterval);
-        }
+        };
 
         this.calculateDoorPosition = function(opennessRatio, collide) {
             var p0 = {
@@ -239,10 +241,10 @@
                 localPosition: Vec3.multiply(Vec3.sum(p0, p1), 0.5),
                 localRotation: rampRotation
             };
-        }
+        };
 
         this.positionDoor = function(opennessRatio, collide) {
-            if (this.doorID == null) {
+            if (this.doorID === null) {
                 return;
             }
 
@@ -263,7 +265,7 @@
         handleMessage: function(id, params) {
             rocket.handleMessages(id, params);
         }
-    }
+    };
 
     rocket = new Rocket();
     return rocket;

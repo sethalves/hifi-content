@@ -5,8 +5,7 @@
 
 (function() {
     var _this;
-    var utilitiesScript = Script.resolvePath("/~/system/libraries/utils.js");
-    Script.include(utilitiesScript);
+    Script.include("/~/system/libraries/utils.js");
     RocketSwitch = function() {
         _this = this;
         this.switchSound = SoundCache.getSound("https://hifi-public.s3.amazonaws.com/sounds/Switches%20and%20sliders/lamp_switch_2.wav");

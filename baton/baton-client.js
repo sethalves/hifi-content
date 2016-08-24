@@ -2,7 +2,9 @@
 //
 //
 
-acBaton = function (options) {
+/*global MyAvatar, Messages, Script */
+
+var acBaton = function (options) {
     var _this = this;
     this.onGrant = null;
     this.onRelease = null;
@@ -108,7 +110,7 @@ acBaton = function (options) {
     };
 
     exports.unload = function unload() { // Disconnect from everything.
-        messages.messageReceived.disconnect(messageHandler);
+        Messages.messageReceived.disconnect(messageHandler);
         return exports;
     };
 
