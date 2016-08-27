@@ -4,7 +4,7 @@
 
 /*global MyAvatar, Messages, Script */
 
-var acBaton = function (options) {
+acBaton = function (options) {
     var _this = this;
     this.onGrant = null;
     this.onRelease = null;

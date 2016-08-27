@@ -7,7 +7,7 @@
 /*global Script, AvatarManager, Controller, Entities, MyAvatar, Overlays, Quat, SoundCache, Vec3 */
 
 
-var genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
+genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
     Script.include("/~/system/libraries/utils.js");
 
     var _this;

@@ -1,8 +1,11 @@
 
+
+/*global Entities, Script, acBaton, Vec3 */
+
 (function() {
     Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
 
-    Boat = (function() {
+    var Boat = (function() {
         var _this = this;
 
         this.batonName = null;
@@ -58,12 +61,5 @@
         };
     });
 
-    Boat.prototype = {
-        handleMessage: function(id, params) {
-            boat.handleMessages(id, params);
-        }
-    }
-
-    boat = new Boat();
-    return boat;
+    return new Boat();
 });
