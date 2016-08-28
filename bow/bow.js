@@ -22,7 +22,7 @@
     var ARROW_HIT_SOUND_URL = 'http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/Arrow_impact1.L.wav';
 
     var ARROW_OFFSET = -0.44;
-    var ARROW_TIP_OFFSET = 0.32;
+    var ARROW_TIP_OFFSET = 0.42;
     var ARROW_GRAVITY = {
         x: 0,
         y: -4.8,
@@ -52,6 +52,7 @@
     var DRAW_STRING_THRESHOLD = 0.80;
     var DRAW_STRING_PULL_DELTA_HAPTIC_PULSE = 0.09;
     var DRAW_STRING_MAX_DRAW = 0.7;
+    var MAX_NEW_ARROW_PULLBACK_DISTANCE = 0.3; // more than this and a new arrow doesn't start
 
     var NOTCH_OFFSET_FORWARD = 0.08;
     var NOTCH_OFFSET_UP = 0.035;
@@ -376,7 +377,6 @@
 
             this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[triggerLookup]);
 
-
             if (this.triggerValue < DRAW_STRING_THRESHOLD && this.stringDrawn === true) {
                 // firing the arrow
                 this.bowProperties = Entities.getEntityProperties(this.entityID);
@@ -395,16 +395,24 @@
                 this.updateArrowPositionInNotch();
 
             } else if (this.triggerValue > DRAW_STRING_THRESHOLD && this.stringDrawn === false) {
-                this.bowProperties = Entities.getEntityProperties(this.entityID);
-                this.arrow = this.createArrow();
-                this.playStringPullSound();
-                Entities.editEntity(this.preNotchString, { visible: false });
                 //the first time aiming the arrow
-                this.pullBackDistance = 0;
-                this.stringDrawn = true;
-                this.createStrings();
-                this.drawStrings();
-                this.updateArrowPositionInNotch();
+                this.bowProperties = Entities.getEntityProperties(this.entityID);
+
+                // only start a new arrow if they back hand was close to the string
+                var notchPosition = this.getNotchPosition(this.bowProperties);
+                var stringHandPosition = this.getStringHandPosition();
+                var handToNotch = Vec3.subtract(notchPosition, stringHandPosition);
+                var pullBackDistance = Vec3.length(handToNotch);
+                if (pullBackDistance < MAX_NEW_ARROW_PULLBACK_DISTANCE) {
+                    this.arrow = this.createArrow();
+                    this.playStringPullSound();
+                    Entities.editEntity(this.preNotchString, { visible: false });
+                    this.pullBackDistance = 0;
+                    this.stringDrawn = true;
+                    this.createStrings();
+                    this.drawStrings();
+                    this.updateArrowPositionInNotch();
+                }
 
             }
         },
@@ -418,17 +426,19 @@
 
         },
 
-        updateArrowPositionInNotch: function(shouldReleaseArrow) {
-            var bowProperties = Entities.getEntityProperties(this.entityID);
-            //set the notch that the arrow should go through
+        getNotchPosition: function(bowProperties) {
             var frontVector = Quat.getFront(bowProperties.rotation);
             var notchVectorForward = Vec3.multiply(frontVector, NOTCH_OFFSET_FORWARD);
             var upVector = Quat.getUp(bowProperties.rotation);
             var notchVectorUp = Vec3.multiply(upVector, NOTCH_OFFSET_UP);
-            var notchPosition;
-            notchPosition = Vec3.sum(bowProperties.position, notchVectorForward);
+            var notchPosition = Vec3.sum(bowProperties.position, notchVectorForward);
             notchPosition = Vec3.sum(notchPosition, notchVectorUp);
+            return notchPosition;
+        },
 
+        updateArrowPositionInNotch: function(shouldReleaseArrow) {
+            //set the notch that the arrow should go through
+            var notchPosition = this.getNotchPosition(this.bowProperties);
             //set the arrow rotation to be between the notch and other hand
             var stringHandPosition = this.getStringHandPosition();
             var handToNotch = Vec3.subtract(notchPosition, stringHandPosition);

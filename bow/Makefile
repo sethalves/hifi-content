@@ -4,7 +4,7 @@
 
 all: bow_collision_hull.obj
 
-bow_collision_hull.obj:
+bow_collision_hull.obj: bow-hull.scm
 	./bow-hull.scm
 
 upload: bow_collision_hull.obj bow.js
