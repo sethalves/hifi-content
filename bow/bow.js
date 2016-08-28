@@ -52,7 +52,7 @@
     var DRAW_STRING_THRESHOLD = 0.80;
     var DRAW_STRING_PULL_DELTA_HAPTIC_PULSE = 0.09;
     var DRAW_STRING_MAX_DRAW = 0.7;
-    var MAX_NEW_ARROW_PULLBACK_DISTANCE = 0.3; // more than this and a new arrow doesn't start
+    var MAX_NEW_ARROW_PULLBACK_DISTANCE = 0.32; // more than this and a new arrow doesn't start
 
     var NOTCH_OFFSET_FORWARD = 0.08;
     var NOTCH_OFFSET_UP = 0.035;
@@ -478,7 +478,7 @@
             }
 
             //shoot the arrow
-            if (shouldReleaseArrow === true) {
+            if (shouldReleaseArrow === true && pullBackDistance >= MAX_NEW_ARROW_PULLBACK_DISTANCE) {
                 // var arrowProps = Entities.getEntityProperties(this.arrow);
 
                 //scale the shot strength by the distance you've pulled the arrow back and set its release velocity to be
@@ -508,12 +508,18 @@
 
                 Controller.triggerShortHapticPulse(1, backHand);
 
+            } else if (shouldReleaseArrow === true) {
+                // they released without pulling back; just delete the arrow.
+                Entities.deleteEntity(this.arrow);
+                this.arrow = null;
+            }
+
+            if (shouldReleaseArrow === true) {
                 //clear the strings back to only the single straight one
                 this.deleteStrings();
                 Entities.editEntity(this.preNotchString, {
                     visible: true
                 });
-
             }
 
         },
