@@ -1,0 +1,35 @@
+{
+    "Entities": [
+        {
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "compoundShapeURL": "http://headache.hungry.com/~seth/hifi/bow/bow_collision_hull.obj",
+            "created": "2016-08-27T15:50:32Z",
+            "dimensions": {
+                "x": 0.04,
+                "y": 1.3,
+                "z": 0.2
+            },
+            "dynamic": 1,
+            "gravity": {
+                "x": 0,
+                "y": -1,
+                "z": 0
+            },
+            "id": "{d1bdca65-b1c9-4a16-86aa-bab752f087fc}",
+            "modelURL": "http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/bow-deadly.fbx",
+            "name": "Hifi-Bow",
+            "rotation": {
+                "w": 0.68224608898162842,
+                "x": 0.18287932872772217,
+                "y": -0.18281835317611694,
+                "z": -0.68389409780502319
+            },
+            "script": "http://headache.hungry.com/~seth/hifi/bow/bow.js",
+            "shapeType": "compound",
+            "type": "Model",
+            "userData": "{ \"grabbableKey\": { \"grabbable\": true }, \"wearable\": { \"joints\": { \"RightHand\":[{\"x\":0.03960523009300232,\"y\":0.01979270577430725,\"z\":0.03294898942112923},{\"x\":-0.7257906794548035,\"y\":-0.4611682891845703,\"z\":0.4436084032058716,\"w\":-0.25251442193984985}], \"LeftHand\":[{\"x\":0.0055799782276153564,\"y\":0.04354757443070412,\"z\":0.05119767785072327},{\"x\":-0.14914104342460632,\"y\":0.6448180079460144,\"z\":-0.2888556718826294,\"w\":-0.6917579770088196}] } } }"
+        }
+    ],
+    "Version": 63
+}
