@@ -22,7 +22,7 @@
     var ARROW_HIT_SOUND_URL = 'http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/Arrow_impact1.L.wav';
 
     var ARROW_OFFSET = -0.44;
-    var ARROW_TIP_OFFSET = 0.42;
+    var ARROW_TIP_OFFSET = 0.47;
     var ARROW_GRAVITY = {
         x: 0,
         y: -4.8,
