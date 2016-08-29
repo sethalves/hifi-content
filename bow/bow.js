@@ -15,6 +15,8 @@
 
     Script.include("/~/system/libraries/utils.js");
 
+    var NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
+
     var NOTCH_ARROW_SOUND_URL = 'http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/notch.wav';
     var SHOOT_ARROW_SOUND_URL =
         'http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/String_release2.L.wav';
@@ -209,6 +211,7 @@
                 compoundShapeURL: ARROW_COLLISION_HULL_URL,
                 dimensions: ARROW_DIMENSIONS,
                 position: this.bowProperties.position,
+                parentID: this.entityID,
                 dynamic: false,
                 collisionless: true,
                 collisionSoundURL: ARROW_HIT_SOUND_URL,
@@ -223,12 +226,12 @@
 
             var makeArrowStick = function(entityA, entityB, collision) {
                 Entities.editEntity(entityA, {
-                    angularVelocity: {
+                    localAngularVelocity: {
                         x: 0,
                         y: 0,
                         z: 0
                     },
-                    velocity: {
+                    localVelocity: {
                         x: 0,
                         y: 0,
                         z: 0
@@ -238,9 +241,10 @@
                         y: 0,
                         z: 0
                     },
-                    position: collision.contactPoint,
                     parentID: entityB,
-                    dynamic: false
+                    dynamic: false,
+                    collisionless: true,
+                    collidesWith: ""
                 });
                 Script.removeEventHandler(arrow, "collisionWithEntity", makeArrowStick);
             };
@@ -498,6 +502,7 @@
                     collisionless: false,
                     collidesWith: "static,dynamic,otherAvatar", // workaround: not with kinematic --> no collision with bow
                     velocity: releaseVelocity,
+                    parentID: NULL_UUID,
                     gravity: ARROW_GRAVITY,
                     lifetime: ARROW_LIFETIME,
                     // position: arrowProps.position,
@@ -512,8 +517,8 @@
 
                 Entities.addAction("travel-oriented", this.arrow, {
                     forward: { x: 0, y: 0, z: -1 },
-                    angularTimeScale: 0.2,
-                    tag: "hifi-bow",
+                    angularTimeScale: 0.1,
+                    tag: "arrow from hifi-bow",
                     ttl: ARROW_LIFETIME
                 });
 
