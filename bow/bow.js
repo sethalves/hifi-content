@@ -39,6 +39,8 @@
         z: 0.96
     };
 
+    var ARROW_LIFETIME = 15; // seconds
+
 
     var TOP_NOTCH_OFFSET = 0.6;
     var BOTTOM_NOTCH_OFFSET = 0.6;
@@ -237,6 +239,7 @@
                         z: 0
                     },
                     position: collision.contactPoint,
+                    parentID: entityB,
                     dynamic: false
                 });
                 Script.removeEventHandler(arrow, "collisionWithEntity", makeArrowStick);
@@ -496,17 +499,24 @@
                     collidesWith: "static,dynamic,otherAvatar", // workaround: not with kinematic --> no collision with bow
                     velocity: releaseVelocity,
                     gravity: ARROW_GRAVITY,
-                    lifetime: 10,
+                    lifetime: ARROW_LIFETIME,
                     // position: arrowProps.position,
                     // rotation: arrowProps.rotation
                 };
-
 
                 //actually shoot the arrow and play its sound
                 Entities.editEntity(this.arrow, arrowProperties);
                 this.playShootArrowSound();
 
                 Controller.triggerShortHapticPulse(1, backHand);
+
+                Entities.addAction("travel-oriented", this.arrow, {
+                    forward: { x: 0, y: 0, z: -1 },
+                    angularTimeScale: 0.2,
+                    tag: "hifi-bow",
+                    ttl: ARROW_LIFETIME
+                });
+
 
             } else if (shouldReleaseArrow === true) {
                 // they released without pulling back; just delete the arrow.
