@@ -116,12 +116,15 @@
             this.shootArrowSound = SoundCache.getSound(SHOOT_ARROW_SOUND_URL);
             this.arrowHitSound = SoundCache.getSound(ARROW_HIT_SOUND_URL);
             this.arrowNotchSound = SoundCache.getSound(NOTCH_ARROW_SOUND_URL);
-            var userData = Entities.getEntityProperties(this.entityID).userData;
+            var userData = Entities.getEntityProperties(this.entityID, ["userData"]).userData;
             this.userData = JSON.parse(userData);
             var children = Entities.getChildrenIDs(this.entityID);
-            if (children.length > 0) {
-                this.preNotchString = children[0];
-            }
+            children.forEach(function(childID) {
+                var childName = Entities.getEntityProperties(childID, ["name"]).name;
+                if (childName == "Hifi-Bow-Pre-Notch-String") {
+                    this.preNotchString = children[0];
+                }
+            });
         },
 
         unload: function() {
@@ -272,7 +275,6 @@
 
         createStrings: function() {
             this.createTopString();
-            this.createBottomString();
         },
 
         createTopString: function() {
@@ -293,27 +295,8 @@
             this.topString = Entities.addEntity(stringProperties);
         },
 
-        createBottomString: function() {
-            var stringProperties = {
-                name: 'Hifi-Bow-Bottom-String',
-                type: 'Line',
-                position: Vec3.sum(this.bowProperties.position, BOTTOM_NOTCH_OFFSET),
-                dimensions: LINE_DIMENSIONS,
-                dynamic: false,
-                collisionless: true,
-                userData: JSON.stringify({
-                    grabbableKey: {
-                        grabbable: false
-                    }
-                })
-            };
-
-            this.bottomString = Entities.addEntity(stringProperties);
-        },
-
         deleteStrings: function() {
             Entities.deleteEntity(this.topString);
-            Entities.deleteEntity(this.bottomString);
         },
 
         updateStringPositions: function() {
@@ -331,11 +314,6 @@
             Entities.editEntity(this.topString, {
                 position: this.topStringPosition
             });
-
-            Entities.editEntity(this.bottomString, {
-                position: this.bottomStringPosition
-            });
-
         },
 
         drawStrings: function() {
@@ -344,30 +322,15 @@
             var lineVectors = this.getLocalLineVectors();
 
             Entities.editEntity(this.topString, {
-                linePoints: [{
-                    x: 0,
-                    y: 0,
-                    z: 0
-                }, lineVectors[0]],
+                linePoints: [{ x: 0, y: 0, z: 0 }, lineVectors[0], lineVectors[1]],
                 lineWidth: 5,
                 color: this.stringData.currentColor
             });
-
-            Entities.editEntity(this.bottomString, {
-                linePoints: [{
-                    x: 0,
-                    y: 0,
-                    z: 0
-                }, lineVectors[1]],
-                lineWidth: 5,
-                color: this.stringData.currentColor
-            });
-
         },
 
         getLocalLineVectors: function() {
             var topVector = Vec3.subtract(this.arrowRearPosition, this.topStringPosition);
-            var bottomVector = Vec3.subtract(this.arrowRearPosition, this.bottomStringPosition);
+            var bottomVector = Vec3.subtract(this.bottomStringPosition, this.topStringPosition);
             return [topVector, bottomVector];
         },
 
