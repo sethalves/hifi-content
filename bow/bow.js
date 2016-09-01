@@ -56,7 +56,8 @@
     var DRAW_STRING_THRESHOLD = 0.80;
     var DRAW_STRING_PULL_DELTA_HAPTIC_PULSE = 0.09;
     var DRAW_STRING_MAX_DRAW = 0.7;
-    var MAX_NEW_ARROW_PULLBACK_DISTANCE = 0.32; // more than this and a new arrow doesn't start
+    var NEAR_TO_RELAXED_KNOCK_DISTANCE = 0.4; // more than this and a new arrow doesn't start
+    var NEAR_TO_RELAXED_SCHMITT = 0.05;
 
     var NOTCH_OFFSET_FORWARD = 0.08;
     var NOTCH_OFFSET_UP = 0.035;
@@ -96,11 +97,10 @@
     }
 
     Bow.prototype = {
-        stringDrawn: false,
+        topString: null,
         aiming: false,
         arrowTipPosition: null,
         preNotchString: null,
-        hasArrowNotched: false,
         arrow: null,
         stringData: {
             currentColor: {
@@ -109,6 +109,13 @@
                 blue: 255
             }
         },
+
+        // 0 = start
+        // 1 = hand close to knock, arrow is drawn
+        // 2 = arrow is grabbed
+        // 3 = arrow is grabbed and pulled
+
+        state: 0,
         sinceLastUpdate: 0,
         preload: function(entityID) {
             this.entityID = entityID;
@@ -132,25 +139,15 @@
             Entities.deleteEntity(this.arrow);
         },
 
-        startNearGrab: function(entityID, args) {
-            _this.startEquip(entityID, args);
-        },
-
-        continueNearGrab: function(entityID, args) {
-            _this.continueEquip(entityID, args);
-        },
-
-        releaseGrab: function(entityID, args) {
-            _this.releaseEquip(entityID, args);
-        },
-
         startEquip: function(entityID, args) {
             this.hand = args[0];
             // var avatarID = args[1];
 
-            //disable the opposite hand in handControllerGrab.js by message
-            var handToDisable = this.hand === 'right' ? 'left' : 'right';
-            Messages.sendMessage('Hifi-Hand-Disabler', handToDisable);
+            if (this.hand === 'left') {
+                this.getStringHandPosition = function() { return _this.getControllerLocation("right").position; };
+            } else if (this.hand === 'right') {
+                this.getStringHandPosition = function() { return _this.getControllerLocation("left").position; };
+            }
 
             var data = getEntityCustomData('grabbableKey', this.entityID, {});
             data.grabbable = false;
@@ -196,8 +193,6 @@
             data.grabbable = true;
             setEntityCustomData('grabbableKey', this.entityID, data);
             Entities.deleteEntity(this.arrow);
-            this.aiming = false;
-            this.hasArrowNotched = false;
             Entities.editEntity(_this.entityID, {
                 collidesWith: "static,dynamic,kinematic,otherAvatar,myAvatar"
             });
@@ -274,7 +269,10 @@
         },
 
         createStrings: function() {
-            this.createTopString();
+            if (!this.topString) {
+                this.createTopString();
+                Entities.editEntity(this.preNotchString, { visible: false });
+            }
         },
 
         createTopString: function() {
@@ -285,6 +283,8 @@
                 dimensions: LINE_DIMENSIONS,
                 dynamic: false,
                 collisionless: true,
+                lineWidth: 5,
+                color: this.stringData.currentColor,
                 userData: JSON.stringify({
                     grabbableKey: {
                         grabbable: false
@@ -296,10 +296,16 @@
         },
 
         deleteStrings: function() {
-            Entities.deleteEntity(this.topString);
+            if (this.topString) {
+                Entities.deleteEntity(this.topString);
+                this.topString = null;
+                Entities.editEntity(this.preNotchString, { visible: true });
+            }
         },
 
-        updateStringPositions: function() {
+        drawStrings: function() {
+            this.createStrings();
+
             var upVector = Quat.getUp(this.bowProperties.rotation);
             var upOffset = Vec3.multiply(upVector, TOP_NOTCH_OFFSET);
             var downVector = Vec3.multiply(-1, Quat.getUp(this.bowProperties.rotation));
@@ -311,20 +317,11 @@
             var bottomStringPosition = Vec3.sum(this.bowProperties.position, downOffset);
             this.bottomStringPosition = Vec3.sum(bottomStringPosition, backOffset);
 
-            Entities.editEntity(this.topString, {
-                position: this.topStringPosition
-            });
-        },
-
-        drawStrings: function() {
-
-            this.updateStringPositions();
             var lineVectors = this.getLocalLineVectors();
 
             Entities.editEntity(this.topString, {
-                linePoints: [{ x: 0, y: 0, z: 0 }, lineVectors[0], lineVectors[1]],
-                lineWidth: 5,
-                color: this.stringData.currentColor
+                position: this.topStringPosition,
+                linePoints: [{ x: 0, y: 0, z: 0 }, lineVectors[0], lineVectors[1]]
             });
         },
 
@@ -338,69 +335,72 @@
             var standardControllerValue =
                 (controllerHand === "right") ? Controller.Standard.RightHand : Controller.Standard.LeftHand;
             var pose = Controller.getPoseValue(standardControllerValue);
-
             var orientation = Quat.multiply(MyAvatar.orientation, pose.rotation);
             var position = Vec3.sum(Vec3.multiplyQbyV(MyAvatar.orientation, pose.translation), MyAvatar.position);
-            // add to the real position so the grab-point is out in front of the hand, a bit
-            // if (doOffset) {
-            //     position = Vec3.sum(position, Vec3.multiplyQbyV(orientation, GRAB_POINT_SPHERE_OFFSET));
-            // }
-
             return {position: position, orientation: orientation};
         },
 
         checkStringHand: function() {
             //invert the hands because our string will be held with the opposite hand of the first one we pick up the bow with
-            var triggerLookup;
-            if (this.hand === 'left') {
-                triggerLookup = 1;
-                // this.getStringHandPosition = MyAvatar.getRightPalmPosition;
-                this.getStringHandPosition = function() { return _this.getControllerLocation("right").position; };
-            } else if (this.hand === 'right') {
-                // this.getStringHandPosition = MyAvatar.getLeftPalmPosition;
-                this.getStringHandPosition = function() { return _this.getControllerLocation("left").position; };
-                triggerLookup = 0;
-            }
+            this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[(this.hand === 'left') ? 1 : 0]);
 
-            this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[triggerLookup]);
+            this.bowProperties = Entities.getEntityProperties(this.entityID);
+            var notchPosition = this.getNotchPosition(this.bowProperties);
+            var stringHandPosition = this.getStringHandPosition();
+            var handToNotch = Vec3.subtract(notchPosition, stringHandPosition);
+            var pullBackDistance = Vec3.length(handToNotch);
 
-            if (this.triggerValue < DRAW_STRING_THRESHOLD && this.stringDrawn === true) {
-                // firing the arrow
-                this.bowProperties = Entities.getEntityProperties(this.entityID);
-                this.drawStrings();
-                this.hasArrowNotched = false;
-                this.aiming = false;
-                this.stringDrawn = false;
-                this.updateArrowPositionInNotch(true);
-                Entities.editEntity(this.preNotchString, { visible: true });
-
-            } else if (this.triggerValue > DRAW_STRING_THRESHOLD && this.stringDrawn === true) {
-                //continuing to aim the arrow
-                this.bowProperties = Entities.getEntityProperties(this.entityID);
-                this.aiming = true;
-                this.drawStrings();
-                this.updateArrowPositionInNotch();
-
-            } else if (this.triggerValue > DRAW_STRING_THRESHOLD && this.stringDrawn === false) {
-                //the first time aiming the arrow
-                this.bowProperties = Entities.getEntityProperties(this.entityID);
-
-                // only start a new arrow if they back hand was close to the string
-                var notchPosition = this.getNotchPosition(this.bowProperties);
-                var stringHandPosition = this.getStringHandPosition();
-                var handToNotch = Vec3.subtract(notchPosition, stringHandPosition);
-                var pullBackDistance = Vec3.length(handToNotch);
-                if (pullBackDistance < MAX_NEW_ARROW_PULLBACK_DISTANCE) {
+            if (this.state === 0) {
+                this.deleteStrings();
+                if (pullBackDistance < (NEAR_TO_RELAXED_KNOCK_DISTANCE - NEAR_TO_RELAXED_SCHMITT) && !this.backHandBusy) {
+                    //the first time aiming the arrow
+                    var handToDisable = (this.hand === 'right' ? 'left' : 'right');
+                    Messages.sendMessage('Hifi-Hand-Disabler', handToDisable);
                     this.arrow = this.createArrow();
                     this.playStringPullSound();
-                    Entities.editEntity(this.preNotchString, { visible: false });
-                    this.pullBackDistance = 0;
-                    this.stringDrawn = true;
-                    this.createStrings();
+                    this.state = 1;
+                }
+            }
+            if (this.state === 1) {
+                if (pullBackDistance >= (NEAR_TO_RELAXED_KNOCK_DISTANCE + NEAR_TO_RELAXED_SCHMITT)) {
+                    // delete the unpulled arrow
+                    Messages.sendMessage('Hifi-Hand-Disabler', "none");
+                    Entities.deleteEntity(this.arrow);
+                    this.arrow = null;
+                    this.state = 0;
+                } else if (this.triggerValue >= DRAW_STRING_THRESHOLD) {
+                    // they've grabbed the arrow
+                    this.state = 2;
+                } else {
                     this.drawStrings();
                     this.updateArrowPositionInNotch();
                 }
-
+            }
+            if (this.state === 2) {
+                if (this.triggerValue < DRAW_STRING_THRESHOLD) {
+                    // they let go without pulling
+                    this.state = 1;
+                } else if (pullBackDistance >= (NEAR_TO_RELAXED_KNOCK_DISTANCE + NEAR_TO_RELAXED_SCHMITT)) {
+                    // they've grabbed the arrow and pulled it
+                    this.state = 3;
+                } else {
+                    this.drawStrings();
+                    this.updateArrowPositionInNotch();
+                }
+            }
+            if (this.state === 3) {
+                if (pullBackDistance < (NEAR_TO_RELAXED_KNOCK_DISTANCE + NEAR_TO_RELAXED_SCHMITT)) {
+                    // they unpulled without firing
+                    this.state = 2;
+                } else if (this.triggerValue < DRAW_STRING_THRESHOLD) {
+                    // they've fired the arrow
+                    Messages.sendMessage('Hifi-Hand-Disabler', "none");
+                    this.updateArrowPositionInNotch(true);
+                    this.state = 0;
+                } else {
+                    this.drawStrings();
+                    this.updateArrowPositionInNotch();
+                }
             }
         },
 
@@ -435,7 +435,6 @@
             var pullBackDistance = Vec3.length(handToNotch);
             // pulse as arrow is drawn
             if (Math.abs(pullBackDistance - this.pullBackDistance) > DRAW_STRING_PULL_DELTA_HAPTIC_PULSE) {
-                // Controller.triggerShortHapticPulse(1, backHand);
                 Controller.triggerHapticPulse(1, 20, backHand);
                 this.pullBackDistance = pullBackDistance;
             }
@@ -446,26 +445,30 @@
             }
 
             // //pull the arrow back a bit
-            var pullBackOffset = Vec3.multiply(handToNotch, -pullBackDistance);
-            var arrowPosition = Vec3.sum(notchPosition, pullBackOffset);
+            // var pullBackOffset = Vec3.multiply(handToNotch, -pullBackDistance);
+            // var arrowPosition = Vec3.sum(notchPosition, pullBackOffset);
 
-            // // move it forward a bit
-            var pushForwardOffset = Vec3.multiply(handToNotch, -ARROW_OFFSET);
-            var finalArrowPosition = Vec3.sum(arrowPosition, pushForwardOffset);
+            // // // move it forward a bit
+            // var pushForwardOffset = Vec3.multiply(handToNotch, -ARROW_OFFSET);
+            // var finalArrowPosition = Vec3.sum(arrowPosition, pushForwardOffset);
 
             //we draw strings to the rear of the arrow
-            this.setArrowRearPosition(finalArrowPosition, arrowRotation);
+            // this.setArrowRearPosition(finalArrowPosition, arrowRotation);
+
+            var halfArrowVec = Vec3.multiply(Vec3.normalize(handToNotch), ARROW_DIMENSIONS.z / 2.0)
+            var arrowPosition = Vec3.sum(stringHandPosition, halfArrowVec);
+            this.setArrowRearPosition(arrowPosition, arrowRotation);
 
             //if we're not shooting, we're updating the arrow's orientation
             if (shouldReleaseArrow !== true) {
                 Entities.editEntity(this.arrow, {
-                    position: finalArrowPosition,
+                    position: arrowPosition,
                     rotation: arrowRotation
                 });
             }
 
             //shoot the arrow
-            if (shouldReleaseArrow === true && pullBackDistance >= MAX_NEW_ARROW_PULLBACK_DISTANCE) {
+            if (shouldReleaseArrow === true) { // && pullBackDistance >= (NEAR_TO_RELAXED_KNOCK_DISTANCE + NEAR_TO_RELAXED_SCHMITT)) {
                 var arrowAge = Entities.getEntityProperties(this.arrow, ["age"]).age;
 
                 //scale the shot strength by the distance you've pulled the arrow back and set its release velocity to be
@@ -501,19 +504,18 @@
                 });
 
 
-            } else if (shouldReleaseArrow === true) {
+            } // else if (shouldReleaseArrow === true) {
                 // they released without pulling back; just delete the arrow.
-                Entities.deleteEntity(this.arrow);
-                this.arrow = null;
-            }
+                // Entities.deleteEntity(this.arrow);
+                // this.arrow = null;
+            // }
 
-            if (shouldReleaseArrow === true) {
-                //clear the strings back to only the single straight one
-                this.deleteStrings();
-                Entities.editEntity(this.preNotchString, {
-                    visible: true
-                });
-            }
+            // if (shouldReleaseArrow === true) {
+            //     //clear the strings back to only the single straight one
+            //     Entities.editEntity(this.preNotchString, {
+            //         visible: true
+            //     });
+            // }
 
         },
 
@@ -563,9 +565,36 @@
             var min2 = 0;
             var max2 = 0.2;
             return min2 + (max2 - min2) * ((value - min1) / (max1 - min1));
-        }
+        },
 
+        handleMessages: function(channel, message, sender) {
+            if (sender !== MyAvatar.sessionUUID) {
+                return;
+            }
+            if (channel !== 'Hifi-Object-Manipulation') {
+                try {
+                    message = JSON.parse(message);
+                    var action = message.action;
+                    var hand = message.joint;
+                    var isBackHand = ((_this.hand == "left" && hand == "RightHand") ||
+                                      (_this.hand == "right" && hand == "LeftHand"));
+                    if ((action == "equip" || action == "grab") && isBackHand) {
+                        _this.backHandBusy = true;
+                    }
+                    if (action == "release" && isBackHand) {
+                        _this.backHandBusy = false;
+                    }
+                }  catch (e) {
+                    print("WARNING: error parsing Hifi-Object-Manipulation message");
+                }
+            }
+        }
     };
 
-    return new Bow();
+    var bow = new Bow();
+
+    Messages.subscribe('Hifi-Object-Manipulation');
+    Messages.messageReceived.connect(bow.handleMessages);
+
+    return bow;
 });

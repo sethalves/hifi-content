@@ -9,7 +9,7 @@ bow_collision_hull.obj: bow-hull.scm
 
 upload: bow_collision_hull.obj bow.js
 	mkdir -p export
-	cp $^ export/
+	cp -a $^ export/
 	rsync -avP --delete export/ headache.hungry.com:public_html/hifi/bow/
 
 clean:
