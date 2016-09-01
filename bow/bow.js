@@ -334,14 +334,31 @@
             return [topVector, bottomVector];
         },
 
+        getControllerLocation: function (controllerHand) {
+            var standardControllerValue =
+                (controllerHand === "right") ? Controller.Standard.RightHand : Controller.Standard.LeftHand;
+            var pose = Controller.getPoseValue(standardControllerValue);
+
+            var orientation = Quat.multiply(MyAvatar.orientation, pose.rotation);
+            var position = Vec3.sum(Vec3.multiplyQbyV(MyAvatar.orientation, pose.translation), MyAvatar.position);
+            // add to the real position so the grab-point is out in front of the hand, a bit
+            // if (doOffset) {
+            //     position = Vec3.sum(position, Vec3.multiplyQbyV(orientation, GRAB_POINT_SPHERE_OFFSET));
+            // }
+
+            return {position: position, orientation: orientation};
+        },
+
         checkStringHand: function() {
             //invert the hands because our string will be held with the opposite hand of the first one we pick up the bow with
             var triggerLookup;
             if (this.hand === 'left') {
                 triggerLookup = 1;
-                this.getStringHandPosition = MyAvatar.getRightPalmPosition;
+                // this.getStringHandPosition = MyAvatar.getRightPalmPosition;
+                this.getStringHandPosition = function() { return _this.getControllerLocation("right").position; };
             } else if (this.hand === 'right') {
-                this.getStringHandPosition = MyAvatar.getLeftPalmPosition;
+                // this.getStringHandPosition = MyAvatar.getLeftPalmPosition;
+                this.getStringHandPosition = function() { return _this.getControllerLocation("left").position; };
                 triggerLookup = 0;
             }
 
@@ -449,7 +466,7 @@
 
             //shoot the arrow
             if (shouldReleaseArrow === true && pullBackDistance >= MAX_NEW_ARROW_PULLBACK_DISTANCE) {
-                // var arrowProps = Entities.getEntityProperties(this.arrow);
+                var arrowAge = Entities.getEntityProperties(this.arrow, ["age"]).age;
 
                 //scale the shot strength by the distance you've pulled the arrow back and set its release velocity to be
                 // in the direction of the v
@@ -467,9 +484,7 @@
                     velocity: releaseVelocity,
                     parentID: NULL_UUID,
                     gravity: ARROW_GRAVITY,
-                    lifetime: ARROW_LIFETIME,
-                    // position: arrowProps.position,
-                    // rotation: arrowProps.rotation
+                    lifetime: ARROW_LIFETIME + arrowAge,
                 };
 
                 //actually shoot the arrow and play its sound
