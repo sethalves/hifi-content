@@ -30,17 +30,23 @@
             }
 
             if (velocityNeedsUpdate) {
-                _this.baton.claim(
-                    function () { // onGrant
-                        Entities.editEntity(_this.boatID, {velocity: newVelocity});
-                        _this.baton.release();
-                    },
-                    null, // onRelease
-                    null, // onDenied
-                    function () { // onNoServerResponse
-                        print("no response from baton-server");
-                    }
-                );
+                if (_this.baton) {
+                    _this.baton.claim(
+                        function () { // onGrant
+                            Entities.editEntity(_this.boatID, {velocity: newVelocity});
+                            _this.baton.release();
+                        },
+                        null, // onRelease
+                        null, // onDenied
+                        function () { // onNoServerResponse
+                            print("no response from baton-server");
+                        }
+                    );
+                } else {
+                    // baton isn't (yet?) working.
+                    Entities.editEntity(_this.boatID, {velocity: newVelocity});
+                    _this.baton = acBaton({ batonName: _this.batonName, timeScale: 15000 });
+                }
             }
         };
 
@@ -52,10 +58,7 @@
             }, 1000);
 
             this.batonName = 'io.highfidelity.seth.Boat:' + this.boatID;
-            this.baton = acBaton({
-                batonName: this.batonName,
-                timeScale: 15000
-            });
+            this.baton = acBaton({ batonName: this.batonName, timeScale: 15000 });
 
             this.moveBoat();
         };
