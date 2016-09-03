@@ -23,7 +23,6 @@
     var STRING_PULL_SOUND_URL = 'http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/Bow_draw.1.L.wav';
     var ARROW_HIT_SOUND_URL = 'http://mpassets.highfidelity.com/32fc6d32-27a2-428e-937e-869f3f05e8e1-v1/Arrow_impact1.L.wav';
 
-    var ARROW_OFFSET = -0.44;
     var ARROW_TIP_OFFSET = 0.47;
     var ARROW_GRAVITY = {
         x: 0,
@@ -56,7 +55,7 @@
     var DRAW_STRING_THRESHOLD = 0.80;
     var DRAW_STRING_PULL_DELTA_HAPTIC_PULSE = 0.09;
     var DRAW_STRING_MAX_DRAW = 0.7;
-    var NEAR_TO_RELAXED_KNOCK_DISTANCE = 0.4; // more than this and a new arrow doesn't start
+    var NEAR_TO_RELAXED_KNOCK_DISTANCE = 0.5; // if the hand is this close, rez the arrow
     var NEAR_TO_RELAXED_SCHMITT = 0.05;
 
     var NOTCH_OFFSET_FORWARD = 0.08;
@@ -351,6 +350,8 @@
             var pullBackDistance = Vec3.length(handToNotch);
 
             if (this.state === 0) {
+                this.pullBackDistance = 0;
+
                 this.deleteStrings();
                 if (pullBackDistance < (NEAR_TO_RELAXED_KNOCK_DISTANCE - NEAR_TO_RELAXED_SCHMITT) && !this.backHandBusy) {
                     //the first time aiming the arrow
@@ -362,6 +363,7 @@
                 }
             }
             if (this.state === 1) {
+
                 if (pullBackDistance >= (NEAR_TO_RELAXED_KNOCK_DISTANCE + NEAR_TO_RELAXED_SCHMITT)) {
                     // delete the unpulled arrow
                     Messages.sendMessage('Hifi-Hand-Disabler', "none");
@@ -370,10 +372,11 @@
                     this.state = 0;
                 } else if (this.triggerValue >= DRAW_STRING_THRESHOLD) {
                     // they've grabbed the arrow
+                    this.pullBackDistance = 0;
                     this.state = 2;
                 } else {
                     this.drawStrings();
-                    this.updateArrowPositionInNotch();
+                    this.updateArrowPositionInNotch(false, false);
                 }
             }
             if (this.state === 2) {
@@ -385,7 +388,7 @@
                     this.state = 3;
                 } else {
                     this.drawStrings();
-                    this.updateArrowPositionInNotch();
+                    this.updateArrowPositionInNotch(false, true);
                 }
             }
             if (this.state === 3) {
@@ -395,11 +398,11 @@
                 } else if (this.triggerValue < DRAW_STRING_THRESHOLD) {
                     // they've fired the arrow
                     Messages.sendMessage('Hifi-Hand-Disabler', "none");
-                    this.updateArrowPositionInNotch(true);
+                    this.updateArrowPositionInNotch(true, true);
                     this.state = 0;
                 } else {
                     this.drawStrings();
-                    this.updateArrowPositionInNotch();
+                    this.updateArrowPositionInNotch(false, true);
                 }
             }
         },
@@ -423,7 +426,7 @@
             return notchPosition;
         },
 
-        updateArrowPositionInNotch: function(shouldReleaseArrow) {
+        updateArrowPositionInNotch: function(shouldReleaseArrow, doHapticPulses) {
             //set the notch that the arrow should go through
             var notchPosition = this.getNotchPosition(this.bowProperties);
             //set the arrow rotation to be between the notch and other hand
@@ -434,7 +437,8 @@
             var backHand = this.hand === 'left' ? 1 : 0;
             var pullBackDistance = Vec3.length(handToNotch);
             // pulse as arrow is drawn
-            if (Math.abs(pullBackDistance - this.pullBackDistance) > DRAW_STRING_PULL_DELTA_HAPTIC_PULSE) {
+            if (doHapticPulses &&
+                Math.abs(pullBackDistance - this.pullBackDistance) > DRAW_STRING_PULL_DELTA_HAPTIC_PULSE) {
                 Controller.triggerHapticPulse(1, 20, backHand);
                 this.pullBackDistance = pullBackDistance;
             }
@@ -455,7 +459,7 @@
             //we draw strings to the rear of the arrow
             // this.setArrowRearPosition(finalArrowPosition, arrowRotation);
 
-            var halfArrowVec = Vec3.multiply(Vec3.normalize(handToNotch), ARROW_DIMENSIONS.z / 2.0)
+            var halfArrowVec = Vec3.multiply(Vec3.normalize(handToNotch), ARROW_DIMENSIONS.z / 2.0);
             var arrowPosition = Vec3.sum(stringHandPosition, halfArrowVec);
             this.setArrowRearPosition(arrowPosition, arrowRotation);
 
@@ -572,21 +576,22 @@
                 return;
             }
             if (channel !== 'Hifi-Object-Manipulation') {
-                try {
-                    message = JSON.parse(message);
-                    var action = message.action;
-                    var hand = message.joint;
-                    var isBackHand = ((_this.hand == "left" && hand == "RightHand") ||
-                                      (_this.hand == "right" && hand == "LeftHand"));
-                    if ((action == "equip" || action == "grab") && isBackHand) {
-                        _this.backHandBusy = true;
-                    }
-                    if (action == "release" && isBackHand) {
-                        _this.backHandBusy = false;
-                    }
-                }  catch (e) {
-                    print("WARNING: error parsing Hifi-Object-Manipulation message");
+                return;
+            }
+            try {
+                var data = JSON.parse(message);
+                var action = data.action;
+                var hand = data.joint;
+                var isBackHand = ((_this.hand == "left" && hand == "RightHand") ||
+                                  (_this.hand == "right" && hand == "LeftHand"));
+                if ((action == "equip" || action == "grab") && isBackHand) {
+                    _this.backHandBusy = true;
                 }
+                if (action == "release" && isBackHand) {
+                    _this.backHandBusy = false;
+                }
+            }  catch (e) {
+                print("WARNING: bow.js -- error parsing Hifi-Object-Manipulation message: " + message);
             }
         }
     };
