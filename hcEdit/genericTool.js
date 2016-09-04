@@ -63,7 +63,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             var upVec = Quat.getUp(this.rotation);
             this.barrelPoint = Vec3.sum(this.position, Vec3.multiply(upVec, this.laserOffsets.y));
             this.laserTip = Vec3.sum(this.barrelPoint, Vec3.multiply(this.firingDirection, this.laserLength));
-            this.barrelPoint = Vec3.sum(this.barrelPoint, Vec3.multiply(this.firingDirection, this.firingOffsets.z))
+            this.barrelPoint = Vec3.sum(this.barrelPoint, Vec3.multiply(this.firingDirection, this.firingOffsets.z));
         },
 
         toggleWithTriggerPressure: function() {
@@ -126,6 +126,22 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             //     dimensions: 0.02,
             //     lifetime: 1.0
             // });
+
+
+            // var indicator = Overlays.addOverlay("line3d", {
+            //     position: this.pickRay.origin,
+            //     start: { x: 0, y: 0, z: 0 },
+            //     end: Vec3.multiply(Vec3.normalize(this.pickRay.direction), 3.0),
+            //     color: { red: 0, green: 40, blue: 255 },
+            //     alpha: 0.8,
+            //     solid: true,
+            //     visible: true,
+            //     ignoreRayIntersection: true,
+            //     drawInFront: false
+            // });
+            // Script.setTimeout(function() {
+            //     Overlays.deleteOverlay(indicator);
+            // }, 2000);
 
 
             var intersection = Entities.findRayIntersection(this.pickRay, true);

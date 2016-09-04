@@ -35,7 +35,7 @@ hangPictureTool.obj: base-tool.obj hangPicture-icon-positioned.obj
 upload: all
 	rm -rf export
 	mkdir export
-	cp $(EXPORT_FILES) export/
+	cp -a $(EXPORT_FILES) export/
 	rsync -avP export/ headache.hungry.com:public_html/hifi/hcEdit/
 
 clean:
