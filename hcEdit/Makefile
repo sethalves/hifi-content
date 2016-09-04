@@ -41,3 +41,4 @@ upload: all
 clean:
 	rm -f *~ base-tool.stl base-tool.obj
 	rm -f hangPicture-icon.obj hangPicture-icon-positioned.obj hangPictureTool.obj
+	rm -rf export
