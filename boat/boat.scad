@@ -33,6 +33,13 @@ output_deck_collision_hull_3 = 0;
 output_hold_floor_collision_hull = 0;
 
 
+module inner_hull() {
+    intersection() {
+        translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
+        translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
+    }
+}
+
 module boat_hull() {
     // boat-hull
     difference() {
@@ -44,29 +51,7 @@ module boat_hull() {
                 translate([0, 0, hull_half_diff]) { sphere(hull_half_length); }
             }
 
-            intersection() {
-                translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
-                translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
-            }
-
-
-        //     // inner-floor
-        //     intersection() {
-        //         // inner-hull-space
-        //         intersection() {
-        //             translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
-        //             translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
-        //         }
-
-        //         union() {
-        //             translate([L, 0, L]) { cube([H - L, H, H - L], false); } // main deck
-        //             translate([L, hold_floor, L]) { cube([H - L, hold_ceiling - hold_floor, H - L], false); } // hold
-        //             // hatch
-        //             translate([hatch_low_x, (hold_ceiling - 1), -hatch_half_width]) {
-        //                 cube([hatch_high_x - hatch_low_x, 1 - (hold_ceiling - 1), hatch_half_width - -hatch_half_width], false);
-        //             }
-        //         }
-        //     }
+            inner_hull();
         }
 
         translate([L, hull_wall_height, L]) { cube([H - L, H - hull_wall_height, H - L], false); }
@@ -79,8 +64,7 @@ module floor_part(low_x, low_z, high_x, high_z) {
         translate([low_x, -hull_thickness, low_z]) {
             cube([high_x - low_x, 0 - -hull_thickness, high_z - low_z], false);
         }
-        translate([0, 0, -hull_half_diff]) { sphere(hull_half_length); }
-        translate([0, 0, hull_half_diff]) { sphere(hull_half_length); }
+        inner_hull();
     }
 }
 
@@ -113,8 +97,7 @@ if (output_deck_collision_hull_0) {
                   hull_half_width - -hull_half_width],
                  false);
         }
-        translate([0, 0, -hull_half_diff]) { sphere(hull_half_length); }
-        translate([0, 0, hull_half_diff]) { sphere(hull_half_length); }
+        inner_hull();
     }
 } else if (output_walls) {
     intersection() {
