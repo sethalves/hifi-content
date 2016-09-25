@@ -4,9 +4,11 @@
 ;; https://github.com/mkeeter/ao
 
 ;; (add-to-load-path (string-append (dirname (current-filename)) "/../bind/guile"))
-(add-to-load-path "/home/seth/src/ao/bind/guile")
+;; (add-to-load-path "/home/seth/src/ao/bind/guile") ;; this makes (current-filename) return #f for some reason.  use relative path
+(add-to-load-path "../../ao/bind/guile")
 
 (use-modules (ao bind))
+
 (ao-init-guile)
 (use-modules (ao shapes) (ao transforms) (ao csg) (ao export))
 
