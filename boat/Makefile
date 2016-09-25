@@ -6,43 +6,54 @@ VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 
 
 %.obj: %.stl
-	wavefront-obj-tool -n $^ -o $@
+	wavefront-obj-tool -n -c $^ -o $@
 
 
-all: boat-hull.obj boat-collision-hull.obj
+all: boat.obj boat-collision-hull.obj
 
 
 ## visual model
 
 
-# boat-hull.obj: boat-hull.scm
-# 	./boat-hull.scm
+# boat.obj: boat.scm
+# 	./boat.scm
 
-boat-hull.stl: boat-hull.scad
+boat.stl: boat.scad
 	openscad -o $@ $^
 
-boat-hull.obj: boat-hull.stl
+boat.obj: boat.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S boat_hull_mtl
 
 
 ## collision hull
 
-boat-rail.stl: boat-hull.scad
-	openscad -D output_rail=1 -o $@ $^
+boat-walls.stl: boat.scad
+	openscad -D output_walls=1 -o $@ $^
 
-boat-rail.obj: boat-rail.stl
-	wavefront-obj-tool -n -c $^ -o $@
+boat-walls.obj: boat-walls.stl
 
-boat-rail-collision-hull.obj: boat-rail.obj
-	$(VHACD) -g -i $^ -o $@
+boat-walls-collision-hull.obj: boat-walls.obj
+	$(VHACD) -g -i $^ -o $@ # --concavity 0.001 --resolution 400000 --depth 30
 
 
-boat-collision-hull.obj: boat-rail-collision-hull.obj
-	cp $^ $@
+boat-deck-collision-hull.stl: boat.scad
+	openscad -D output_deck_collision_hull=1 -o $@ $^
+
+boat-deck-collision-hull.obj: boat-deck-collision-hull.stl
+
+boat-hold-floor-collision-hull.stl: boat.scad
+	openscad -D output_hold_floor_collision_hull=1 -o $@ $^
+
+boat-hold-floor-collision-hull.obj: boat-hold-floor-collision-hull.stl
+
+
+boat-collision-hull.obj: boat-walls-collision-hull.obj boat-deck-collision-hull.obj boat-hold-floor-collision-hull.obj
+	wavefront-obj-tool $^ > $@
+
 
 ##
 
-upload: boat-hull.obj boat-collision-hull.obj boat.js
+upload: boat.obj boat-collision-hull.obj boat.js
 	mkdir -p export
 	cp -a $^ export/
 	rsync -avP --delete export/ headache.hungry.com:public_html/hifi/boat/
@@ -50,7 +61,9 @@ upload: boat-hull.obj boat-collision-hull.obj boat.js
 
 clean:
 	rm -f *~
-	rm -f boat-hull.obj boat-hull.stl
-	rm -f boat-rail.obj boat-rail.stl
-	rm -f boat-collision-hull.obj boat-rail-collision-hull.obj
+	rm -f boat.obj boat.stl
+	rm -f boat-walls.obj boat-walls.stl
+	rm -f boat-collision-hull.obj boat-walls-collision-hull.obj
+	rm -f boat-deck-collision-hull.obj boat-deck-collision-hull.stl
+	rm -f boat-hold-floor-collision-hull.obj boat-hold-floor-collision-hull.stl
 	rm -rf export/
