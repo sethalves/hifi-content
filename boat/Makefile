@@ -28,7 +28,7 @@ boat-hull.obj: boat-hull.stl
 ## collision hull
 
 boat-rail.stl: boat-hull.scad
-	openscad -D only_output_rail=1 -o $@ $^
+	openscad -D output_rail=1 -o $@ $^
 
 boat-rail.obj: boat-rail.stl
 	wavefront-obj-tool -n -c $^ -o $@
