@@ -40,5 +40,16 @@ hull_length = 12;
 hull_width = 8;
 hull_thickness = 0.25;
 hull_wall_height = 2;
+only_output_rail = 0;
+H = hull_length * 2.0;
+L = -H;
 
-boat_hull(hull_length, hull_width, hull_thickness, hull_wall_height);
+
+if (only_output_rail) {
+    intersection() {
+        boat_hull(hull_length, hull_width, hull_thickness, hull_wall_height);
+        translate([L, 0, L]) { cube([H - L, H - 0, H - L], false); }
+    }
+} else {
+    boat_hull(hull_length, hull_width, hull_thickness, hull_wall_height);
+}
