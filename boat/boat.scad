@@ -20,6 +20,8 @@ hatch_low_x = 1;
 hatch_high_x = 2;
 hatch_half_width = 1;
 
+boat_back_squeeze = 0.55;
+
 H = hull_length * 2.0;
 L = -H;
 
@@ -34,26 +36,46 @@ output_hold_floor_collision_hull = 0;
 
 
 module inner_hull() {
-    intersection() {
-        translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
-        translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
+    hull() {
+        intersection() {
+            translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
+            translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
+        };
+        translate([-hull_half_length + hull_thickness,
+                   (-hull_half_length * boat_back_squeeze),
+                   ((-hull_half_width + hull_thickness) * boat_back_squeeze)]) {
+            cube([(-hull_half_length + hull_thickness) - -hull_half_length,
+                  hull_wall_height - (-hull_half_length * boat_back_squeeze),
+                  ((hull_half_width - hull_thickness) * boat_back_squeeze) -
+                  ((-hull_half_width + hull_thickness) * boat_back_squeeze)], false);
+        };
+    }
+
+}
+
+module outer_hull() {
+    hull() {
+        intersection() {
+            translate([0, 0, -hull_half_diff]) { sphere(hull_half_length); }
+            translate([0, 0, hull_half_diff]) { sphere(hull_half_length); }
+        };
+        translate([-hull_half_length, (-hull_half_length * boat_back_squeeze), (-hull_half_width * boat_back_squeeze)]) {
+            cube([(-hull_half_length + hull_thickness) - -hull_half_length,
+                  hull_wall_height - (-hull_half_length * boat_back_squeeze),
+                  (hull_half_width * boat_back_squeeze) - (-hull_half_width * boat_back_squeeze)], false);
+        };
     }
 }
 
-module boat_hull() {
-    // boat-hull
-    difference() {
-        // full-hull
-        difference() {
-            // outer-hull
-            intersection() {
-                translate([0, 0, -hull_half_diff]) { sphere(hull_half_length); }
-                translate([0, 0, hull_half_diff]) { sphere(hull_half_length); }
-            }
 
+module boat_hull() {
+    difference() {
+        // hollow shell
+        difference() {
+            outer_hull();
             inner_hull();
         }
-
+        // with the top chopped off...
         translate([L, hull_wall_height, L]) { cube([H - L, H - hull_wall_height, H - L], false); }
     }
 }
@@ -68,7 +90,8 @@ module floor_part(low_x, low_z, high_x, high_z) {
     }
 }
 
-
+// the deck has a hatch in it; each section must be output separately.
+//
 //     +--------------------------+
 //     |      3         |         |
 //     |-----------+----+         |
