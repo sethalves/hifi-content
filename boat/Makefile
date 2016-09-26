@@ -3,10 +3,10 @@
 #
 
 VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
-
+N= #-n
 
 %.obj: %.stl
-	wavefront-obj-tool -n -c $^ -o $@
+	wavefront-obj-tool ${N} -c $^ -o $@
 
 
 all: boat.obj boat-collision-hull.obj
@@ -22,11 +22,11 @@ boat-hull.stl: boat.scad
 	openscad -o $@ $^
 
 boat-hull.obj: boat-hull.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S boat_hull_mtl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
 
 
 boat.obj: boat-hull.obj boat-hold-floor-collision-hull.obj deck-parts/boat-deck-collision-hull-0.obj deck-parts/boat-deck-collision-hull-1.obj deck-parts/boat-deck-collision-hull-2.obj deck-parts/boat-deck-collision-hull-3.obj
-	wavefront-obj-tool -n -c $^ -o $@ -L boat.mtl
+	wavefront-obj-tool ${N} -c $^ -o $@ -L boat.mtl
 
 
 ## collision hull
@@ -50,7 +50,7 @@ boat-hold-floor-collision-hull.stl: boat.scad
 	openscad -D output_hold_floor_collision_hull=1 -o $@ $^
 
 boat-hold-floor-collision-hull.obj: boat-hold-floor-collision-hull.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S boat_floor_mtl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 
 ##
@@ -75,16 +75,16 @@ deck-parts/boat-deck-collision-hull-3.stl: boat.scad
 ##
 
 deck-parts/boat-deck-collision-hull-0.obj: deck-parts/boat-deck-collision-hull-0.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S boat_floor_mtl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 deck-parts/boat-deck-collision-hull-1.obj: deck-parts/boat-deck-collision-hull-1.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S boat_floor_mtl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 deck-parts/boat-deck-collision-hull-2.obj: deck-parts/boat-deck-collision-hull-2.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S boat_floor_mtl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 deck-parts/boat-deck-collision-hull-3.obj: deck-parts/boat-deck-collision-hull-3.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S boat_floor_mtl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 
 ##
