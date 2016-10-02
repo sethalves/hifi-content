@@ -19,7 +19,7 @@ all: boat.obj boat-collision-hull.obj
 # 	./boat.scm
 
 boat-hull.stl: boat.scad
-	openscad -o $@ $^
+	openscad -D output_hull=1 -o $@ $^
 
 boat-hull.obj: boat-hull.stl
 	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
@@ -30,7 +30,7 @@ boat.obj: boat-hull.obj boat-hold-floor-collision-hull.obj \
 		  deck-parts/boat-deck-collision-hull-1.obj \
 		  deck-parts/boat-deck-collision-hull-2.obj \
 		  deck-parts/boat-deck-collision-hull-3.obj \
-		  deck-parts/boat-deck-collision-hull-4.obj
+		  deck-parts/quarterdeck.obj
 	wavefront-obj-tool ${N} -c $^ -o $@ -L boat.mtl
 
 
@@ -69,7 +69,7 @@ deck-parts/boat-deck-collision-hull-3.stl: boat.scad
 	mkdir -p deck-parts
 	openscad -D output_deck_collision_hull_3=1 -o $@ $^
 
-deck-parts/boat-deck-collision-hull-4.stl: boat.scad
+deck-parts/quarterdeck.stl: boat.scad
 	mkdir -p deck-parts
 	openscad -D output_deck_collision_hull_4=1 -o $@ $^
 
@@ -87,7 +87,7 @@ deck-parts/boat-deck-collision-hull-2.obj: deck-parts/boat-deck-collision-hull-2
 deck-parts/boat-deck-collision-hull-3.obj: deck-parts/boat-deck-collision-hull-3.stl
 	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
-deck-parts/boat-deck-collision-hull-4.obj: deck-parts/boat-deck-collision-hull-4.stl
+deck-parts/quarterdeck.obj: deck-parts/quarterdeck.stl
 	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 ##
@@ -99,7 +99,7 @@ boat-collision-hull.obj: boat-walls-collision-hull.obj \
 						 deck-parts/boat-deck-collision-hull-1.obj \
 						 deck-parts/boat-deck-collision-hull-2.obj \
 						 deck-parts/boat-deck-collision-hull-3.obj \
-						 deck-parts/boat-deck-collision-hull-4.obj
+						 deck-parts/quarterdeck.obj
 	wavefront-obj-tool $^ > $@
 
 

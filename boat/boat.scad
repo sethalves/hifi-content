@@ -22,8 +22,9 @@ hatch_half_width = 1;
 boat_back_squeeze = 0.55;
 cabin_offset = 3.0;
 cabin_size = 12.0;
-cabin_height = 4;
+cabin_height = 4; // how high above the top of the rail?
 cabin_door_half_width = 0.7;
+quarterdeck_entry_half_width = hull_half_width * 0.7;
 
 // H and L are big enough to be outside the boat in any dimension
 H = hull_length * 2.0;
@@ -38,6 +39,7 @@ output_deck_collision_hull_2 = 0;
 output_deck_collision_hull_3 = 0;
 output_deck_collision_hull_4 = 0;
 output_hold_floor_collision_hull = 0;
+output_hull = 0;
 
 module place_cuboid(low_x, high_x, low_y, high_y, low_z, high_z) {
     translate([low_x, low_y, low_z]) {
@@ -123,12 +125,17 @@ module cabin_cut() {
 
 
 module cabin() {
-    translate([0, cabin_height + hull_rail_height, 0]) {
-        rotate([90, 0 ,0]) {
-            linear_extrude(height = cabin_height) {
-                cabin_cut();
+    difference() {
+        translate([0, cabin_height + hull_rail_height, 0]) {
+            rotate([90, 0 ,0]) {
+                linear_extrude(height = cabin_height) {
+                    cabin_cut();
+                }
             }
         }
+        place_cuboid((-actual_radius + cabin_size - hull_thickness), H,
+                     cabin_height, H,
+                     -quarterdeck_entry_half_width, quarterdeck_entry_half_width);
     }
 }
 
@@ -143,11 +150,10 @@ module cabin_roof() {
 }
 
 
-module boat_hull() {
+module boat_walls() {
     union() {
         main_hull();
         cabin();
-        cabin_roof();
     }
 }
 
@@ -192,13 +198,13 @@ if (output_deck_collision_hull_0) {
     }
 } else if (output_walls) {
     intersection() {
-        boat_hull(hull_length, hull_width, hull_thickness, hull_rail_height);
+        boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
         place_cuboid(L, H, 0, H, L, H);
     }
     intersection() {
-        boat_hull(hull_length, hull_width, hull_thickness, hull_rail_height);
+        boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
         place_cuboid(L, H, hold_floor, hold_ceiling, L, H);
     }
-} else {
-    boat_hull(hull_length, hull_width, hull_thickness, hull_rail_height);
+} else if (output_hull) {
+    boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
 }
