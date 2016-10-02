@@ -60,7 +60,7 @@ module inner_hull() {
                          (-hull_half_width + hull_thickness) * boat_back_squeeze,
                          (hull_half_width - hull_thickness) * boat_back_squeeze);
         }
-        translate([L, hull_rail_height, L]) { cube([H - L, H - hull_rail_height, H - L], false); }
+        place_cuboid(L, H, hull_rail_height, H, L, H);
     }
 }
 
@@ -77,7 +77,7 @@ module outer_hull() {
                          -hull_half_length * boat_back_squeeze, hull_rail_height,
                          -hull_half_width * boat_back_squeeze, hull_half_width * boat_back_squeeze);
         }
-        translate([L, hull_rail_height, L]) { cube([H - L, H - hull_rail_height, H - L], false); }
+        place_cuboid(L, H, hull_rail_height, H, L, H);
     }
 }
 
@@ -97,14 +97,9 @@ module main_hull() {
                              -hull_half_width, hull_half_width);
                 outer_hull();
             }
-            translate([-hull_half_length,
-                       -1,
-                       -cabin_door_half_width]) {
-                cube([hull_half_length - -hull_half_length,
-                      (hull_rail_height + 1) - -1,
-                      cabin_door_half_width - -cabin_door_half_width],
-                     false);
-            }
+            place_cuboid(-hull_half_length, hull_half_length,
+                         -1, (hull_rail_height + 1),
+                         -cabin_door_half_width, cabin_door_half_width);
         }
     }
 }
@@ -117,14 +112,9 @@ module cabin_cut() {
             translate([0, -hull_rail_height + 0.0001, 0]) { // almost the very top
                 intersection() {
                     main_hull();
-                    translate([-actual_radius,
-                               0,
-                               -hull_half_width]) {
-                        cube([(-actual_radius + cabin_size) - -actual_radius,
-                              cabin_height - 0,
-                              hull_half_width - -hull_half_width],
-                             false);
-                    }
+                    place_cuboid(-actual_radius, (-actual_radius + cabin_size),
+                                 0, cabin_height,
+                                 -hull_half_width, hull_half_width);
                 }
             }
         }
@@ -164,9 +154,7 @@ module boat_hull() {
 
 module floor_part(low_x, low_z, high_x, high_z) {
     intersection() {
-        translate([low_x, -hull_thickness, low_z]) {
-            cube([high_x - low_x, 0 - -hull_thickness, high_z - low_z], false);
-        }
+        place_cuboid(low_x, high_x, -hull_thickness, 0, low_z, high_z);
         inner_hull();
     }
 }
@@ -197,22 +185,19 @@ if (output_deck_collision_hull_0) {
     cabin_roof();
 } else if (output_hold_floor_collision_hull) {
     intersection() {
-        translate([-hull_half_length, (hold_floor - hull_thickness), -hull_half_width]) {
-            cube([hull_half_length - -hull_half_length,
-                  hold_floor - (hold_floor - hull_thickness),
-                  hull_half_width - -hull_half_width],
-                 false);
-        }
+        place_cuboid(-hull_half_length, hull_half_length,
+                     (hold_floor - hull_thickness), hold_floor,
+                     -hull_half_width, hull_half_width);
         inner_hull();
     }
 } else if (output_walls) {
     intersection() {
         boat_hull(hull_length, hull_width, hull_thickness, hull_rail_height);
-        translate([L, 0, L]) { cube([H - L, H - 0, H - L], false); }
+        place_cuboid(L, H, 0, H, L, H);
     }
     intersection() {
         boat_hull(hull_length, hull_width, hull_thickness, hull_rail_height);
-        translate([L, hold_floor, L]) { cube([H - L, hold_ceiling - hold_floor, H - L], false); }
+        place_cuboid(L, H, hold_floor, hold_ceiling, L, H);
     }
 } else {
     boat_hull(hull_length, hull_width, hull_thickness, hull_rail_height);
