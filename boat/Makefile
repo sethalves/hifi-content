@@ -73,6 +73,14 @@ deck-parts/quarterdeck.stl: boat.scad
 	mkdir -p deck-parts
 	openscad -D output_deck_collision_hull_4=1 -o $@ $^
 
+cabin-parts/cabin-front-wall-0.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_cabin_wall_0=1 -o $@ $^
+
+cabin-parts/cabin-front-wall-1.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_cabin_wall_1=1 -o $@ $^
+
 ##
 
 deck-parts/boat-deck-collision-hull-0.obj: deck-parts/boat-deck-collision-hull-0.stl
@@ -90,6 +98,12 @@ deck-parts/boat-deck-collision-hull-3.obj: deck-parts/boat-deck-collision-hull-3
 deck-parts/quarterdeck.obj: deck-parts/quarterdeck.stl
 	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
+cabin-parts/cabin-front-wall-0.obj: cabin-parts/cabin-front-wall-0.stl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
+
+cabin-parts/cabin-front-wall-1.obj: cabin-parts/cabin-front-wall-1.stl
+	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
+
 ##
 
 
@@ -99,6 +113,8 @@ boat-collision-hull.obj: boat-walls-collision-hull.obj \
 						 deck-parts/boat-deck-collision-hull-1.obj \
 						 deck-parts/boat-deck-collision-hull-2.obj \
 						 deck-parts/boat-deck-collision-hull-3.obj \
+						 cabin-parts/cabin-front-wall-0.obj \
+						 cabin-parts/cabin-front-wall-1.obj \
 						 deck-parts/quarterdeck.obj
 	wavefront-obj-tool $^ > $@
 
@@ -119,5 +135,5 @@ clean:
 	rm -f boat-collision-hull.obj boat-walls-collision-hull.obj
 	rm -f boat-deck-collision-hull.obj boat-deck-collision-hull.stl
 	rm -f boat-hold-floor-collision-hull.obj boat-hold-floor-collision-hull.stl
-	rm -rf deck-parts/
+	rm -rf deck-parts/ cabin-parts/
 	rm -rf export/
