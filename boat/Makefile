@@ -22,7 +22,7 @@ boat-hull.stl: boat.scad
 	openscad -D output_hull=1 -o $@ $^
 
 boat-hull.obj: boat-hull.stl
-	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
 
 boat.obj: boat-hull.obj boat-hold-floor-collision-hull.obj \
@@ -99,10 +99,10 @@ deck-parts/quarterdeck.obj: deck-parts/quarterdeck.stl
 	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 cabin-parts/cabin-front-wall-0.obj: cabin-parts/cabin-front-wall-0.stl
-	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
 cabin-parts/cabin-front-wall-1.obj: cabin-parts/cabin-front-wall-1.stl
-	wavefront-obj-tool -m 0.2 ${N} -c $^ -o $@ -S boat_hull_mtl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
 ##
 

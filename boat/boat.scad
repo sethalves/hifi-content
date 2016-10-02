@@ -5,7 +5,7 @@
 hull_length = 60;
 hull_width = 16;
 hull_thickness = 0.5;
-hull_rail_height = 1.0;
+hull_rail_height = 1.3;
 
 hull_half_length = hull_length / 2.0;
 hull_half_width = hull_width / 2.0;
@@ -22,7 +22,7 @@ hatch_half_width = 1;
 boat_back_squeeze = 0.55;
 cabin_offset = 3.0;
 cabin_size = 12.0;
-cabin_height = 4; // how high above the top of the rail?
+cabin_height = 5.3; // how high above the top of the rail?
 cabin_door_half_width = 0.7;
 quarterdeck_entry_half_width = hull_half_width * 0.7;
 
@@ -219,52 +219,54 @@ module floor_part(low_x, low_z, high_x, high_z) {
 // +--> X
 
 
-if (output_deck_collision_hull_0) {
-    floor_part(-hull_half_length, -hull_half_width, hatch_low_x, hatch_half_width);
-} else if (output_deck_collision_hull_1) {
-    floor_part(hatch_low_x, -hull_half_width, hull_half_length, -hatch_half_width);
-} else if (output_deck_collision_hull_2) {
-    floor_part(hatch_high_x, -hatch_half_width, hull_half_length, hull_half_width);
-} else if (output_deck_collision_hull_3) {
-    floor_part(-hull_half_length, hatch_half_width, hatch_high_x, hull_half_width);
-} else if (output_deck_collision_hull_4) {
-    cabin_roof();
-} else if (output_hold_floor_collision_hull) {
-    intersection() {
-        place_cuboid(-hull_half_length, hull_half_length,
-                     (hold_floor - hull_thickness), hold_floor,
-                     -hull_half_width, hull_half_width);
-        inner_hull();
-    }
-} else if (output_walls) {
-    // walls that can be walked into, minus the front wall of the cabin
-    difference() {
-        union() {
-            intersection() {
-                boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
-                place_cuboid(L, H, 0, H, L, H);
-            }
-            intersection() {
-                boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
-                place_cuboid(L, H, hold_floor, hold_ceiling, L, H);
-            }
+scale([1.0, 0.75, 1.0]) {
+    if (output_deck_collision_hull_0) {
+        floor_part(-hull_half_length, -hull_half_width, hatch_low_x, hatch_half_width);
+    } else if (output_deck_collision_hull_1) {
+        floor_part(hatch_low_x, -hull_half_width, hull_half_length, -hatch_half_width);
+    } else if (output_deck_collision_hull_2) {
+        floor_part(hatch_high_x, -hatch_half_width, hull_half_length, hull_half_width);
+    } else if (output_deck_collision_hull_3) {
+        floor_part(-hull_half_length, hatch_half_width, hatch_high_x, hull_half_width);
+    } else if (output_deck_collision_hull_4) {
+        cabin_roof();
+    } else if (output_hold_floor_collision_hull) {
+        intersection() {
+            place_cuboid(-hull_half_length, hull_half_length,
+                         (hold_floor - hull_thickness), hold_floor,
+                         -hull_half_width, hull_half_width);
+            inner_hull();
         }
-        cabin_front_wall_template();
+    } else if (output_walls) {
+        // walls that can be walked into, minus the front wall of the cabin
+        difference() {
+            union() {
+                intersection() {
+                    boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
+                    place_cuboid(L, H, 0, H, L, H);
+                }
+                intersection() {
+                    boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
+                    place_cuboid(L, H, hold_floor, hold_ceiling, L, H);
+                }
+            }
+            cabin_front_wall_template();
+        }
+    } else if (output_cabin_wall_0) {
+        intersection() {
+            place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
+                         0, cabin_height,
+                         L, -cabin_door_half_width);
+            cabin_front_wall_template();
+        }
+    } else if (output_cabin_wall_1) {
+        intersection() {
+            place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
+                         0, cabin_height,
+                         cabin_door_half_width, H);
+            cabin_front_wall_template();
+        }
+    } else if (output_hull) {
+        boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
     }
-} else if (output_cabin_wall_0) {
-    intersection() {
-        place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
-                     0, cabin_height,
-                     L, -cabin_door_half_width);
-        cabin_front_wall_template();
-    }
-} else if (output_cabin_wall_1) {
-    intersection() {
-        place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
-                     0, cabin_height,
-                     cabin_door_half_width, H);
-        cabin_front_wall_template();
-    }
-} else if (output_hull) {
-    boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
 }
