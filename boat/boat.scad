@@ -44,7 +44,12 @@ cabin_window_elevation = 1;
 cabin_window_height = 2;
 cabin_window_half_width = 1.7;
 
+stair_count = 8;
+stair_base_size = 5; // back to front
+stair_offset_from_door = 0.5; // how far from cabin door
+
 hull_fragment_angle = 25;
+
 
 // H and L are big enough to be outside the boat in any dimension
 H = hull_length * 2.0;
@@ -64,6 +69,8 @@ output_hull = 0; // main body of boat
 output_cabin_wall_0 = 0;
 output_cabin_wall_1 = 0;
 output_door_frame = 0;
+output_stair_0 = 0;
+output_stair_1 = 0;
 output_mast = 0;
 output_mast_base = 0;
 output_forward_mast = 0;
@@ -345,6 +352,32 @@ module main() {
             rotate([-90, 0 ,0]) {
                 cylinder(forward_mast_base_height, forward_mast_base_radius);
             }
+        }
+    }
+    if (output_stair_0 || output_visual) {
+        intersection() {
+            union() {
+                for (i = [0 : stair_count]) {
+                    place_cuboid((-actual_radius + cabin_size),
+                                 (-actual_radius + cabin_size) + ((stair_base_size / stair_count) * (stair_count - i)),
+                                 0, (cabin_height / stair_count) * (i + 1),
+                                 cabin_door_half_width + stair_offset_from_door, H);
+                }
+            }
+            main_deck_interior_template();
+        }
+    }
+    if (output_stair_1 || output_visual) {
+        intersection() {
+            union() {
+                for (i = [0 : stair_count]) {
+                    place_cuboid((-actual_radius + cabin_size),
+                                 (-actual_radius + cabin_size) + ((stair_base_size / stair_count) * (stair_count - i)),
+                                 0, (cabin_height / stair_count) * (i + 1),
+                                 L, -cabin_door_half_width - stair_offset_from_door);
+                }
+            }
+            main_deck_interior_template();
         }
     }
 }

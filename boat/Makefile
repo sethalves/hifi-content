@@ -76,6 +76,19 @@ cabin-parts/cabin-door-frame.stl: boat.scad
 cabin-parts/cabin-door-frame.obj: cabin-parts/cabin-door-frame.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
+cabin-parts/stair0.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_stair_0=1 -o $@ $^
+cabin-parts/stair0.obj: cabin-parts/stair0.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
+cabin-parts/stair1.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_stair_1=1 -o $@ $^
+cabin-parts/stair1.obj: cabin-parts/stair1.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
+
+
+
 sail-parts/main-mast.stl: boat.scad
 	mkdir -p sail-parts
 	openscad -D output_mast=1 -o $@ $^
@@ -143,6 +156,8 @@ boat.obj: boat-walls.obj \
 		  cabin-parts/cabin-front-wall-0.obj \
 		  cabin-parts/cabin-front-wall-1.obj \
 		  cabin-parts/cabin-door-frame.obj \
+		  cabin-parts/stair0.obj \
+		  cabin-parts/stair1.obj \
 		  deck-parts/quarterdeck.obj \
 		  sail-parts/main-mast.obj \
 		  sail-parts/main-mast-base.obj \
