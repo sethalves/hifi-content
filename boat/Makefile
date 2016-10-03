@@ -3,7 +3,7 @@
 #
 
 VHACD=~/src/hifi-master/build/tools/vhacd-util/vhacd-util
-N= #-n
+N=-n
 
 %.obj: %.stl
 	wavefront-obj-tool ${N} -c $^ -o $@
@@ -25,14 +25,19 @@ boat-hull.obj: boat-hull.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
 
-boat.obj: boat-hull.obj boat-hold-floor-collision-hull.obj \
-		  deck-parts/boat-deck-collision-hull-0.obj \
-		  deck-parts/boat-deck-collision-hull-1.obj \
-		  deck-parts/boat-deck-collision-hull-2.obj \
-		  deck-parts/boat-deck-collision-hull-3.obj \
-		  deck-parts/quarterdeck.obj
-	wavefront-obj-tool ${N} -c $^ -o $@ -L boat.mtl
+# boat.obj: boat-hull.obj boat-hold-floor-collision-hull.obj \
+# 		  deck-parts/boat-deck-collision-hull-0.obj \
+# 		  deck-parts/boat-deck-collision-hull-1.obj \
+# 		  deck-parts/boat-deck-collision-hull-2.obj \
+# 		  deck-parts/boat-deck-collision-hull-3.obj \
+# 		  deck-parts/quarterdeck.obj
+# 	wavefront-obj-tool ${N} -c $^ -o $@ -L boat.mtl
 
+boat.stl: boat.scad
+	openscad -D output_visual=1 -o $@ $^
+
+boat.obj: boat.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl -L boat.mtl
 
 ## collision hull
 
