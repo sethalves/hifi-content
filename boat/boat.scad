@@ -40,6 +40,10 @@ forward_mast_base_radius = 1.3;
 mast_top_ratio = 0.2;
 mast_mid_ratio = 0.4;
 
+cabin_window_elevation = 1;
+cabin_window_height = 2;
+cabin_window_half_width = 1.7;
+
 hull_fragment_angle = 25;
 
 // H and L are big enough to be outside the boat in any dimension
@@ -278,7 +282,25 @@ module main() {
                      -cabin_door_half_width, cabin_door_half_width);
     }
     if (output_hull || output_visual) {
-        boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
+        difference() {
+            boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
+
+            translate([-actual_radius + (cabin_size / 2), 0, 0]) {
+                place_cuboid(-hull_thickness * 20, -hull_thickness * 2,
+                             cabin_window_elevation, cabin_window_elevation + cabin_window_height,
+                             -cabin_window_half_width, cabin_window_half_width);
+                rotate([0, 60, 0]) {
+                    place_cuboid(-hull_thickness * 20, -hull_thickness * 2,
+                                 cabin_window_elevation, cabin_window_elevation + cabin_window_height,
+                                 -cabin_window_half_width, cabin_window_half_width);
+                }
+                rotate([0, -60, 0]) {
+                    place_cuboid(-hull_thickness * 20, -hull_thickness * 2,
+                                 cabin_window_elevation, cabin_window_elevation + cabin_window_height,
+                                 -cabin_window_half_width, cabin_window_half_width);
+                }
+            }
+        }
     }
     if (output_mast || output_visual) {
         translate([mast_forward_offset, 0, 0]) {
