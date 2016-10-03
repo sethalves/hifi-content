@@ -35,6 +35,8 @@ forward_mast_height = 30;
 forward_mast_radius = 0.8;
 forward_mast_base_height = 0.2;
 forward_mast_base_radius = 1.3;
+mast_top_ratio = 0.2;
+mast_mid_ratio = 0.4;
 
 hull_fragment_angle = 25;
 
@@ -131,7 +133,7 @@ module cabin_cut() {
     // take a sample of the top of rail so it can be extended to be the cabin
     projection(cut = true) {
         rotate([-90, 0 ,0]) { // cut looks at z = 0
-            translate([0, -hull_rail_height + 0.0001, 0]) { // almost the very top
+            translate([0, -hull_rail_height + 0.000001, 0]) { // almost the very top
                 intersection() {
                     main_hull();
                     place_cuboid(-actual_radius, (-actual_radius + cabin_size),
@@ -303,6 +305,14 @@ module main() {
                 cylinder(mast_base_height, mast_base_radius);
             }
         }
+        if (output_visual) {
+            translate([mast_forward_offset, mast_height * 0.9, 0]) {
+                cylinder(h=(mast_height * mast_top_ratio), r=(mast_radius * 0.5), center=true);
+            }
+            translate([mast_forward_offset, mast_height * 0.5, 0]) {
+                cylinder(h=(mast_height * mast_mid_ratio), r=(mast_radius * 0.8), center=true);
+            }
+        }
     }
     if (output_mast_base || output_visual) {
         translate([mast_forward_offset, 0, 0]) {
@@ -316,6 +326,14 @@ module main() {
             rotate([-90, 0 ,0]) {
                 cylinder(forward_mast_height, forward_mast_radius);
                 cylinder(forward_mast_base_height, forward_mast_base_radius);
+            }
+        }
+        if (output_visual) {
+            translate([forward_mast_forward_offset, forward_mast_height * 0.9, 0]) {
+                cylinder(h=(forward_mast_height * mast_top_ratio), r=(forward_mast_radius * 0.5), center=true);
+            }
+            translate([forward_mast_forward_offset, forward_mast_height * 0.5, 0]) {
+                cylinder(h=(forward_mast_height * mast_mid_ratio), r=(forward_mast_radius * 0.8), center=true);
             }
         }
     }
