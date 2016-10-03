@@ -11,7 +11,7 @@ hull_half_length = hull_length / 2.0;
 hull_half_width = hull_width / 2.0;
 hull_half_diff = hull_half_length - hull_half_width;
 hold_ceiling = 0 - hull_thickness;
-hold_floor = -5;
+hold_floor = -6;
 
 actual_radius = hull_half_length - 10; // XXX
 
@@ -24,15 +24,16 @@ cabin_offset = 3.0;
 cabin_size = 12.0;
 cabin_height = 5.3; // how high above the top of the rail?
 cabin_door_half_width = 0.7;
+cabin_door_height = 4.5;
 
 mast_forward_offset = -0.5;
 mast_height = 40;
 mast_radius = 1;
 mast_base_height = 0.2;
-mast_base_radius = 1.5;
+mast_base_radius = 1.2;
 forward_mast_forward_offset = actual_radius - 6;
 forward_mast_height = 30;
-forward_mast_radius = 0.8;
+forward_mast_radius = 0.6;
 forward_mast_base_height = 0.2;
 forward_mast_base_radius = 1.3;
 mast_top_ratio = 0.2;
@@ -57,6 +58,7 @@ output_hold_floor_collision_hull = 0;
 output_hull = 0; // main body of boat
 output_cabin_wall_0 = 0;
 output_cabin_wall_1 = 0;
+output_door_frame = 0;
 output_mast = 0;
 output_mast_base = 0;
 output_forward_mast = 0;
@@ -268,6 +270,11 @@ module main() {
                          cabin_door_half_width, H);
             main_deck_interior_template();
         }
+    }
+    if (output_door_frame || output_visual) {
+        place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
+                     cabin_door_height - hull_thickness, cabin_height - hull_thickness,
+                     -cabin_door_half_width, cabin_door_half_width);
     }
     if (output_hull || output_visual) {
         boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);

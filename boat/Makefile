@@ -16,7 +16,7 @@ boat-collision-walls.stl: boat.scad
 	openscad -D output_walls=1 -o $@ $^
 
 boat-walls-collision-hull.obj: boat-collision-walls.obj
-	$(VHACD) -g -i $^ -o $@ # --concavity 0.001 --resolution 400000 --depth 30
+	$(VHACD) -g -i $^ -o $@ --maxvertices 14 # --concavity 0.001 --resolution 400000 --depth 30
 
 boat-walls.stl: boat.scad
 	openscad -D output_hull=1 -o $@ $^
@@ -70,6 +70,12 @@ cabin-parts/cabin-front-wall-1.stl: boat.scad
 cabin-parts/cabin-front-wall-1.obj: cabin-parts/cabin-front-wall-1.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
+cabin-parts/cabin-door-frame.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_door_frame=1 -o $@ $^
+cabin-parts/cabin-door-frame.obj: cabin-parts/cabin-door-frame.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
+
 sail-parts/main-mast.stl: boat.scad
 	mkdir -p sail-parts
 	openscad -D output_mast=1 -o $@ $^
@@ -116,6 +122,7 @@ boat-collision-hull.obj: boat-walls-collision-hull.obj \
 						 deck-parts/boat-deck-collision-hull-3.obj \
 						 cabin-parts/cabin-front-wall-0.obj \
 						 cabin-parts/cabin-front-wall-1.obj \
+						 cabin-parts/cabin-door-frame.obj \
 						 deck-parts/quarterdeck.obj \
 						 sail-parts/main-mast.obj \
 						 sail-parts/main-mast-base.obj \
@@ -135,6 +142,7 @@ boat.obj: boat-walls.obj \
 		  deck-parts/boat-deck-collision-hull-3.obj \
 		  cabin-parts/cabin-front-wall-0.obj \
 		  cabin-parts/cabin-front-wall-1.obj \
+		  cabin-parts/cabin-door-frame.obj \
 		  deck-parts/quarterdeck.obj \
 		  sail-parts/main-mast.obj \
 		  sail-parts/main-mast-base.obj \
@@ -148,7 +156,7 @@ boat.obj: boat-walls.obj \
 
 ## miscellaneous
 
-upload: boat.obj boat-collision-hull.obj boat.js boat.mtl
+upload: boat.obj boat-collision-hull.obj boat.js boat.mtl wood.jpg
 	mkdir -p export
 	cp -a $^ export/
 	rsync -avP --delete export/ headache.hungry.com:public_html/hifi/boat/
