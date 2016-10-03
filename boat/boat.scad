@@ -61,6 +61,8 @@ output_mast = 0;
 output_mast_base = 0;
 output_forward_mast = 0;
 output_forward_mast_base = 0;
+output_spars = 0;
+output_forward_spars = 0;
 
 module place_cuboid(low_x, high_x, low_y, high_y, low_z, high_z) {
     translate([low_x, low_y, low_z]) {
@@ -276,15 +278,16 @@ module main() {
                 cylinder(mast_height, mast_radius);
             }
         }
-        if (output_visual) {
-            translate([mast_forward_offset, mast_height * 0.9, 0]) {
-                cylinder(h=(mast_height * mast_top_ratio), r=(mast_radius * 0.5), center=true);
-            }
-            translate([mast_forward_offset, mast_height * 0.5, 0]) {
-                cylinder(h=(mast_height * mast_mid_ratio), r=(mast_radius * 0.8), center=true);
-            }
+    }
+    if (output_spars || output_visual) {
+        translate([mast_forward_offset, mast_height * 0.9, 0]) {
+            cylinder(h=(mast_height * mast_top_ratio), r=(mast_radius * 0.5), center=true);
+        }
+        translate([mast_forward_offset, mast_height * 0.5, 0]) {
+            cylinder(h=(mast_height * mast_mid_ratio), r=(mast_radius * 0.8), center=true);
         }
     }
+
     if (output_mast_base || output_visual) {
         translate([mast_forward_offset, 0, 0]) {
             rotate([-90, 0 ,0]) {
@@ -298,13 +301,13 @@ module main() {
                 cylinder(forward_mast_height, forward_mast_radius);
             }
         }
-        if (output_visual) {
-            translate([forward_mast_forward_offset, forward_mast_height * 0.9, 0]) {
-                cylinder(h=(forward_mast_height * mast_top_ratio), r=(forward_mast_radius * 0.5), center=true);
-            }
-            translate([forward_mast_forward_offset, forward_mast_height * 0.5, 0]) {
-                cylinder(h=(forward_mast_height * mast_mid_ratio), r=(forward_mast_radius * 0.8), center=true);
-            }
+    }
+    if (output_forward_spars) {
+        translate([forward_mast_forward_offset, forward_mast_height * 0.9, 0]) {
+            cylinder(h=(forward_mast_height * mast_top_ratio), r=(forward_mast_radius * 0.5), center=true);
+        }
+        translate([forward_mast_forward_offset, forward_mast_height * 0.5, 0]) {
+            cylinder(h=(forward_mast_height * mast_mid_ratio), r=(forward_mast_radius * 0.8), center=true);
         }
     }
     if (output_forward_mast_base || output_visual) {

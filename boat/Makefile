@@ -82,17 +82,29 @@ sail-parts/main-mast-base.stl: boat.scad
 sail-parts/main-mast-base.obj: sail-parts/main-mast-base.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_brass_mtl
 
-sail-parts/main-forward-mast.stl: boat.scad
+sail-parts/forward-mast.stl: boat.scad
 	mkdir -p sail-parts
 	openscad -D output_forward_mast=1 -o $@ $^
-sail-parts/main-forward-mast.obj: sail-parts/main-forward-mast.stl
+sail-parts/forward-mast.obj: sail-parts/forward-mast.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_mast_mtl
 
-sail-parts/main-forward-mast-base.stl: boat.scad
+sail-parts/forward-mast-base.stl: boat.scad
 	mkdir -p sail-parts
 	openscad -D output_forward_mast_base=1 -o $@ $^
-sail-parts/main-forward-mast-base.obj: sail-parts/main-forward-mast-base.stl
+sail-parts/forward-mast-base.obj: sail-parts/forward-mast-base.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_brass_mtl
+
+sail-parts/main-spars.stl: boat.scad
+	mkdir -p sail-parts
+	openscad -D output_spars=1 -o $@ $^
+sail-parts/main-spars.obj: sail-parts/main-spars.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_mast_mtl
+
+sail-parts/forward-spars.stl: boat.scad
+	mkdir -p sail-parts
+	openscad -D output_forward_spars=1 -o $@ $^
+sail-parts/forward-spars.obj: sail-parts/forward-spars.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_mast_mtl
 
 ##
 
@@ -107,8 +119,8 @@ boat-collision-hull.obj: boat-walls-collision-hull.obj \
 						 deck-parts/quarterdeck.obj \
 						 sail-parts/main-mast.obj \
 						 sail-parts/main-mast-base.obj \
-						 sail-parts/main-forward-mast.obj \
-						 sail-parts/main-forward-mast-base.obj
+						 sail-parts/forward-mast.obj \
+						 sail-parts/forward-mast-base.obj
 	wavefront-obj-tool $^ > $@
 
 
@@ -126,8 +138,10 @@ boat.obj: boat-walls.obj \
 		  deck-parts/quarterdeck.obj \
 		  sail-parts/main-mast.obj \
 		  sail-parts/main-mast-base.obj \
-		  sail-parts/main-forward-mast.obj \
-		  sail-parts/main-forward-mast-base.obj
+		  sail-parts/forward-mast.obj \
+		  sail-parts/forward-mast-base.obj \
+		  sail-parts/main-spars.obj \
+		  sail-parts/forward-spars.obj
 	wavefront-obj-tool -L boat.mtl $^ > $@
 
 
