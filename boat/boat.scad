@@ -29,6 +29,7 @@ cabin_door_height = 4.5;
 mast_forward_offset = -0.5;
 mast_height = 40;
 mast_radius = 1;
+mast_taper = 0.6;
 mast_base_height = 0.2;
 mast_base_radius = 1.2;
 forward_mast_forward_offset = actual_radius - 6;
@@ -282,7 +283,7 @@ module main() {
     if (output_mast || output_visual) {
         translate([mast_forward_offset, 0, 0]) {
             rotate([-90, 0 ,0]) {
-                cylinder(mast_height, mast_radius);
+                cylinder(mast_height, r1=mast_radius, r2=(mast_radius * mast_taper));
             }
         }
     }
@@ -305,7 +306,7 @@ module main() {
     if (output_forward_mast || output_visual) {
         translate([forward_mast_forward_offset, 0, 0]) {
             rotate([-90, 0 ,0]) {
-                cylinder(forward_mast_height, forward_mast_radius);
+                cylinder(forward_mast_height, r1=forward_mast_radius, r2=(forward_mast_radius * mast_taper));
             }
         }
     }
