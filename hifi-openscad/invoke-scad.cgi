@@ -117,9 +117,9 @@ if p.returncode != 0:
     p = subprocess.Popen(cmd) # nothing depends on output or return value, so it will run in the background
 
 
-# cmd = ['/usr/local/bin/wavefront-obj-tool', '-n', fsBase + '/models/' + stlFile, '-o', fsBase + '/models/' + visualFile]
+cmd = ['/usr/local/bin/wavefront-obj-tool', '-n', fsBase + '/models/' + stlFile, '-o', fsBase + '/models/' + visualFile]
 # export DISPLAY=:100.0
-cmd = ['/usr/bin/meshlabserver', '-i', fsBase + '/models/' + stlFile, '-o', fsBase + '/models/' + visualFile]
+# cmd = ['/usr/bin/meshlabserver', '-i', fsBase + '/models/' + stlFile, '-o', fsBase + '/models/' + visualFile]
 
 print >> sys.stderr, cmd
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, env={"DISPLAY":":100.0"})
