@@ -15,9 +15,9 @@ hold_floor = -5;
 
 actual_radius = hull_half_length - 10; // XXX
 
-hatch_low_x = 1;
-hatch_high_x = 2;
-hatch_half_width = 1.2;
+hatch_low_x = 4;
+hatch_high_x = 6;
+hatch_half_width = 1.5;
 
 boat_back_squeeze = 0.55;
 cabin_offset = 3.0;
@@ -25,8 +25,18 @@ cabin_size = 12.0;
 cabin_height = 5.3; // how high above the top of the rail?
 cabin_door_half_width = 0.7;
 
+mast_forward_offset = -0.5;
 mast_height = 40;
 mast_radius = 1;
+mast_base_height = 0.2;
+mast_base_radius = 1.5;
+forward_mast_forward_offset = actual_radius - 6;
+forward_mast_height = 30;
+forward_mast_radius = 0.8;
+forward_mast_base_height = 0.2;
+forward_mast_base_radius = 1.3;
+
+hull_fragment_angle = 25;
 
 // H and L are big enough to be outside the boat in any dimension
 H = hull_length * 2.0;
@@ -46,6 +56,9 @@ output_hull = 0;
 output_cabin_wall_0 = 0;
 output_cabin_wall_1 = 0;
 output_mast = 0;
+output_mast_base = 0;
+output_forward_mast = 0;
+output_forward_mast_base = 0;
 
 module place_cuboid(low_x, high_x, low_y, high_y, low_z, high_z) {
     translate([low_x, low_y, low_z]) {
@@ -58,8 +71,8 @@ module inner_hull() {
     difference() {
         hull() {
             intersection() {
-                translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
-                translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness); }
+                translate([0, 0, - hull_half_diff]) { sphere(hull_half_length - hull_thickness, $fa = hull_fragment_angle); }
+                translate([0, 0, hull_half_diff]) { sphere(hull_half_length - hull_thickness, $fa = hull_fragment_angle); }
             };
             // fatten the back of the boat
             place_cuboid(-actual_radius + cabin_offset + hull_thickness,
@@ -77,8 +90,8 @@ module outer_hull() {
     difference() {
         hull() {
             intersection() {
-                translate([0, 0, -hull_half_diff]) { sphere(hull_half_length); }
-                translate([0, 0, hull_half_diff]) { sphere(hull_half_length); }
+                translate([0, 0, -hull_half_diff]) { sphere(hull_half_length, $fa = hull_fragment_angle); }
+                translate([0, 0, hull_half_diff]) { sphere(hull_half_length, $fa = hull_fragment_angle); }
             };
             // fatten the back of the boat
             place_cuboid(-actual_radius + cabin_offset, -actual_radius + hull_thickness + cabin_offset,
@@ -284,7 +297,34 @@ module main() {
         boat_walls(hull_length, hull_width, hull_thickness, hull_rail_height);
     }
     if (output_mast || output_visual) {
-        cylinder(mast_height, mast_radius);
+        translate([mast_forward_offset, 0, 0]) {
+            rotate([-90, 0 ,0]) {
+                cylinder(mast_height, mast_radius);
+                cylinder(mast_base_height, mast_base_radius);
+            }
+        }
+    }
+    if (output_mast_base || output_visual) {
+        translate([mast_forward_offset, 0, 0]) {
+            rotate([-90, 0 ,0]) {
+                cylinder(mast_base_height, mast_base_radius);
+            }
+        }
+    }
+    if (output_forward_mast || output_visual) {
+        translate([forward_mast_forward_offset, 0, 0]) {
+            rotate([-90, 0 ,0]) {
+                cylinder(forward_mast_height, forward_mast_radius);
+                cylinder(forward_mast_base_height, forward_mast_base_radius);
+            }
+        }
+    }
+    if (output_forward_mast_base || output_visual) {
+        translate([forward_mast_forward_offset, 0, 0]) {
+            rotate([-90, 0 ,0]) {
+                cylinder(forward_mast_base_height, forward_mast_base_radius);
+            }
+        }
     }
 }
 
