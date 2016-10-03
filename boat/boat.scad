@@ -47,14 +47,14 @@ L = -H;
 
 // these are overridden by the Makefile to create different parts
 output_visual = 0; // everything in a union
-output_walls = 0;
+output_walls = 0; // main body of boat, but only the parts you can bump into while walking
 output_deck_collision_hull_0 = 0;
 output_deck_collision_hull_1 = 0;
 output_deck_collision_hull_2 = 0;
 output_deck_collision_hull_3 = 0;
 output_deck_collision_hull_4 = 0;
 output_hold_floor_collision_hull = 0;
-output_hull = 0;
+output_hull = 0; // main body of boat
 output_cabin_wall_0 = 0;
 output_cabin_wall_1 = 0;
 output_mast = 0;
@@ -111,20 +111,6 @@ module main_hull() {
             outer_hull();
             inner_hull();
         };
-
-        // front wall of cabin
-        difference() {
-            intersection() {
-                place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
-                             0, hull_rail_height,
-                             -hull_half_width, hull_half_width);
-                outer_hull();
-            }
-            // cut out door to cabin
-            place_cuboid(-actual_radius + cabin_size - hull_thickness - 1, -actual_radius + cabin_size + 1,
-                         0, (hull_rail_height + cabin_height),
-                         -cabin_door_half_width, cabin_door_half_width);
-        }
     }
 }
 
@@ -146,29 +132,24 @@ module cabin_cut() {
 }
 
 
-module cabin_wall_template_cut() {
+module main_deck_interior_cut() {
     projection(cut = true) {
         rotate([-90, 0 ,0]) { // cut looks at z = 0
             translate([0, -hull_rail_height + 0.0001, 0]) { // almost the very top
-                intersection() {
-                    inner_hull();
-                    place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
-                                 L, H,
-                                 L, H);
-                }
+                inner_hull();
             }
         }
     }
 }
 
 
-module cabin_front_wall_template() {
+module main_deck_interior_template() {
     // a box that encompasses the wall between the cabin and deck
     hull() {
         translate([0, cabin_height + hull_rail_height, 0]) {
             rotate([90, 0 ,0]) {
                 linear_extrude(height = cabin_height + hull_rail_height) {
-                    cabin_wall_template_cut();
+                    main_deck_interior_cut();
                 }
             }
         }
@@ -185,22 +166,13 @@ module cabin() {
                 }
             }
         }
-
-        // remove railing between quarterdeck and main deck
-        translate([0, cabin_height - hull_thickness, 0]) {
-            cabin_front_wall_template();
-        }
-
-        // doorway into cabin
-        place_cuboid(-actual_radius + cabin_size - hull_thickness - 1, -actual_radius + cabin_size + 1,
-                     0, (hull_rail_height + cabin_height),
-                     -cabin_door_half_width, cabin_door_half_width);
     }
 }
 
 
 module cabin_roof() {
     intersection() {
+        main_deck_interior_template();
         hull() {
             cabin();
         }
@@ -276,23 +248,23 @@ module main() {
                     place_cuboid(L, H, hold_floor, hold_ceiling, L, H);
                 }
             }
-            cabin_front_wall_template();
+            main_deck_interior_template();
         }
     }
     if (output_cabin_wall_0 || output_visual) {
         intersection() {
             place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
-                         0, cabin_height,
+                         0, cabin_height - hull_thickness,
                          L, -cabin_door_half_width);
-            cabin_front_wall_template();
+            main_deck_interior_template();
         }
     }
     if (output_cabin_wall_1 || output_visual) {
         intersection() {
             place_cuboid((-actual_radius + cabin_size - hull_thickness), (-actual_radius + cabin_size),
-                         0, cabin_height,
+                         0, cabin_height - hull_thickness,
                          cabin_door_half_width, H);
-            cabin_front_wall_template();
+            main_deck_interior_template();
         }
     }
     if (output_hull || output_visual) {
@@ -302,7 +274,6 @@ module main() {
         translate([mast_forward_offset, 0, 0]) {
             rotate([-90, 0 ,0]) {
                 cylinder(mast_height, mast_radius);
-                cylinder(mast_base_height, mast_base_radius);
             }
         }
         if (output_visual) {
@@ -325,7 +296,6 @@ module main() {
         translate([forward_mast_forward_offset, 0, 0]) {
             rotate([-90, 0 ,0]) {
                 cylinder(forward_mast_height, forward_mast_radius);
-                cylinder(forward_mast_base_height, forward_mast_base_radius);
             }
         }
         if (output_visual) {
