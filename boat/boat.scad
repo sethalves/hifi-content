@@ -64,6 +64,7 @@ output_deck_collision_hull_1 = 0;
 output_deck_collision_hull_2 = 0;
 output_deck_collision_hull_3 = 0;
 output_deck_collision_hull_4 = 0;
+output_hold_floor = 0;
 output_hold_floor_collision_hull = 0;
 output_hull = 0; // main body of boat
 output_cabin_wall_0 = 0;
@@ -71,6 +72,8 @@ output_cabin_wall_1 = 0;
 output_door_frame = 0;
 output_stair_0 = 0;
 output_stair_1 = 0;
+output_stair_collision_shape_0 = 0;
+output_stair_collision_shape_1 = 0;
 output_mast = 0;
 output_mast_base = 0;
 output_forward_mast = 0;
@@ -243,12 +246,20 @@ module main() {
     if (output_deck_collision_hull_4 || output_visual) {
         cabin_roof();
     }
-    if (output_hold_floor_collision_hull || output_visual) {
+    if (output_hold_floor || output_visual) {
         intersection() {
             place_cuboid(-hull_half_length, hull_half_length,
                          (hold_floor - hull_thickness), hold_floor,
                          -hull_half_width, hull_half_width);
             inner_hull();
+        }
+    }
+    if (output_hold_floor_collision_hull) {
+        intersection() {
+            place_cuboid(-hull_half_length, hull_half_length,
+                         (hold_floor - hull_thickness), hold_floor,
+                         -hull_half_width, hull_half_width);
+            outer_hull();
         }
     }
     if (output_walls || output_visual) {
@@ -376,6 +387,49 @@ module main() {
                                  0, (cabin_height / stair_count) * (i + 1),
                                  L, -cabin_door_half_width - stair_offset_from_door);
                 }
+            }
+            main_deck_interior_template();
+        }
+    }
+    if (output_stair_collision_shape_0) {
+        intersection() {
+            union() {
+                // ramp
+                translate([(-actual_radius + cabin_size + stair_base_size),
+                           -(cabin_height / stair_count), 0]) {
+                    rotate([0, 0, -atan(cabin_height / stair_base_size)]) {
+                        place_cuboid(-sqrt((cabin_height * cabin_height) + (stair_base_size * stair_base_size)), 0,
+                                     0, cabin_height / stair_count,
+                                     cabin_door_half_width + stair_offset_from_door, H);
+                    }
+                }
+                // and part of the top stair to fill the gap
+                place_cuboid((-actual_radius + cabin_size),
+                             (-actual_radius + cabin_size) + ((stair_base_size / stair_count) * 0.7),
+                             0, cabin_height,
+                             cabin_door_half_width + stair_offset_from_door, H);
+
+            }
+            main_deck_interior_template();
+        }
+    }
+    if (output_stair_collision_shape_1) {
+        intersection() {
+            union() {
+                // ramp
+                translate([(-actual_radius + cabin_size + stair_base_size),
+                           -(cabin_height / stair_count), 0]) {
+                    rotate([0, 0, -atan(cabin_height / stair_base_size)]) {
+                        place_cuboid(-sqrt((cabin_height * cabin_height) + (stair_base_size * stair_base_size)), 0,
+                                     0, cabin_height / stair_count,
+                                     L, -cabin_door_half_width - stair_offset_from_door);
+                    }
+                }
+                // and part of the top stair to fill the gap
+                place_cuboid((-actual_radius + cabin_size),
+                             (-actual_radius + cabin_size) + ((stair_base_size / stair_count) * 0.7),
+                             0, cabin_height,
+                             L, -cabin_door_half_width - stair_offset_from_door);
             }
             main_deck_interior_template();
         }

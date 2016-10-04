@@ -16,12 +16,17 @@ boat-collision-walls.stl: boat.scad
 	openscad -D output_walls=1 -o $@ $^
 
 boat-walls-collision-hull.obj: boat-collision-walls.obj
-	$(VHACD) -g -i $^ -o $@ --maxvertices 14 # --concavity 0.001 --resolution 400000 --depth 30
+	$(VHACD) -g -i $^ -o $@ # --maxvertices 14 --concavity 0.001 --resolution 400000 --depth 30
 
 boat-walls.stl: boat.scad
 	openscad -D output_hull=1 -o $@ $^
 boat-walls.obj: boat-walls.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
+
+boat-hold-floor.stl: boat.scad
+	openscad -D output_hold_floor=1 -o $@ $^
+boat-hold-floor.obj: boat-hold-floor.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_floor_mtl
 
 boat-hold-floor-collision-hull.stl: boat.scad
 	openscad -D output_hold_floor_collision_hull=1 -o $@ $^
@@ -88,6 +93,18 @@ cabin-parts/stair1.obj: cabin-parts/stair1.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
 
 
+cabin-parts/stair-collision-shape0.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_stair_collision_shape_0=1 -o $@ $^
+cabin-parts/stair-collision-shape0.obj: cabin-parts/stair-collision-shape0.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
+cabin-parts/stair-collision-shape1.stl: boat.scad
+	mkdir -p cabin-parts
+	openscad -D output_stair_collision_shape_1=1 -o $@ $^
+cabin-parts/stair-collision-shape1.obj: cabin-parts/stair-collision-shape1.stl
+	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S boat_hull_mtl
+
+
 
 sail-parts/main-mast.stl: boat.scad
 	mkdir -p sail-parts
@@ -136,6 +153,8 @@ boat-collision-hull.obj: boat-walls-collision-hull.obj \
 						 cabin-parts/cabin-front-wall-0.obj \
 						 cabin-parts/cabin-front-wall-1.obj \
 						 cabin-parts/cabin-door-frame.obj \
+						 cabin-parts/stair-collision-shape0.obj \
+						 cabin-parts/stair-collision-shape1.obj \
 						 deck-parts/quarterdeck.obj \
 						 sail-parts/main-mast.obj \
 						 sail-parts/main-mast-base.obj \
@@ -148,7 +167,7 @@ boat-collision-hull.obj: boat-walls-collision-hull.obj \
 # 	openscad -D output_visual=1 -o $@ $^
 
 boat.obj: boat-walls.obj \
-		  boat-hold-floor-collision-hull.obj \
+		  boat-hold-floor.obj \
 		  deck-parts/boat-deck-collision-hull-0.obj \
 		  deck-parts/boat-deck-collision-hull-1.obj \
 		  deck-parts/boat-deck-collision-hull-2.obj \
@@ -157,7 +176,7 @@ boat.obj: boat-walls.obj \
 		  cabin-parts/cabin-front-wall-1.obj \
 		  cabin-parts/cabin-door-frame.obj \
 		  cabin-parts/stair0.obj \
-		  cabin-parts/stair1.obj \
+	      cabin-parts/stair1.obj \
 		  deck-parts/quarterdeck.obj \
 		  sail-parts/main-mast.obj \
 		  sail-parts/main-mast-base.obj \
