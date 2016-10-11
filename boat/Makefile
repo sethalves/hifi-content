@@ -200,6 +200,7 @@ clean:
 	rm -f *~
 	rm -f boat.obj boat.stl
 	rm -f boat-walls.obj boat-walls.stl
+	rm -f boat-hold-floor.obj boat-hold-floor.stl
 	rm -f boat-collision-walls.obj boat-collision-walls.stl
 	rm -f boat-collision-hull.obj boat-walls-collision-hull.obj
 	rm -f boat-deck-collision-hull.obj boat-deck-collision-hull.stl
