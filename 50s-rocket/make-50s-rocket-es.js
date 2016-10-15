@@ -59,6 +59,7 @@
                 type: 'Model',
                 modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj',
                 compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj',
+                shapeType: "compound",
                 dynamic: false,
                 gravity: { x: 0, y: 0, z: 0 },
                 angularDamping: { x: 0.0, y: 0.0, z: 0.0 },
