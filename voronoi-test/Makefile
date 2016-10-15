@@ -2,8 +2,8 @@
 #
 #
 
-VORONOI=../../voronoi/voronoi_main
-LIBS='(seth pbm)' '(foldling command-line)' '(seth strings)' '(seth math-3d)'
+VORONOI=../../voronoi/voronoi
+LIBS='(seth pbm)' '(foldling command-line)' '(seth strings)' '(seth math-3d)' '(srfi 95)' '(srfi 69)' '(seth graph)'
 
 all: lines.png
 
@@ -22,10 +22,10 @@ link-libs: very-clean
 		install $(LIBS)
 
 lines: points
-	cat $^ | $(VORONOI) > $@
+	cat $^ | $(VORONOI) 0 0 100 100 > $@
 
 lines.pnm: lines
-	cat $^ | ./voronoi-test-chibi.scm > $@
+	cat $^ | ./voronoi-test-gauche.scm > $@
 
 lines.png: lines.pnm
 	pnmtopng $^ > $@
