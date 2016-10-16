@@ -9,6 +9,7 @@
           (srfi 1)
           (srfi 69)
           (srfi 95)
+          (snow assert)
           (foldling command-line)
           (seth cout)
           (seth strings)
@@ -17,10 +18,19 @@
           (seth image)
           (seth pbm)
           (seth graph)
+          (seth model-3d)
+          (seth obj-model)
           )
   (begin
 
     (define epsilon 0.0001)
+
+    (define-record-type <voronoi-graph-data>
+      (make-voronoi-graph-data point index status)
+      voronoi-graph-data?
+      (point voronoi-graph-data-point voronoi-graph-data-set-point!)
+      (index voronoi-graph-data-index voronoi-graph-data-set-index!)
+      (status voronoi-graph-data-status voronoi-graph-data-set-status!))
 
     (define (image-fat-line! img pxl x0 y0 x1 y1 channels)
       (image-line! img pxl x0 y0 x1 y1 channels)
@@ -147,8 +157,10 @@
                 (else
                  (let ((p0 (car sorted-edge-points))
                        (p1 (cadr sorted-edge-points)))
-                   (loop (cons (list p0 p1) edges)
-                         (cdr sorted-edge-points))))))))
+                   (if (vector2-almost-equal? p0 p1 epsilon)
+                       (loop edges (cdr sorted-edge-points))
+                       (loop (cons (list p0 p1) edges)
+                             (cdr sorted-edge-points)))))))))
 
 
     (define (tug-line-ends-to-points in-lines points)
@@ -168,53 +180,194 @@
        in-lines))
 
 
-    (define (point->key point)
-      (string-append (number->string (vector2-x point)) "/" (number->string (vector2-y point))))
+    (define (edge-angle node-0 node-1)
+      (let* ((p0 (voronoi-graph-data-point (node-value node-0)))
+             (p1 (voronoi-graph-data-point (node-value node-1)))
+             (delta (vector2-diff p1 p0)))
+        (atan2 (vector2-y delta) (vector2-x delta))))
 
-    (define (extract-faces in-lines)
+
+    (define (find-face-edge node-a node-b)
+      ;; look for an edge that joins node-b some node
+      ;; other than node-a and is a sharper left-turn
+      ;; than the others.
+      (let loop ((b-edges (node-edges node-b))
+                 (leftest-angle 0)
+                 (face-edge #f))
+        (if (null? b-edges)
+            face-edge
+            (let* ((bc-edge (car b-edges))
+                   (node-c (edge-other-node bc-edge node-b)))
+              (if (eq? node-a node-c)
+                  ;; don't go backwards
+                  (loop (cdr b-edges) leftest-angle face-edge)
+                  ;; see if this edge is best
+                  (let* ((angle-ab (edge-angle node-a node-b))
+                         (angle-bc (edge-angle node-b node-c))
+                         (angle-change (- angle-bc angle-ab))
+                         (b-rest (cdr b-edges)))
+                    (cond ((> angle-change pi)
+                           ;; a spin-too-far right turn
+                           (loop b-rest leftest-angle face-edge))
+                          ((< angle-change 0)
+                           ;; a right turn
+                           (loop b-rest leftest-angle face-edge))
+                          ((> angle-change leftest-angle)
+                           ;; best so far
+                           (loop b-rest angle-bc bc-edge))
+                          (else
+                           (loop b-rest leftest-angle face-edge)))))))))
+
+
+    (define (face-search model mesh start-node path-nodes node-a node-b)
+      (cond
+       ((eq? (voronoi-graph-data-status (node-value node-b)) 'searched) #t)
+       ((eq? start-node node-b)
+        ;; (cout "found face: " (cons node-b path-nodes) "\n" (current-error-port))
+        (let ((face (make-face
+                     model
+                     (list->vector
+                      (map (lambda (node)
+                             (make-face-corner
+                              (voronoi-graph-data-index (node-value node))
+                              'unset ;; texture
+                              'unset)) ;; normal
+                           (cons node-b path-nodes)))
+                     #f))) ;; material
+          ;; face-is-degenerate?
+          (mesh-append-face! model mesh face)))
+       (else
+        (let ((face-edge (find-face-edge node-a node-b)))
+          (cond (face-edge
+                 ;; (cout "search: "
+                 ;;       (voronoi-graph-data-point (node-value node-a)) " "
+                 ;;       (voronoi-graph-data-point (node-value node-b))
+                 ;;       "\n" (current-error-port))
+                 (face-search model mesh
+                              start-node
+                              (cons node-b path-nodes)
+                              node-b
+                              (edge-other-node face-edge node-b)))
+                (else #t))))))
+
+
+    (define (graph->model graph)
+      (let ((model (make-empty-model))
+            (mesh (make-mesh #f '())))
+        (model-prepend-mesh! model mesh)
+
+        ;; fill in the indexes of the nodes
+        (for-each
+         (lambda (node)
+           (let* ((data (node-value node))
+                  (point (voronoi-graph-data-point data))
+                  (point-3d (vector (number->string (vector2-x point))
+                                    (number->string (vector2-y point))
+                                    "1.0"))
+                  (index (model-append-vertex! model point-3d)))
+             (voronoi-graph-data-set-index! data index)))
+         (graph-nodes graph))
+
+        ;; search for faces
+        (let loop ((nodes (graph-nodes graph)))
+          (cond ((null? nodes) #t)
+                (else
+                 (let* ((node (car nodes))
+                        (data (node-value node)))
+                   (for-each
+                    (lambda (edge)
+                      (face-search model mesh
+                                   node (list node) node
+                                   (edge-other-node edge node)))
+                    (node-edges node))
+                   (voronoi-graph-data-set-status! data 'searched)
+                   (loop (cdr nodes))))))
+        model))
+
+
+
+    (define (line-segments->graph in-lines)
       (let* ((graph (make-graph))
              (points (points->unique-points (lines->points in-lines)))
              (lines (tug-line-ends-to-points in-lines points))
-             (nodes (map (lambda (point) (make-node graph point)) points))
+             (nodes (map
+                     (lambda (point)
+                       (let ((data (make-voronoi-graph-data point #f #f)))
+                         (make-node graph data)))
+                     points))
              (nodes-hash (make-hash-table)))
 
         ;; create a hash-table to go from points to graph nodes
         (for-each
          (lambda (node)
-           (let ((node-point (node-value node)))
-             (hash-table-set! nodes-hash (point->key node-point) node)))
+           (let ((point (voronoi-graph-data-point (node-value node))))
+             (hash-table-set! nodes-hash point node)))
          nodes)
 
         ;; make a graph edge for each line
         (for-each
          (lambda (line)
-           (let ((node-a (hash-table-ref nodes-hash (point->key (car line))))
-                 (node-b (hash-table-ref nodes-hash (point->key (cadr line)))))
+           (let ((node-a (hash-table-ref nodes-hash (car line)))
+                 (node-b (hash-table-ref nodes-hash (cadr line))))
              (connect-nodes graph node-a node-b)))
          lines)
 
-        #t))
+        graph))
 
 
     (define (main-program)
-      ;; XXX read width and height from command-line
-      (define width 100)
-      (define height 100)
+      (define (usage why)
+        (cout why "\n" (current-error-port))
+        (cout "voronoi-terrain [arguments]" (current-error-port))
+        (cout "    --obj         output an obj file\n" (current-error-port))
+        (cout "    --pnm         output a pnm file\n" (current-error-port))
+        (exit 1))
 
-      (let loop ((lines '()))
-        (let ((line (read-line)))
-          (if (eof-object? line)
-              (let* ((edge-lines (discover-edges lines width height))
-                     (lines-and-edges (append lines edge-lines)))
-                (cout "---\n" (current-error-port))
-                (show-lines lines-and-edges width height)
-                (extract-faces lines-and-edges))
-              (let* ((line-port (open-input-string line))
-                     (x0 (read line-port))
-                     (y0 (read line-port))
-                     (x1 (read line-port))
-                     (y1 (read line-port)))
-                (loop (cons (list (vector x0 y0) (vector x1 y1))
-                            lines)))))))
+
+      (let* ((args (parse-command-line `((--obj) (--pnm) (-?) (-h))))
+             (output-obj #f)
+             (output-pnm #f)
+             (width #f)
+             (height #f)
+             (extra-arguments '())
+             )
+        (for-each
+         (lambda (arg)
+           (case (car arg)
+             ((-? -h) (usage ""))
+             ((--obj)
+              (if (or output-obj output-pnm) (usage "give only one of --obj or --pnm"))
+              (set! output-obj #t))
+             ((--pnm)
+              (if (or output-obj output-pnm) (usage "give only one of --obj or --pnm"))
+              (set! output-pnm #t))
+             ((--)
+              (set! extra-arguments (cdr arg)))))
+         args)
+
+        (if (not width) (set! width 100))
+        (if (not height) (set! height 100))
+
+        (let loop ((lines '()))
+          (let ((line (read-line)))
+            (if (eof-object? line)
+                (let* ((edge-lines (discover-edges lines width height))
+                       (lines-and-edges (append lines edge-lines))
+                       (graph (line-segments->graph lines-and-edges))
+                       (model (graph->model graph)))
+                  ;; (cout "---\n" (current-error-port))
+                  ;; (cout "edge lines: " edge-lines "\n" (current-error-port))
+                  ;; (cout "---\n" (current-error-port))
+                  (cond
+                   (output-obj (write-obj-model model (current-output-port)))
+                   (output-pnm (show-lines lines-and-edges width height))
+                   (else (usage "give one of --obj or --pnm"))))
+                (let* ((line-port (open-input-string line))
+                       (x0 (read line-port))
+                       (y0 (read line-port))
+                       (x1 (read line-port))
+                       (y1 (read line-port)))
+                  (loop (cons (list (vector x0 y0) (vector x1 y1))
+                              lines))))))))
 
     ))
