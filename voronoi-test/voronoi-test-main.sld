@@ -221,21 +221,21 @@
 
     (define (face-search model mesh start-node path-nodes node-a node-b)
       (cond
-       ((eq? (voronoi-graph-data-status (node-value node-b)) 'searched) #t)
+       ;; ((eq? (voronoi-graph-data-status (node-value node-b)) 'searched) #t)
        ((eq? start-node node-b)
         ;; (cout "found face: " (cons node-b path-nodes) "\n" (current-error-port))
-        (let ((face (make-face
-                     model
-                     (list->vector
-                      (map (lambda (node)
-                             (make-face-corner
-                              (voronoi-graph-data-index (node-value node))
-                              'unset ;; texture
-                              'unset)) ;; normal
-                           path-nodes))
-                     #f))) ;; material
+        (let* ((corners (list->vector
+                         (map (lambda (node)
+                                (make-face-corner
+                                 (voronoi-graph-data-index (node-value node))
+                                 'unset ;; texture
+                                 'unset)) ;; normal
+                              path-nodes)))
+               (material #f)
+               (face (make-face model corners material)))
           ;; face-is-degenerate?
-          (mesh-append-face! model mesh face)))
+          (if (not (model-contains-face model face))
+              (mesh-append-face! model mesh face))))
        (else
         (let ((face-edge (find-face-edge node-a node-b)))
           (cond (face-edge
