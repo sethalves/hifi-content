@@ -232,7 +232,7 @@
                               (voronoi-graph-data-index (node-value node))
                               'unset ;; texture
                               'unset)) ;; normal
-                           (cons node-b path-nodes)))
+                           path-nodes))
                      #f))) ;; material
           ;; face-is-degenerate?
           (mesh-append-face! model mesh face)))
@@ -324,7 +324,9 @@
         (exit 1))
 
 
-      (let* ((args (parse-command-line `((--obj) (--pnm) (-?) (-h))))
+      (let* ((args (parse-command-line `((--obj)
+                                         (--pnm)
+                                         (-?) (-h))))
              (output-obj #f)
              (output-pnm #f)
              (width #f)
@@ -345,6 +347,7 @@
               (set! extra-arguments (cdr arg)))))
          args)
 
+        ;; TODO -- set width and height from command-line
         (if (not width) (set! width 100))
         (if (not height) (set! height 100))
 
