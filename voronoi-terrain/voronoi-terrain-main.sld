@@ -219,52 +219,50 @@
                            (loop b-rest leftest-angle face-edge)))))))))
 
 
+    (define (add-faces model mesh path-nodes)
+      (let* ((corners (map (lambda (node)
+                             (make-face-corner
+                              (voronoi-graph-data-index (node-value node))
+                              'unset ;; texture
+                              'unset)) ;; normal
+                           path-nodes))
+             (corners-count (length corners))
+             (material #f))
+        (let ((face (make-face model (list->vector corners) material)))
+          (cond ((< corners-count 3) #f)
+                ((= corners-count 3)
+                 (if (not (model-contains-face model face))
+                     (mesh-append-face! model mesh face)))
+                (else
+                 (let* ((center-vertex (face->center-vertex model face))
+                        (center-vertex-s (vector-map number->string center-vertex))
+                        (center-index
+                         (model-append-vertex! model center-vertex-s))
+                        (center-corner (make-face-corner
+                                        center-index 'unset 'unset))
+                        (last-corner (last corners)))
+                   (let loop ((corners (cons last-corner corners)))
+                     (cond ((null? corners) #t)
+                           ((null? (cdr corners)) #t)
+                           (else
+                            (let* ((corner-b (car corners))
+                                   (corner-c (cadr corners))
+                                   (subface (make-face model (vector center-corner
+                                                                     corner-b
+                                                                     corner-c)
+                                                       material)))
+                              (if (not (model-contains-face model subface))
+                                  (mesh-append-face! model mesh subface))
+                              (loop (cdr corners))))))))))))
+
     (define (face-search model mesh start-node path-nodes node-a node-b)
       (cond
        ;; ((eq? (voronoi-graph-data-status (node-value node-b)) 'searched) #t)
        ((eq? start-node node-b)
-        ;; (cout "found face: " (cons node-b path-nodes) "\n" (current-error-port))
-        (let* ((corners (map (lambda (node)
-                               (make-face-corner
-                                (voronoi-graph-data-index (node-value node))
-                                'unset ;; texture
-                                'unset)) ;; normal
-                             path-nodes))
-               (corners-count (length corners))
-               (material #f))
-          (let ((face (make-face model (list->vector corners) material)))
-            (cond ((< corners-count 3) #f)
-                  ((= corners-count 3)
-                   (if (not (model-contains-face model face))
-                       (mesh-append-face! model mesh face)))
-                  (else
-                   (let* ((center-vertex (face->center-vertex model face))
-                          (center-vertex-s (vector-map number->string center-vertex))
-                          (center-index
-                           (model-append-vertex! model center-vertex-s))
-                          (center-corner (make-face-corner
-                                          center-index 'unset 'unset))
-                          (last-corner (last corners)))
-                     (let loop ((corners (cons last-corner corners)))
-                       (cond ((null? corners) #t)
-                             ((null? (cdr corners)) #t)
-                             (else
-                              (let* ((corner-b (car corners))
-                                     (corner-c (cadr corners))
-                                     (subface (make-face model (vector center-corner
-                                                                       corner-b
-                                                                       corner-c)
-                                                         material)))
-                                (if (not (model-contains-face model subface))
-                                    (mesh-append-face! model mesh subface))
-                                (loop (cdr corners))))))))))))
+        (add-faces model mesh (reverse path-nodes)))
        (else
         (let ((face-edge (find-face-edge node-a node-b)))
           (cond (face-edge
-                 ;; (cout "search: "
-                 ;;       (voronoi-graph-data-point (node-value node-a)) " "
-                 ;;       (voronoi-graph-data-point (node-value node-b))
-                 ;;       "\n" (current-error-port))
                  (face-search model mesh
                               start-node
                               (cons node-b path-nodes)
@@ -273,7 +271,7 @@
                 (else #t))))))
 
 
-    (define (graph->model graph)
+    (define (graph->model graph height-function)
       (let ((model (make-empty-model))
             (mesh (make-mesh #f '())))
         (model-prepend-mesh! model mesh)
@@ -285,7 +283,7 @@
                   (point (voronoi-graph-data-point data))
                   (point-3d (vector (number->string (vector2-x point))
                                     (number->string (vector2-y point))
-                                    "1.0"))
+                                    (number->string (height-function point))))
                   (index (model-append-vertex! model point-3d)))
              (voronoi-graph-data-set-index! data index)))
          (graph-nodes graph))
@@ -304,6 +302,9 @@
                     (node-edges node))
                    (voronoi-graph-data-set-status! data 'searched)
                    (loop (cdr nodes))))))
+        (operate-on-faces model (lambda (mesh face)
+                                  (face-set-normals! model face)
+                                  face))
         model))
 
 
@@ -343,17 +344,25 @@
         (cout "voronoi-terrain [arguments]" (current-error-port))
         (cout "    --obj         output an obj file\n" (current-error-port))
         (cout "    --pnm         output a pnm file\n" (current-error-port))
+        (cout "    --width w     width of output\n" (current-error-port))
+        (cout "    --height h    height of output\n" (current-error-port))
         (exit 1))
 
 
       (let* ((args (parse-command-line `((--obj)
                                          (--pnm)
+                                         ((--width) width)
+                                         ((--height) height)
                                          (-?) (-h))))
              (output-obj #f)
              (output-pnm #f)
              (width #f)
              (height #f)
              (extra-arguments '())
+             (height-function (lambda (point)
+                                1.0
+                                ;; (/ (vector2-x point) (+ (vector2-y point) 1))
+                                ))
              )
         (for-each
          (lambda (arg)
@@ -365,6 +374,10 @@
              ((--pnm)
               (if (or output-obj output-pnm) (usage "give only one of --obj or --pnm"))
               (set! output-pnm #t))
+             ((--width)
+              (set! width (string->number (cadr arg))))
+             ((--height)
+              (set! height (string->number (cadr arg))))
              ((--)
               (set! extra-arguments (cdr arg)))))
          args)
@@ -373,13 +386,15 @@
         (if (not width) (set! width 100))
         (if (not height) (set! height 100))
 
+        (cout "width=" width " height=" height "\n" (current-error-port))
+
         (let loop ((lines '()))
           (let ((line (read-line)))
             (if (eof-object? line)
                 (let* ((edge-lines (discover-edges lines width height))
                        (lines-and-edges (append lines edge-lines))
                        (graph (line-segments->graph lines-and-edges))
-                       (model (graph->model graph)))
+                       (model (graph->model graph height-function)))
                   ;; (cout "---\n" (current-error-port))
                   ;; (cout "edge lines: " edge-lines "\n" (current-error-port))
                   ;; (cout "---\n" (current-error-port))

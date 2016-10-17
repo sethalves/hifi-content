@@ -4,6 +4,9 @@
 
 VORONOI=../../voronoi/voronoi
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)'
+WIDTH=200
+HEIGHT=200
+
 
 all: lines.png lines.obj
 
@@ -22,13 +25,13 @@ link-libs: very-clean
 		install $(LIBS)
 
 lines: points
-	cat $^ | $(VORONOI) 0 0 100 100 > $@
+	cat $^ | $(VORONOI) 0 0 $(WIDTH) $(HEIGHT) > $@
 
 lines.pnm: lines
-	cat $^ | ./voronoi-terrain-gauche.scm --pnm > $@
+	cat $^ | ./voronoi-terrain-gauche.scm --pnm --width $(WIDTH) --height $(HEIGHT) > $@
 
 lines.obj: lines
-	cat $^ | ./voronoi-terrain-gauche.scm --obj > $@
+	cat $^ | ./voronoi-terrain-gauche.scm --obj --width $(WIDTH) --height $(HEIGHT) > $@
 
 lines.png: lines.pnm
 	pnmtopng $^ > $@
