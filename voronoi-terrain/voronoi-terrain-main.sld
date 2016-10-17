@@ -259,7 +259,7 @@
       (cond
        ;; ((eq? (voronoi-graph-data-status (node-value node-b)) 'searched) #t)
        ((eq? start-node node-b)
-        (add-faces model mesh (reverse path-nodes)))
+        (add-faces model mesh path-nodes))
        (else
         (let ((face-edge (find-face-edge node-a node-b)))
           (cond (face-edge
@@ -281,9 +281,10 @@
          (lambda (node)
            (let* ((data (node-value node))
                   (point (voronoi-graph-data-point data))
+                  ;; y axis is up
                   (point-3d (vector (number->string (vector2-x point))
-                                    (number->string (vector2-y point))
-                                    (number->string (height-function point))))
+                                    (number->string (height-function point))
+                                    (number->string (vector2-y point))))
                   (index (model-append-vertex! model point-3d)))
              (voronoi-graph-data-set-index! data index)))
          (graph-nodes graph))
