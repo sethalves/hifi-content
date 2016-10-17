@@ -123,7 +123,7 @@
         (almost= (vector2-y point) value epsilon)))
 
 
-    (define (discover-edges lines width height)
+    (define (discover-edge-points lines width height)
       (let* ((points (lines->unique-points+corners lines width height))
              ;; down along left edge
              (left-points (filter (setup-x-almost-= 0.0) points))
@@ -136,20 +136,26 @@
              (right-points-sorted (sort right-points point-y->))
              ;; right to left along the top
              (top-points (filter (setup-y-almost-= 0.0) points))
-             (top-points-sorted (sort top-points point-x->))
-             ;; put them all in a loop
-             (sorted-edge-points (append left-points-sorted
-                                         bottom-points-sorted
-                                         right-points-sorted
-                                         top-points-sorted
-                                         ;; and close loop
-                                         (list (car left-points-sorted)))))
+             (top-points-sorted (sort top-points point-x->)))
+        (values left-points-sorted bottom-points-sorted
+                right-points-sorted top-points-sorted)))
 
-        ;; (cout "all: " points "\n" (current-error-port))
-        ;; (cout "left: " left-points-sorted "\n" (current-error-port))
-        ;; (cout "top: " top-points-sorted "\n" (current-error-port))
-        ;; (cout "right: " right-points-sorted "\n" (current-error-port))
-        ;; (cout "bottom: " bottom-points-sorted "\n" (current-error-port))
+
+    (define (make-edge-lines left-edge-points bottom-edge-points
+                             right-edge-points top-edge-points)
+      ;; (cout "all: " points "\n" (current-error-port))
+      ;; (cout "left: " left-points-sorted "\n" (current-error-port))
+      ;; (cout "top: " top-points-sorted "\n" (current-error-port))
+      ;; (cout "right: " right-points-sorted "\n" (current-error-port))
+      ;; (cout "bottom: " bottom-points-sorted "\n" (current-error-port))
+
+      ;; put them all in a loop
+      (let ((sorted-edge-points (append left-edge-points
+                                        bottom-edge-points
+                                        right-edge-points
+                                        top-edge-points
+                                        ;; and close loop
+                                        (list (car left-edge-points)))))
         (let loop ((edges (list))
                    (sorted-edge-points sorted-edge-points))
           (cond ((null? sorted-edge-points) edges)
@@ -161,6 +167,7 @@
                        (loop edges (cdr sorted-edge-points))
                        (loop (cons (list p0 p1) edges)
                              (cdr sorted-edge-points)))))))))
+
 
 
     (define (tug-line-ends-to-points in-lines points)
@@ -218,6 +225,11 @@
                           (else
                            (loop b-rest leftest-angle face-edge)))))))))
 
+    (define (point->corner model mesh material point)
+      (let* ((point-s (vector-map number->string point))
+             (point-index (model-append-vertex! model point-s)))
+             (make-face-corner point-index 'unset 'unset)))
+
 
     (define (add-faces model mesh path-nodes)
       (let* ((corners (map (lambda (node)
@@ -235,11 +247,8 @@
                      (mesh-append-face! model mesh face)))
                 (else
                  (let* ((center-vertex (face->center-vertex model face))
-                        (center-vertex-s (vector-map number->string center-vertex))
-                        (center-index
-                         (model-append-vertex! model center-vertex-s))
-                        (center-corner (make-face-corner
-                                        center-index 'unset 'unset))
+                        (center-corner
+                         (point->corner model mesh material center-vertex))
                         (last-corner (last corners)))
                    (let loop ((corners (cons last-corner corners)))
                      (cond ((null? corners) #t)
@@ -339,6 +348,65 @@
         graph))
 
 
+    (define (fill-area model mesh base points)
+      (cout points "\n" (current-error-port))
+      (let* ((material #f)
+             (base-corner (point->corner model mesh material base))
+             (point-corners
+              (map (lambda (point)
+                     (point->corner model mesh material point))
+                   points)))
+        (let loop ((point-corners point-corners))
+          (cond ((null? point-corners) #t)
+                ((null? (cdr point-corners)) #t)
+                (else
+                 (let* ((corner-a (car point-corners))
+                        (corner-b (cadr point-corners))
+                        (face (make-face
+                               model (vector corner-b corner-a base-corner)
+                               material)))
+                   (mesh-append-face! model mesh face)
+                   (loop (cdr point-corners))))))))
+
+
+    (define (close-model model width height height-function
+                         left-edge-points bottom-edge-points
+                         right-edge-points top-edge-points)
+      (define (2d->3d points)
+        (map (lambda (point)
+               (vector (vector2-x point)
+                       (height-function point)
+                       (vector2-y point)))
+             points))
+      (let ((mesh (car (model-meshes model))))
+        (fill-area model mesh
+                   (vector 0 0 (/ height 2.0))
+                   (append (list (vector 0 0 0))
+                           (2d->3d left-edge-points)
+                           (list (vector 0 0 height))))
+        (fill-area model mesh
+                   (vector (/ width 2.0) 0 height)
+                   (append (list (vector 0 0 height))
+                           (2d->3d bottom-edge-points)
+                           (list (vector width 0 height))))
+        (fill-area model mesh
+                   (vector width 0 (/ height 2.0))
+                   (append (list (vector width 0 height))
+                           (2d->3d right-edge-points)
+                           (list (vector width 0 0))))
+        (fill-area model mesh
+                   (vector (/ width 2.0) 0 0)
+                   (append (list (vector width 0 0))
+                           (2d->3d top-edge-points)
+                           (list (vector 0 0 0))))
+        ;; add bottom
+        (fill-area model mesh
+                   (vector 0 0 0)
+                   (list (vector 0 0 height)
+                         (vector width 0 height)
+                         (vector width 0 0)))))
+
+
     (define (main-program)
       (define (usage why)
         (cout why "\n" (current-error-port))
@@ -361,8 +429,10 @@
              (height #f)
              (extra-arguments '())
              (height-function (lambda (point)
-                                1.0
+                                ;; 1.0
                                 ;; (/ (vector2-x point) (+ (vector2-y point) 1))
+                                (let ((middle (vector (/ width 2.0) (/ height 2.0))))
+                                  (vector2-length (vector2-diff middle point)))
                                 ))
              )
         (for-each
@@ -392,17 +462,31 @@
         (let loop ((lines '()))
           (let ((line (read-line)))
             (if (eof-object? line)
-                (let* ((edge-lines (discover-edges lines width height))
-                       (lines-and-edges (append lines edge-lines))
-                       (graph (line-segments->graph lines-and-edges))
-                       (model (graph->model graph height-function)))
-                  ;; (cout "---\n" (current-error-port))
-                  ;; (cout "edge lines: " edge-lines "\n" (current-error-port))
-                  ;; (cout "---\n" (current-error-port))
-                  (cond
-                   (output-obj (write-obj-model model (current-output-port)))
-                   (output-pnm (show-lines lines-and-edges width height))
-                   (else (usage "give one of --obj or --pnm"))))
+                (let-values (((left-edge-points
+                               bottom-edge-points
+                               right-edge-points
+                               top-edge-points)
+                              (discover-edge-points lines width height)))
+                  (let* ((edge-lines (make-edge-lines left-edge-points
+                                                      bottom-edge-points
+                                                      right-edge-points
+                                                      top-edge-points))
+                         (lines-and-edges (append lines edge-lines)))
+                    ;; (cout "---\n" (current-error-port))
+                    ;; (cout "edge lines: " edge-lines "\n" (current-error-port))
+                    ;; (cout "---\n" (current-error-port))
+                    (cond
+                     (output-obj
+                      (let* ((graph (line-segments->graph lines-and-edges))
+                             (model (graph->model graph height-function)))
+                        (close-model model width height height-function
+                                     left-edge-points
+                                     bottom-edge-points
+                                     right-edge-points
+                                     top-edge-points)
+                        (write-obj-model model (current-output-port))))
+                     (output-pnm (show-lines lines-and-edges width height))
+                     (else (usage "give one of --obj or --pnm")))))
                 (let* ((line-port (open-input-string line))
                        (x0 (read line-port))
                        (y0 (read line-port))
