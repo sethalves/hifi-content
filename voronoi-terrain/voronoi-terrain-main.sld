@@ -1,3 +1,8 @@
+
+
+;; http://www.voronoi.com/wiki/index.php?title=Main_Page
+
+
 (define-library (voronoi-terrain-main)
   (export main-program)
   (import (scheme base)
@@ -43,7 +48,7 @@
       (let ((image (raster-new width height (vector 255 255 255 255))))
         (for-each
          (lambda (line)
-           (cout line "\n" (current-error-port))
+           (cerr line "\n")
            (let ((x0 (exact (round (vector-ref (car line) 0))))
                  (y0 (exact (round (vector-ref (car line) 1))))
                  (x1 (exact (round (vector-ref (cadr line) 0))))
@@ -143,11 +148,11 @@
 
     (define (make-edge-lines left-edge-points bottom-edge-points
                              right-edge-points top-edge-points)
-      ;; (cout "all: " points "\n" (current-error-port))
-      ;; (cout "left: " left-points-sorted "\n" (current-error-port))
-      ;; (cout "top: " top-points-sorted "\n" (current-error-port))
-      ;; (cout "right: " right-points-sorted "\n" (current-error-port))
-      ;; (cout "bottom: " bottom-points-sorted "\n" (current-error-port))
+      ;; (cerr "all: " points "\n")
+      ;; (cerr "left: " left-points-sorted "\n")
+      ;; (cerr "top: " top-points-sorted "\n")
+      ;; (cerr "right: " right-points-sorted "\n")
+      ;; (cerr "bottom: " bottom-points-sorted "\n")
 
       ;; put them all in a loop
       (let ((sorted-edge-points (append left-edge-points
@@ -280,7 +285,7 @@
                 (else #t))))))
 
 
-    (define (graph->model graph height-function)
+    (define (graph->model graph multiplier height-function)
       (let ((model (make-empty-model))
             (mesh (make-mesh #f '())))
         (model-prepend-mesh! model mesh)
@@ -349,7 +354,7 @@
 
 
     (define (fill-area model mesh base points)
-      (cout points "\n" (current-error-port))
+      (cerr points "\n")
       (let* ((material #f)
              (base-corner (point->corner model mesh material base))
              (point-corners
@@ -409,30 +414,42 @@
 
     (define (main-program)
       (define (usage why)
-        (cout why "\n" (current-error-port))
-        (cout "voronoi-terrain [arguments]" (current-error-port))
-        (cout "    --obj         output an obj file\n" (current-error-port))
-        (cout "    --pnm         output a pnm file\n" (current-error-port))
-        (cout "    --width w     width of output\n" (current-error-port))
-        (cout "    --height h    height of output\n" (current-error-port))
+        (cerr why "\n")
+        (cerr "voronoi-terrain [arguments] lines-input-file points-input-file")
+        (cerr "    --obj                      output an obj file\n")
+        (cerr "    --pnm                      output a pnm file\n")
+        (cerr "    --input-width w            width of output\n")
+        (cerr "    --input-height h           height of output\n")
+        (cerr "    --output-x-size x-size     width of output\n")
+        (cerr "    --output-y-size y-size     height of output\n")
+        (cerr "    --output-z-size z-size     depth of output\n")
         (exit 1))
-
 
       (let* ((args (parse-command-line `((--obj)
                                          (--pnm)
-                                         ((--width) width)
-                                         ((--height) height)
+                                         ((--input-width) width)
+                                         ((--input-height) height)
+                                         ((--output-x-size) width)
+                                         ((--output-y-size) width)
+                                         ((--output-z-size) depth)
                                          (-?) (-h))))
              (output-obj #f)
              (output-pnm #f)
              (width #f)
              (height #f)
+             (output-x-size #f)
+             (output-y-size #f)
+             (output-z-size #f)
+             (lines-input-filename #f)
+             (lines-input-port #f)
+             (points-input-filename #f)
+             (points-input-port #f)
              (extra-arguments '())
              (height-function (lambda (point)
-                                ;; 1.0
+                                100.0
                                 ;; (/ (vector2-x point) (+ (vector2-y point) 1))
-                                (let ((middle (vector (/ width 2.0) (/ height 2.0))))
-                                  (vector2-length (vector2-diff middle point)))
+                                ;; (let ((middle (vector (/ width 2.0) (/ height 2.0))))
+                                ;;   (vector2-length (vector2-diff middle point)))
                                 ))
              )
         (for-each
@@ -445,22 +462,39 @@
              ((--pnm)
               (if (or output-obj output-pnm) (usage "give only one of --obj or --pnm"))
               (set! output-pnm #t))
-             ((--width)
+             ((--input-width)
               (set! width (string->number (cadr arg))))
-             ((--height)
+             ((--input-height)
               (set! height (string->number (cadr arg))))
+             ((--output-x-size)
+              (set! output-x-size (string->number (cadr arg))))
+             ((--output-y-size)
+              (set! output-y-size (string->number (cadr arg))))
+             ((--output-z-size)
+              (set! output-z-size (string->number (cadr arg))))
              ((--)
               (set! extra-arguments (cdr arg)))))
          args)
 
-        ;; TODO -- set width and height from command-line
+        (if (not (= (length extra-arguments) 2))
+            (usage "give both lines-input-file and points-input-file"))
+        (set! lines-input-filename (car extra-arguments))
+        (set! points-input-filename (cadr extra-arguments))
+
         (if (not width) (set! width 100))
         (if (not height) (set! height 100))
 
-        (cout "width=" width " height=" height "\n" (current-error-port))
+        (if (not output-x-size) (set! output-x-size width))
+        (if (not output-z-size) (set! output-z-size height))
+        (if (not output-y-size)
+            (set! output-y-size (max output-x-size output-z-size)))
+
+        (cerr "input-width=" width " input-height=" height "\n")
+
+        (set! lines-input-port (open-input-file lines-input-filename))
 
         (let loop ((lines '()))
-          (let ((line (read-line)))
+          (let ((line (read-line lines-input-port)))
             (if (eof-object? line)
                 (let-values (((left-edge-points
                                bottom-edge-points
@@ -472,21 +506,29 @@
                                                       right-edge-points
                                                       top-edge-points))
                          (lines-and-edges (append lines edge-lines)))
-                    ;; (cout "---\n" (current-error-port))
-                    ;; (cout "edge lines: " edge-lines "\n" (current-error-port))
-                    ;; (cout "---\n" (current-error-port))
+                    ;; (cerr "---\n")
+                    ;; (cerr "edge lines: " edge-lines "\n")
+                    ;; (cerr "---\n")
                     (cond
                      (output-obj
                       (let* ((graph (line-segments->graph lines-and-edges))
-                             (model (graph->model graph height-function)))
+                             (multiplier (vector (/ output-x-size width)
+                                                 (/ output-y-size 255.0)
+                                                 (/ output-z-size height)))
+                             (model (graph->model graph
+                                                  multiplier
+                                                  height-function)))
                         (close-model model width height height-function
                                      left-edge-points
                                      bottom-edge-points
                                      right-edge-points
                                      top-edge-points)
                         (write-obj-model model (current-output-port))))
+
                      (output-pnm (show-lines lines-and-edges width height))
+
                      (else (usage "give one of --obj or --pnm")))))
+
                 (let* ((line-port (open-input-string line))
                        (x0 (read line-port))
                        (y0 (read line-port))

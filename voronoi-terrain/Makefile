@@ -25,13 +25,16 @@ link-libs: very-clean
 		install $(LIBS)
 
 lines: points
-	cat $^ | $(VORONOI) 0 0 $(WIDTH) $(HEIGHT) > $@
+	cat $^ | cut -f1,3 -d' ' | $(VORONOI) 0 0 $(WIDTH) $(HEIGHT) > $@
 
-lines.pnm: lines
-	cat $^ | ./voronoi-terrain-gauche.scm --pnm --width $(WIDTH) --height $(HEIGHT) > $@
+lines.pnm: lines points
+	./voronoi-terrain-gauche.scm --pnm --input-width $(WIDTH) --input-height $(HEIGHT) lines points > $@
 
-lines.obj: lines
-	cat $^ | ./voronoi-terrain-gauche.scm --obj --width $(WIDTH) --height $(HEIGHT) > $@
+lines.obj: lines points
+	./voronoi-terrain-gauche.scm --obj \
+			--output-x-size 200 --output-y-size 200 --output-z-size 200 \
+			--input-width $(WIDTH) --input-height $(HEIGHT) \
+			lines points > $@
 
 lines.png: lines.pnm
 	pnmtopng $^ > $@
