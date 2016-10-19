@@ -233,7 +233,7 @@
     (define (point->corner model mesh material point)
       (let* ((point-s (vector-map number->string point))
              (point-index (model-append-vertex! model point-s)))
-             (make-face-corner point-index 'unset 'unset)))
+        (make-face-corner point-index 'unset 'unset)))
 
 
     (define (add-faces model mesh path-nodes)
@@ -422,6 +422,37 @@
                          (vector width-s 0 height-s)
                          (vector width-s 0 0)))))
 
+    (define (read-points points-input-filename)
+      (let ((points-input-port (open-input-file points-input-filename)))
+        (let loop ((points '()))
+          (let ((line (read-line points-input-port)))
+            (if (eof-object? line)
+                (begin
+                  (close-port points-input-port)
+                  points)
+                (let* ((line-port (open-input-string line))
+                       (x (read line-port))
+                       (y (read line-port))
+                       (z (read line-port)))
+                  (loop (cons (vector x y z) points))))))))
+
+
+    (define (read-lines lines-input-filename)
+      (let ((lines-input-port (open-input-file lines-input-filename)))
+        (let loop ((lines '()))
+          (let ((line (read-line lines-input-port)))
+            (if (eof-object? line)
+                (begin
+                  (close-port lines-input-port)
+                  lines)
+                (let* ((line-port (open-input-string line))
+                       (x0 (read line-port))
+                       (y0 (read line-port))
+                       (x1 (read line-port))
+                       (y1 (read line-port)))
+                  (loop (cons (list (vector x0 y0) (vector x1 y1))
+                              lines))))))))
+
 
     (define (main-program)
       (define (usage why)
@@ -452,9 +483,7 @@
              (output-y-size #f)
              (output-z-size #f)
              (lines-input-filename #f)
-             (lines-input-port #f)
              (points-input-filename #f)
-             (points-input-port #f)
              (extra-arguments '())
              (height-function (lambda (point)
                                 100.0
@@ -502,51 +531,36 @@
 
         (cerr "input-width=" width " input-height=" height "\n")
 
-        (set! lines-input-port (open-input-file lines-input-filename))
-
-        (let loop ((lines '()))
-          (let ((line (read-line lines-input-port)))
-            (if (eof-object? line)
-                (let-values (((left-edge-points
+        (let ((lines (read-lines lines-input-filename))
+              (points (read-points points-input-filename)))
+          (let-values (((left-edge-points
+                         bottom-edge-points
+                         right-edge-points
+                         top-edge-points)
+                        (discover-edge-points lines width height)))
+            (let* ((edge-lines (make-edge-lines left-edge-points
+                                                bottom-edge-points
+                                                right-edge-points
+                                                top-edge-points))
+                   (lines-and-edges (append lines edge-lines)))
+              (cond
+               ;; output a model
+               (output-obj
+                (let* ((graph (line-segments->graph lines-and-edges))
+                       (multiplier (vector (/ output-x-size width)
+                                           (/ output-y-size 255.0)
+                                           (/ output-z-size height)))
+                       (model (graph->model graph
+                                            multiplier
+                                            height-function)))
+                  (close-model model width height height-function
+                               multiplier
+                               left-edge-points
                                bottom-edge-points
                                right-edge-points
                                top-edge-points)
-                              (discover-edge-points lines width height)))
-                  (let* ((edge-lines (make-edge-lines left-edge-points
-                                                      bottom-edge-points
-                                                      right-edge-points
-                                                      top-edge-points))
-                         (lines-and-edges (append lines edge-lines)))
-                    ;; (cerr "---\n")
-                    ;; (cerr "edge lines: " edge-lines "\n")
-                    ;; (cerr "---\n")
-                    (cond
-                     (output-obj
-                      (let* ((graph (line-segments->graph lines-and-edges))
-                             (multiplier (vector (/ output-x-size width)
-                                                 (/ output-y-size 255.0)
-                                                 (/ output-z-size height)))
-                             (model (graph->model graph
-                                                  multiplier
-                                                  height-function)))
-                        (close-model model width height height-function
-                                     multiplier
-                                     left-edge-points
-                                     bottom-edge-points
-                                     right-edge-points
-                                     top-edge-points)
-                        (write-obj-model model (current-output-port))))
-
-                     (output-pnm (show-lines lines-and-edges width height))
-
-                     (else (usage "give one of --obj or --pnm")))))
-
-                (let* ((line-port (open-input-string line))
-                       (x0 (read line-port))
-                       (y0 (read line-port))
-                       (x1 (read line-port))
-                       (y1 (read line-port)))
-                  (loop (cons (list (vector x0 y0) (vector x1 y1))
-                              lines))))))))
-
-    ))
+                  (write-obj-model model (current-output-port))))
+               ;; output a png
+               (output-pnm (show-lines lines-and-edges width height))
+               ;; else complain
+               (else (usage "give one of --obj or --pnm"))))))))))
