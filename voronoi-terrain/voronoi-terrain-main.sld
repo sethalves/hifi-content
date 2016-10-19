@@ -271,7 +271,6 @@
 
     (define (face-search model mesh start-node path-nodes node-a node-b)
       (cond
-       ;; ((eq? (voronoi-graph-data-status (node-value node-b)) 'searched) #t)
        ((eq? start-node node-b)
         (add-faces model mesh path-nodes))
        (else
@@ -296,10 +295,15 @@
            (let* ((data (node-value node))
                   (point (voronoi-graph-data-point data))
                   ;; y axis is up
-                  (point-3d (vector (number->string (vector2-x point))
-                                    (number->string (height-function point))
-                                    (number->string (vector2-y point))))
-                  (index (model-append-vertex! model point-3d)))
+                  (point-3d (vector (vector2-x point)
+                                    (height-function point)
+                                    (vector2-y point)))
+                  (point-3d-scaled
+                   (vector (* (vector3-x point-3d) (vector3-x multiplier))
+                           (* (vector3-y point-3d) (vector3-y multiplier))
+                           (* (vector3-z point-3d) (vector3-z multiplier))))
+                  (point-3d-str (vector-map number->string point-3d-scaled))
+                  (index (model-append-vertex! model point-3d-str)))
              (voronoi-graph-data-set-index! data index)))
          (graph-nodes graph))
 
@@ -354,6 +358,8 @@
 
 
     (define (fill-area model mesh base points)
+      ;; fill in a fan-shape by making a series of triangles
+      ;; that all have `base` as the first point
       (cerr points "\n")
       (let* ((material #f)
              (base-corner (point->corner model mesh material base))
@@ -374,42 +380,47 @@
                    (loop (cdr point-corners))))))))
 
 
-    (define (close-model model width height height-function
+    (define (close-model model width height height-function multiplier
                          left-edge-points bottom-edge-points
                          right-edge-points top-edge-points)
+      ;; make a box around the lower part of the model so it's
+      ;; closed/water-tight
       (define (2d->3d points)
         (map (lambda (point)
-               (vector (vector2-x point)
-                       (height-function point)
-                       (vector2-y point)))
+               (vector
+                (* (vector2-x point) (vector3-x multiplier))
+                (* (height-function point) (vector3-y multiplier))
+                (* (vector2-y point) (vector3-z multiplier))))
              points))
-      (let ((mesh (car (model-meshes model))))
+      (let ((mesh (car (model-meshes model)))
+            (width-s (* (vector3-x multiplier) width))
+            (height-s (* (vector3-z multiplier) height)))
         (fill-area model mesh
-                   (vector 0 0 (/ height 2.0))
+                   (vector 0 0 (/ height-s 2.0))
                    (append (list (vector 0 0 0))
                            (2d->3d left-edge-points)
-                           (list (vector 0 0 height))))
+                           (list (vector 0 0 height-s))))
         (fill-area model mesh
-                   (vector (/ width 2.0) 0 height)
-                   (append (list (vector 0 0 height))
+                   (vector (/ width-s 2.0) 0 height-s)
+                   (append (list (vector 0 0 height-s))
                            (2d->3d bottom-edge-points)
-                           (list (vector width 0 height))))
+                           (list (vector width-s 0 height-s))))
         (fill-area model mesh
-                   (vector width 0 (/ height 2.0))
-                   (append (list (vector width 0 height))
+                   (vector width-s 0 (/ height-s 2.0))
+                   (append (list (vector width-s 0 height-s))
                            (2d->3d right-edge-points)
-                           (list (vector width 0 0))))
+                           (list (vector width-s 0 0))))
         (fill-area model mesh
-                   (vector (/ width 2.0) 0 0)
-                   (append (list (vector width 0 0))
+                   (vector (/ width-s 2.0) 0 0)
+                   (append (list (vector width-s 0 0))
                            (2d->3d top-edge-points)
                            (list (vector 0 0 0))))
         ;; add bottom
         (fill-area model mesh
                    (vector 0 0 0)
-                   (list (vector 0 0 height)
-                         (vector width 0 height)
-                         (vector width 0 0)))))
+                   (list (vector 0 0 height-s)
+                         (vector width-s 0 height-s)
+                         (vector width-s 0 0)))))
 
 
     (define (main-program)
@@ -519,6 +530,7 @@
                                                   multiplier
                                                   height-function)))
                         (close-model model width height height-function
+                                     multiplier
                                      left-edge-points
                                      bottom-edge-points
                                      right-edge-points

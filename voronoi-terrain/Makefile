@@ -32,7 +32,7 @@ lines.pnm: lines points
 
 lines.obj: lines points
 	./voronoi-terrain-gauche.scm --obj \
-			--output-x-size 200 --output-y-size 200 --output-z-size 200 \
+			--output-x-size 1024 --output-y-size 1024 --output-z-size 1024 \
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
 			lines points > $@
 
