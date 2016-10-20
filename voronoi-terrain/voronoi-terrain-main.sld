@@ -295,22 +295,41 @@
                                   (mesh-append-face! model mesh subface))
                               (loop (cdr corners))))))))))))
 
-    (define (face-search model mesh start-node path-nodes node-a node-b)
+    (define (face-search start-node path-nodes node-a node-b)
       (cond
        ((eq? start-node node-b)
-        (add-faces model mesh path-nodes))
+        path-nodes
+        ;; (add-faces model mesh path-nodes)
+        )
        (else
         (let ((face-edge (find-face-edge node-a node-b)))
           (cond (face-edge
-                 (face-search model mesh
-                              start-node
+                 (face-search start-node
                               (cons node-b path-nodes)
                               node-b
                               (edge-other-node face-edge node-b)))
-                (else #t))))))
+                (else #f))))))
 
 
-    (define (graph->model graph multiplier height-function)
+    (define (find-polygons graph)
+      (let ((polygons '()))
+        (let loop ((nodes (graph-nodes graph)))
+          (cond ((null? nodes) polygons)
+                (else
+                 (let* ((node (car nodes))
+                        (data (node-value node)))
+                   (for-each
+                    (lambda (edge)
+                      (let ((face (face-search node (list node) node
+                                               (edge-other-node edge node))))
+                        (if face (set! polygons (cons face polygons)))))
+                    (node-edges node))
+                   (voronoi-graph-data-set-status! data 'searched)
+                   (loop (cdr nodes))))))))
+
+
+
+    (define (graph->model graph polygons multiplier height-function)
       (let ((model (make-empty-model))
             (mesh (make-mesh #f '())))
         (model-prepend-mesh! model mesh)
@@ -333,20 +352,11 @@
              (voronoi-graph-data-set-index! data index)))
          (graph-nodes graph))
 
-        ;; search for faces
-        (let loop ((nodes (graph-nodes graph)))
-          (cond ((null? nodes) #t)
-                (else
-                 (let* ((node (car nodes))
-                        (data (node-value node)))
-                   (for-each
-                    (lambda (edge)
-                      (face-search model mesh
-                                   node (list node) node
-                                   (edge-other-node edge node)))
-                    (node-edges node))
-                   (voronoi-graph-data-set-status! data 'searched)
-                   (loop (cdr nodes))))))
+        ;; search for polygons in the graph
+        (for-each (lambda (polygon)
+                    (add-faces model mesh polygon))
+                  polygons)
+
         (operate-on-faces model (lambda (mesh face)
                                   (face-set-normals! model face)
                                   face))
@@ -659,7 +669,8 @@
                                        multiplier
                                        output-x-size output-y-size output-z-size
                                        points))
-                     (model (graph->model graph
+                     (polygons (find-polygons graph))
+                     (model (graph->model graph polygons
                                           multiplier
                                           height-function)))
                 (cond
