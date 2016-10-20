@@ -44,40 +44,51 @@
       (image-line! img pxl x0 (- y0 1) x1 (- y1 1) channels)
       (image-line! img pxl x0 (+ y0 1) x1 (+ y1 1) channels))
 
-    (define (show-lines lines width height)
-      (let ((image (raster-new width height (vector 255 255 255 255))))
-        (for-each
-         (lambda (line)
-           (cerr line "\n")
-           (let ((x0 (exact (round (vector-ref (car line) 0))))
-                 (y0 (exact (round (vector-ref (car line) 1))))
-                 (x1 (exact (round (vector-ref (cadr line) 0))))
-                 (y1 (exact (round (vector-ref (cadr line) 1)))))
-             (image-fat-line! image (vector 0 0 0 255) x0 y0 x1 y1 rgba)
-             ))
-         lines)
+    (define (show-lines graph width height)
 
-        (image->ppm image (current-output-port))
-        ))
+      (let ((lines (map
+                    (lambda (edge)
+                      (let* ((node-a (edge-start-node edge))
+                             (node-b (edge-end-node edge))
+                             (data-a (node-value node-a))
+                             (data-b (node-value node-b))
+                             (point-a (voronoi-graph-data-point data-a))
+                             (point-b (voronoi-graph-data-point data-b)))
+                        (list point-a point-b)))
+                    (graph-edges graph))))
+        (let ((image (raster-new width height (vector 255 255 255 255))))
+          (for-each
+           (lambda (line)
+             ;; (cerr line "\n")
+             (let ((x0 (exact (round (vector-ref (car line) 0))))
+                   (y0 (exact (round (vector-ref (car line) 1))))
+                   (x1 (exact (round (vector-ref (cadr line) 0))))
+                   (y1 (exact (round (vector-ref (cadr line) 1)))))
+               (image-fat-line! image (vector 0 0 0 255) x0 y0 x1 y1 rgba)
+               ))
+           lines)
+
+          (image->ppm image (current-output-port))
+          )))
 
 
     (define (point-x-< p0 p1)
-      (if (= (vector2-x p0) (vector2-x p1))
+      (if (almost= (vector2-x p0) (vector2-x p1) epsilon)
           (< (vector2-y p0) (vector2-y p1))
           (< (vector2-x p0) (vector2-x p1))))
 
     (define (point-x-> p0 p1)
-      (if (= (vector2-x p0) (vector2-x p1))
+      (if (almost= (vector2-x p0) (vector2-x p1) epsilon)
           (> (vector2-y p0) (vector2-y p1))
           (> (vector2-x p0) (vector2-x p1))))
 
     (define (point-y-< p0 p1)
-      (if (= (vector2-y p0) (vector2-y p1))
+      (if (almost= (vector2-y p0) (vector2-y p1) epsilon)
           (< (vector2-x p0) (vector2-x p1))
           (< (vector2-y p0) (vector2-y p1))))
 
     (define (point-y-> p0 p1)
-      (if (= (vector2-y p0) (vector2-y p1))
+      (if (almost= (vector2-y p0) (vector2-y p1) epsilon)
           (> (vector2-x p0) (vector2-x p1))
           (> (vector2-y p0) (vector2-y p1))))
 
@@ -175,7 +186,7 @@
 
 
 
-    (define (tug-line-ends-to-points in-lines points)
+    (define (tug-lines-ends-to-points in-lines points)
       (map
        (lambda (line)
          (let loop ((points points)
@@ -183,11 +194,19 @@
            (cond ((null? points) line)
                  (else
                   (let ((point (car points)))
-                    (cond ((vector2-almost-equal? (car line) point epsilon)
+                    ;; (cerr "tug point: " point "\n")
+                    (cond ((and (vector2-almost-equal? (car line) point epsilon)
+                                (vector2-almost-equal? (cadr line) point epsilon))
+                           ;; (cerr "a\n")
+                           (loop (cdr points) (list point point)))
+                          ((vector2-almost-equal? (car line) point epsilon)
+                           ;; (cerr "b\n")
                            (loop (cdr points) (list point (cadr line))))
                           ((vector2-almost-equal? (cadr line) point epsilon)
+                           ;; (cerr "c\n")
                            (loop (cdr points) (list (car line) point)))
                           (else
+                           ;; (cerr "d\n")
                            (loop (cdr points) line))))))))
        in-lines))
 
@@ -216,9 +235,16 @@
                   ;; see if this edge is best
                   (let* ((angle-ab (edge-angle node-a node-b))
                          (angle-bc (edge-angle node-b node-c))
-                         (angle-change (- angle-bc angle-ab))
+                         (angle-change
+                          (and angle-ab angle-bc (- angle-bc angle-ab)))
                          (b-rest (cdr b-edges)))
-                    (cond ((> angle-change pi)
+                    (cond ((not angle-change)
+                           (cerr "failed on "
+                                 (voronoi-graph-data-point (node-value node-a)) " "
+                                 (voronoi-graph-data-point (node-value node-b)) " "
+                                 (voronoi-graph-data-point (node-value node-c))"\n")
+                           (loop b-rest leftest-angle face-edge))
+                          ((> angle-change pi)
                            ;; a spin-too-far right turn
                            (loop b-rest leftest-angle face-edge))
                           ((< angle-change 0)
@@ -331,13 +357,16 @@
     (define (line-segments->graph in-lines)
       (let* ((graph (make-graph))
              (points (points->unique-points (lines->points in-lines)))
-             (lines (tug-line-ends-to-points in-lines points))
+             (lines (tug-lines-ends-to-points in-lines points))
              (nodes (map
                      (lambda (point)
                        (let ((data (make-voronoi-graph-data point #f #f)))
                          (make-node graph data)))
                      points))
              (nodes-hash (make-hash-table)))
+
+        (cerr "--------------- points --------\n")
+        (for-each (lambda (point) (cerr point "\n")) points)
 
         ;; create a hash-table to go from points to graph nodes
         (for-each
@@ -346,13 +375,44 @@
              (hash-table-set! nodes-hash point node)))
          nodes)
 
+
+
+        (cerr "---------------- lines -------\n")
+        (let loop ((lines lines)
+                   (in-lines in-lines))
+          (if (null? lines) #t
+              (begin
+                (cerr (car in-lines) "  -->  " (car lines) "\n")
+                (loop (cdr lines) (cdr in-lines)))))
+
+
+        (cerr "---------------- hash keys -------\n")
+        (cerr (hash-table-keys nodes-hash) "\n")
+
+        (cerr "---------------- nodes -------\n")
+        (for-each (lambda (node-key)
+                    (cerr (voronoi-graph-data-point (node-value (hash-table-ref nodes-hash node-key))) "\n"))
+                  (hash-table-keys nodes-hash))
+
+
+        (cerr "---------------- edges -------\n")
+
         ;; make a graph edge for each line
         (for-each
          (lambda (line)
            (let ((node-a (hash-table-ref nodes-hash (car line)))
                  (node-b (hash-table-ref nodes-hash (cadr line))))
-             (connect-nodes graph node-a node-b)))
+             (cerr (voronoi-graph-data-point (node-value node-a)) " --> "
+                   (voronoi-graph-data-point (node-value node-b)) " : "
+                   (eq? node-a node-b) "\n")
+
+             (if (not (eq? node-a node-b))
+                 (connect-nodes graph node-a node-b))
+             ))
          lines)
+
+
+
 
         graph))
 
@@ -360,7 +420,7 @@
     (define (fill-area model mesh base points)
       ;; fill in a fan-shape by making a series of triangles
       ;; that all have `base` as the first point
-      (cerr points "\n")
+      ;; (cerr points "\n")
       (let* ((material #f)
              (base-corner (point->corner model mesh material base))
              (point-corners
@@ -449,9 +509,62 @@
                        (x0 (read line-port))
                        (y0 (read line-port))
                        (x1 (read line-port))
-                       (y1 (read line-port)))
-                  (loop (cons (list (vector x0 y0) (vector x1 y1))
-                              lines))))))))
+                       (y1 (read line-port))
+                       (v0 (vector x0 y0))
+                       (v1 (vector x1 y1)))
+                  (if (not (vector2-equal? v0 v1))
+                      (loop (cons (list v0 v1) lines))
+                      (loop lines))))))))
+
+
+    (define (make-height-function width height multiplier
+                                  output-x-size output-y-size output-z-size
+                                  points)
+      (lambda (point)
+        ;; find closest 2 points
+        (define (closer? a-vec b-vec)
+          (let ((a (cond ((not a-vec) #f)
+                         ((= (vector-length a-vec) 2) a-vec)
+                         (else (vector (vector3-x a-vec) (vector3-z a-vec)))))
+                (b (cond ((not b-vec) #f)
+                         ((= (vector-length b-vec) 2) b-vec)
+                         (else (vector (vector3-x b-vec) (vector3-z b-vec))))))
+            (cond ((not a) #f)
+                  ((not b) #t)
+                  (else
+                   (< (vector3-length (vector2-diff a point))
+                      (vector3-length (vector2-diff b point)))))))
+
+        (let loop ((points points)
+                   (closest #f)
+                   (next-closest #f))
+          (if (null? points)
+              (let* ((closest-dx
+                      (vector3-length (vector2-diff closest point)))
+                     (next-closest-dx
+                      (vector3-length (vector2-diff next-closest point)))
+                     (total-dx (+ closest-dx next-closest-dx))
+                     (closest-ratio (/ closest-dx total-dx))
+                     (next-closest-ratio (/ next-closest-dx total-dx)))
+
+                (cerr "height for " point " -- "
+                      closest " "
+                      next-closest " -- "
+                      (* (vector3-y multiplier)
+                         (+ (* (vector3-y closest) closest-ratio)
+                            (* (vector3-y next-closest) next-closest-ratio))) "\n")
+
+                (* (vector3-y multiplier)
+                   (+ (* (vector3-y closest) closest-ratio)
+                      (* (vector3-y next-closest) next-closest-ratio))))
+              (let ((p (car points))
+                    (rest (cdr points)))
+                (cond ((closer? p closest)
+                       (loop rest p closest))
+                      ((closer? p next-closest)
+                       (loop rest closest p))
+                      (else
+                       (loop rest closest next-closest))))))))
 
 
     (define (main-program)
@@ -485,12 +598,6 @@
              (lines-input-filename #f)
              (points-input-filename #f)
              (extra-arguments '())
-             (height-function (lambda (point)
-                                100.0
-                                ;; (/ (vector2-x point) (+ (vector2-y point) 1))
-                                ;; (let ((middle (vector (/ width 2.0) (/ height 2.0))))
-                                ;;   (vector2-length (vector2-diff middle point)))
-                                ))
              )
         (for-each
          (lambda (arg)
@@ -531,8 +638,8 @@
 
         (cerr "input-width=" width " input-height=" height "\n")
 
-        (let ((lines (read-lines lines-input-filename))
-              (points (read-points points-input-filename)))
+        (let* ((lines (read-lines lines-input-filename))
+               (points (read-points points-input-filename)))
           (let-values (((left-edge-points
                          bottom-edge-points
                          right-edge-points
@@ -543,24 +650,30 @@
                                                 right-edge-points
                                                 top-edge-points))
                    (lines-and-edges (append lines edge-lines)))
-              (cond
-               ;; output a model
-               (output-obj
-                (let* ((graph (line-segments->graph lines-and-edges))
-                       (multiplier (vector (/ output-x-size width)
-                                           (/ output-y-size 255.0)
-                                           (/ output-z-size height)))
-                       (model (graph->model graph
-                                            multiplier
-                                            height-function)))
+              (let* ((graph (line-segments->graph lines-and-edges))
+                     (multiplier (vector (/ output-x-size width)
+                                         (/ output-y-size 255.0)
+                                         (/ output-z-size height)))
+                     (height-function (make-height-function
+                                       width height
+                                       multiplier
+                                       output-x-size output-y-size output-z-size
+                                       points))
+                     (model (graph->model graph
+                                          multiplier
+                                          height-function)))
+                (cond
+                 (output-obj
+                  ;; output a model
                   (close-model model width height height-function
                                multiplier
                                left-edge-points
                                bottom-edge-points
                                right-edge-points
                                top-edge-points)
-                  (write-obj-model model (current-output-port))))
-               ;; output a png
-               (output-pnm (show-lines lines-and-edges width height))
-               ;; else complain
-               (else (usage "give one of --obj or --pnm"))))))))))
+                  (write-obj-model model (current-output-port)))
+                 (output-pnm
+                  ;; output a png
+                  (show-lines graph width height))
+                 ;; else complain
+                 (else (usage "give one of --obj or --pnm")))))))))))

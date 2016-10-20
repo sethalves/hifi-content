@@ -4,8 +4,8 @@
 
 VORONOI=../../voronoi/voronoi
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)'
-WIDTH=200
-HEIGHT=200
+WIDTH=80
+HEIGHT=80
 
 
 all: lines.png lines.obj
