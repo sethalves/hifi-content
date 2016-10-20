@@ -25,6 +25,7 @@
           (seth graph)
           (seth model-3d)
           (seth obj-model)
+          (seth scad-model)
           )
   (begin
 
@@ -633,6 +634,7 @@
         (cerr "voronoi-terrain [arguments] lines-input-file points-input-file")
         (cerr "    --obj                      output an obj file\n")
         (cerr "    --pnm                      output a pnm file\n")
+        (cerr "    --scad                     output an openscad file\n")
         (cerr "    --input-width w            width of output\n")
         (cerr "    --input-height h           height of output\n")
         (cerr "    --output-x-size x-size     width of output\n")
@@ -642,6 +644,7 @@
 
       (let* ((args (parse-command-line `((--obj)
                                          (--pnm)
+                                         (--scad)
                                          ((--input-width) width)
                                          ((--input-height) height)
                                          ((--output-x-size) width)
@@ -650,6 +653,7 @@
                                          (-?) (-h))))
              (output-obj #f)
              (output-pnm #f)
+             (output-scad #f)
              (width #f)
              (height #f)
              (output-x-size #f)
@@ -664,11 +668,17 @@
            (case (car arg)
              ((-? -h) (usage ""))
              ((--obj)
-              (if (or output-obj output-pnm) (usage "give only one of --obj or --pnm"))
+              (if (or output-obj output-pnm output-scad)
+                  (usage "give only one of --obj or --pnm or --scad"))
               (set! output-obj #t))
              ((--pnm)
-              (if (or output-obj output-pnm) (usage "give only one of --obj or --pnm"))
+              (if (or output-obj output-pnm output-scad)
+                  (usage "give only one of --obj or --pnm or --scad"))
               (set! output-pnm #t))
+             ((--scad)
+              (if (or output-obj output-pnm output-scad)
+                  (usage "give only one of --obj or --pnm or --scad"))
+              (set! output-scad #t))
              ((--input-width)
               (set! width (string->number (cadr arg))))
              ((--input-height)
@@ -723,19 +733,27 @@
                      (model (graph->model graph polygons
                                           multiplier
                                           height-function)))
+                (close-model model width height height-function
+                             multiplier
+                             left-edge-points
+                             bottom-edge-points
+                             right-edge-points
+                             top-edge-points)
                 (cond
+
                  (output-obj
                   ;; output a model
-                  (close-model model width height height-function
-                               multiplier
-                               left-edge-points
-                               bottom-edge-points
-                               right-edge-points
-                               top-edge-points)
                   (write-obj-model model (current-output-port)))
+
                  (output-pnm
                   ;; output a png
                   ;; (show-graph graph width height))
                   (show-polygons polygons width height))
-                 ;; else complain
-                 (else (usage "give one of --obj or --pnm")))))))))))
+
+                 (output-scad
+                  ;; output an openscad file
+                  (write-scad-model model (current-output-port)))
+
+                 (else
+                  ;; else complain
+                  (usage "give one of --obj or --pnm or --scad")))))))))))
