@@ -273,34 +273,41 @@
                  (leftest-angle 0)
                  (face-edge #f))
         (if (null? b-edges)
-            face-edge
+            (begin
+              ;; (cerr "find-face-edge: "
+              ;;       (voronoi-graph-data-point (node-value node-a)) " --> "
+              ;;       (voronoi-graph-data-point (node-value node-b)) " --> "
+              ;;       (if face-edge
+              ;;           (voronoi-graph-data-point (node-value (edge-other-node face-edge node-b)))
+              ;;           #f) " -- "
+              ;;       leftest-angle "\n")
+              face-edge)
             (let* ((bc-edge (car b-edges))
-                   (node-c (edge-other-node bc-edge node-b)))
+                   (node-c (edge-other-node bc-edge node-b))
+                   (b-rest (cdr b-edges)))
               (if (eq? node-a node-c)
                   ;; don't go backwards
-                  (loop (cdr b-edges) leftest-angle face-edge)
+                  (loop b-rest leftest-angle face-edge)
                   ;; see if this edge is best
                   (let* ((angle-ab (edge-angle node-a node-b))
                          (angle-bc (edge-angle node-b node-c))
                          (angle-change
-                          (and angle-ab angle-bc (- angle-bc angle-ab)))
-                         (b-rest (cdr b-edges)))
+                          (and angle-ab angle-bc
+                               (normalize-angle (- angle-bc angle-ab)))))
                     (cond ((not angle-change)
-                           (cerr "failed on "
-                                 (voronoi-graph-data-point (node-value node-a)) " "
-                                 (voronoi-graph-data-point (node-value node-b)) " "
-                                 (voronoi-graph-data-point (node-value node-c))"\n")
-                           (loop b-rest leftest-angle face-edge))
-                          ((> angle-change pi)
-                           ;; a spin-too-far right turn
                            (loop b-rest leftest-angle face-edge))
                           ((< angle-change 0)
                            ;; a right turn
                            (loop b-rest leftest-angle face-edge))
+                          ((> angle-change pi)
+                           ;; a spin-too-far left turn
+                           (loop b-rest leftest-angle face-edge))
                           ((> angle-change leftest-angle)
-                           ;; best so far
-                           (loop b-rest angle-bc bc-edge))
+                           ;; best left-turn so far
+                           (loop b-rest angle-change bc-edge))
                           (else
+                           ;; a left turn, but not as sharp as
+                           ;; another one we've already seen
                            (loop b-rest leftest-angle face-edge)))))))))
 
     (define (point->corner model mesh material point)
@@ -371,7 +378,6 @@
                                                (edge-other-node edge node))))
                         (if face (set! polygons (cons face polygons)))))
                     (node-edges node))
-                   (voronoi-graph-data-set-status! data 'searched)
                    (loop (cdr nodes))))))))
 
 
@@ -422,8 +428,8 @@
                      points))
              (nodes-hash (make-hash-table)))
 
-        (cerr "--------------- points --------\n")
-        (for-each (lambda (point) (cerr point "\n")) points)
+        ;; (cerr "--------------- points --------\n")
+        ;; (for-each (lambda (point) (cerr point "\n")) points)
 
         ;; create a hash-table to go from points to graph nodes
         (for-each
@@ -434,41 +440,38 @@
 
 
 
-        (cerr "---------------- lines -------\n")
-        (let loop ((lines lines)
-                   (in-lines in-lines))
-          (if (null? lines) #t
-              (begin
-                (cerr (car in-lines) "  -->  " (car lines) "\n")
-                (loop (cdr lines) (cdr in-lines)))))
+        ;; (cerr "---------------- lines -------\n")
+        ;; (let loop ((lines lines)
+        ;;            (in-lines in-lines))
+        ;;   (if (null? lines) #t
+        ;;       (begin
+        ;;         (cerr (car in-lines) "  -->  " (car lines) "\n")
+        ;;         (loop (cdr lines) (cdr in-lines)))))
 
 
-        (cerr "---------------- hash keys -------\n")
-        (cerr (hash-table-keys nodes-hash) "\n")
+        ;; (cerr "---------------- hash keys -------\n")
+        ;; (cerr (hash-table-keys nodes-hash) "\n")
 
-        (cerr "---------------- nodes -------\n")
-        (for-each (lambda (node-key)
-                    (cerr (voronoi-graph-data-point (node-value (hash-table-ref nodes-hash node-key))) "\n"))
-                  (hash-table-keys nodes-hash))
+        ;; (cerr "---------------- nodes -------\n")
+        ;; (for-each (lambda (node-key)
+        ;;             (cerr (voronoi-graph-data-point (node-value (hash-table-ref nodes-hash node-key))) "\n"))
+        ;;           (hash-table-keys nodes-hash))
 
 
-        (cerr "---------------- edges -------\n")
+        ;; (cerr "---------------- edges -------\n")
 
         ;; make a graph edge for each line
         (for-each
          (lambda (line)
            (let ((node-a (hash-table-ref nodes-hash (car line)))
                  (node-b (hash-table-ref nodes-hash (cadr line))))
-             (cerr (voronoi-graph-data-point (node-value node-a)) " --> "
-                   (voronoi-graph-data-point (node-value node-b)) " : "
-                   (eq? node-a node-b) "\n")
+             ;; (cerr (voronoi-graph-data-point (node-value node-a)) " --> "
+             ;;       (voronoi-graph-data-point (node-value node-b)) " : "
+             ;;       (eq? node-a node-b) "\n")
 
              (if (not (eq? node-a node-b))
-                 (connect-nodes graph node-a node-b))
-             ))
+                 (connect-nodes graph node-a node-b))))
          lines)
-
-
 
 
         graph))
@@ -604,12 +607,12 @@
                      (closest-ratio (/ closest-dx total-dx))
                      (next-closest-ratio (/ next-closest-dx total-dx)))
 
-                (cerr "height for " point " -- "
-                      closest " "
-                      next-closest " -- "
-                      (* (vector3-y multiplier)
-                         (+ (* (vector3-y closest) closest-ratio)
-                            (* (vector3-y next-closest) next-closest-ratio))) "\n")
+                ;; (cerr "height for " point " -- "
+                ;;       closest " "
+                ;;       next-closest " -- "
+                ;;       (* (vector3-y multiplier)
+                ;;          (+ (* (vector3-y closest) closest-ratio)
+                ;;             (* (vector3-y next-closest) next-closest-ratio))) "\n")
 
                 (* (vector3-y multiplier)
                    (+ (* (vector3-y closest) closest-ratio)
