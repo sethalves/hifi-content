@@ -44,8 +44,68 @@
       (image-line! img pxl x0 (- y0 1) x1 (- y1 1) channels)
       (image-line! img pxl x0 (+ y0 1) x1 (+ y1 1) channels))
 
-    (define (show-lines graph width height)
 
+    (define (polygon->points polygon)
+      (map (lambda (node)
+             (voronoi-graph-data-point (node-value node)))
+           polygon))
+
+
+    (define (points-average points)
+      (vector2-scale
+       (fold vector2-sum (vector 0 0) points)
+       (/ 1.0 (length points))))
+
+
+    (define (show-lines lines width height)
+      (let ((image (raster-new width height (vector 255 255 255 255))))
+        (for-each
+         (lambda (line)
+           (let ((x0 (exact (round (vector-ref (car line) 0))))
+                 (y0 (exact (round (vector-ref (car line) 1))))
+                 (x1 (exact (round (vector-ref (cadr line) 0))))
+                 (y1 (exact (round (vector-ref (cadr line) 1)))))
+             ;; (image-fat-line! image (vector 0 0 0 255) x0 y0 x1 y1 rgba)
+             (image-line! image (vector 0 0 0 255) x0 y0 x1 y1 rgba)
+             ))
+         lines)
+
+        (image->ppm image (current-output-port))))
+
+    (define (point-loop->lines points)
+      (let loop ((points points)
+                 (lines '()))
+        (cond ((null? points) lines)
+              ((null? (cdr points)) lines)
+              (else (let ((point-a (car points))
+                          (point-b (cadr points)))
+                      (loop (cdr points)
+                            (cons (list point-a point-b) lines)))))))
+
+
+    (define (show-polygons polygons width height)
+      ;; polygon is a list of graph nodes
+      (let loop ((polygons polygons)
+                 (lines '()))
+        (if (null? polygons)
+            (show-lines lines width height)
+            (let* ((polygon (car polygons))
+                   (points (polygon->points polygon))
+                   (center (points-average points))
+                   ;; squish all the points toward the center, a little
+                   (off-points (map
+                                (lambda (point)
+                                  (let* ((point->center (vector2-diff center point))
+                                         (point->center-n (vector2-normalize point->center))
+                                         (offset (vector2-scale point->center-n 2.0)))
+                                    (vector2-sum point offset)))
+                                points))
+                   (off-points-loop (cons (last off-points) off-points))
+                   (new-lines (point-loop->lines off-points-loop)))
+              (loop (cdr polygons) (append lines new-lines))))))
+
+
+    (define (show-graph graph width height)
       (let ((lines (map
                     (lambda (edge)
                       (let* ((node-a (edge-start-node edge))
@@ -56,20 +116,7 @@
                              (point-b (voronoi-graph-data-point data-b)))
                         (list point-a point-b)))
                     (graph-edges graph))))
-        (let ((image (raster-new width height (vector 255 255 255 255))))
-          (for-each
-           (lambda (line)
-             ;; (cerr line "\n")
-             (let ((x0 (exact (round (vector-ref (car line) 0))))
-                   (y0 (exact (round (vector-ref (car line) 1))))
-                   (x1 (exact (round (vector-ref (cadr line) 0))))
-                   (y1 (exact (round (vector-ref (cadr line) 1)))))
-               (image-fat-line! image (vector 0 0 0 255) x0 y0 x1 y1 rgba)
-               ))
-           lines)
-
-          (image->ppm image (current-output-port))
-          )))
+        (show-lines lines width height)))
 
 
     (define (point-x-< p0 p1)
@@ -685,6 +732,7 @@
                   (write-obj-model model (current-output-port)))
                  (output-pnm
                   ;; output a png
-                  (show-lines graph width height))
+                  ;; (show-graph graph width height))
+                  (show-polygons polygons width height))
                  ;; else complain
                  (else (usage "give one of --obj or --pnm")))))))))))
