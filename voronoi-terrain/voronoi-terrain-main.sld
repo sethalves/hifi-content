@@ -329,7 +329,7 @@
         (let ((face (make-face model (list->vector corners) material)))
           (cond ((< corners-count 3) #f)
                 ((= corners-count 3)
-                 (if (not (model-contains-face model face))
+                 (if (not (model-contains-equivalent-face model face epsilon))
                      (mesh-append-face! model mesh face)))
                 (else
                  (let* ((center-vertex (face->center-vertex model face))
@@ -342,11 +342,9 @@
                            (else
                             (let* ((corner-b (car corners))
                                    (corner-c (cadr corners))
-                                   (subface (make-face model (vector center-corner
-                                                                     corner-b
-                                                                     corner-c)
+                                   (subface (make-face model (vector center-corner corner-b corner-c)
                                                        material)))
-                              (if (not (model-contains-face model subface))
+                              (if (not (model-contains-equivalent-face model subface epsilon))
                                   (mesh-append-face! model mesh subface))
                               (loop (cdr corners))))))))))))
 
@@ -739,6 +737,9 @@
                              bottom-edge-points
                              right-edge-points
                              top-edge-points)
+                (compact-obj-model model)
+                (fix-face-winding model)
+
                 (cond
 
                  (output-obj

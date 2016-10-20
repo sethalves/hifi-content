@@ -8,7 +8,7 @@ WIDTH=80
 HEIGHT=80
 
 
-all: lines.png lines.obj terrain.scad
+all: terrain.png terrain.obj terrain
 
 voronoi-terrain: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
@@ -27,10 +27,10 @@ link-libs: very-clean
 lines: points
 	cat $^ | cut -f1,3 -d' ' | $(VORONOI) 0 0 $(WIDTH) $(HEIGHT) > $@
 
-lines.pnm: lines points
+terrain.pnm: lines points
 	./voronoi-terrain-gauche.scm --pnm --input-width $(WIDTH) --input-height $(HEIGHT) lines points > $@
 
-lines.obj: lines points
+terrain.obj: lines points
 	./voronoi-terrain-gauche.scm --obj \
 			--output-x-size 1024 --output-y-size 1024 --output-z-size 1024 \
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
@@ -42,11 +42,24 @@ terrain.scad: lines points
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
 			lines points > $@
 
-lines.png: lines.pnm
+terrain.png: terrain.pnm
 	pnmtopng $^ > $@
 
+
+terrain-parts/terrain00.stl: terrain-parts.scad terrain.scad
+	mkdir -p terrain-parts
+	openscad -D xslice=0 -D zslice=0 -o $@ $<
+
+
+terrain-parts/terrain00.obj: terrain-parts/terrain00.stl
+	wavefront-obj-tool $^ -o $@
+
+terrain: terrain-parts/terrain00.obj
+
+
 clean:
-	rm -f *~ voronoi-terrain lines lines.pnm lines.png lines.obj
+	rm -f *~ voronoi-terrain lines terrain.pnm terrain.png terrain.obj terrain.scad
+	rm -rf terrain-parts
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
