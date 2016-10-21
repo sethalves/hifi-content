@@ -62,6 +62,9 @@ terrain: $(TERRAIN_PARTS)
 	cp terrain.mtl terrain-parts/
 	cp terrain-texture.png terrain-parts/
 
+upload: terrain
+	rsync --delete -avP terrain-parts/ headache.hungry.com:public_html/hifi/terrain-parts/
+
 
 clean:
 	rm -f *~ voronoi-terrain lines terrain.pnm terrain.png terrain.obj terrain.scad
