@@ -409,9 +409,6 @@
                     (add-faces model mesh polygon))
                   polygons)
 
-        (operate-on-faces model (lambda (mesh face)
-                                  (face-set-normals! model face)
-                                  face))
         model))
 
 
@@ -536,10 +533,16 @@
                            (list (vector 0 0 0))))
         ;; add bottom
         (fill-area model mesh
-                   (vector 0 0 0)
-                   (list (vector 0 0 height-s)
+                   (vector (/ width-s 2.0) 0 (/ height-s 2.0))
+                   (list (vector 0 0 0)
+                         (vector 0 0 (/ height-s 2.0))
+                         (vector 0 0 height-s)
+                         (vector (/ width-s 2.0) 0 height-s)
                          (vector width-s 0 height-s)
-                         (vector width-s 0 0)))))
+                         (vector width-s 0 (/ height-s 2.0))
+                         (vector width-s 0 0)
+                         (vector (/ width-s 2.0) 0 0)
+                         (vector 0 0 0)))))
 
     (define (read-points points-input-filename)
       (let ((points-input-port (open-input-file points-input-filename)))
@@ -737,6 +740,9 @@
                              bottom-edge-points
                              right-edge-points
                              top-edge-points)
+                (operate-on-faces model (lambda (mesh face)
+                                          (face-set-normals! model face)
+                                          face))
                 (compact-obj-model model)
                 (fix-face-winding model)
 
