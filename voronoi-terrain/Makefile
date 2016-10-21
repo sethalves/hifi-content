@@ -8,6 +8,17 @@ WIDTH=80
 HEIGHT=80
 
 
+
+terrain-parts/terrain%.stl: terrain-parts.scad terrain.scad
+	mkdir -p terrain-parts
+	openscad -D xslice=`expr substr $@ 22 1` -D zslice=`expr substr $@ 23 1` -o $@ $<
+
+
+terrain-parts/terrain%.obj: terrain-parts/terrain%.stl
+	wavefront-obj-tool -c -n -m 0.0009765625 $^ -o $@ -L terrain.mtl -S terrain_mtl
+
+
+
 all: terrain.png terrain.obj terrain
 
 voronoi-terrain: voronoi-terrain-chicken.scm
@@ -46,15 +57,18 @@ terrain.png: terrain.pnm
 	pnmtopng $^ > $@
 
 
-terrain-parts/terrain00.stl: terrain-parts.scad terrain.scad
-	mkdir -p terrain-parts
-	openscad -D xslice=0 -D zslice=0 -o $@ $<
+# terrain-parts/terrain00.stl: terrain-parts.scad terrain.scad
+# 	mkdir -p terrain-parts
+# 	openscad -D xslice=0 -D zslice=0 -o $@ $<
 
+# terrain-parts/terrain00.obj: terrain-parts/terrain00.stl
+# 	wavefront-obj-tool -c -n -m 0.0009765625 $^ -o $@ -L terrain.mtl -S terrain_mtl
 
-terrain-parts/terrain00.obj: terrain-parts/terrain00.stl
-	wavefront-obj-tool $^ -o $@
+TERRAIN_PARTS=$(foreach xz,00 01 02 03 04 05 06 07 10 11 12 13 14 15 16 17 20 21 22 23 24 25 26 27 30 31 32 33 34 35 36 37 40 41 42 43 44 45 46 47 50 51 52 53 54 55 56 57 60 61 62 63 64 65 66 67 70 71 72 73 74 75 76 77,terrain-parts/terrain${xz}.obj)
 
-terrain: terrain-parts/terrain00.obj
+terrain: $(TERRAIN_PARTS)
+	cp terrain.mtl terrain-parts/
+	cp terrain-texture.png terrain-parts/
 
 
 clean:
