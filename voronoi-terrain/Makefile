@@ -7,19 +7,36 @@ LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(set
 WIDTH=80
 HEIGHT=80
 
+OUTPUT_WIDTH=1024
+OUTPUT_DEPTH=1024
+OUTPUT_HEIGHT=1024
 
 
 terrain-parts/terrain%.stl: terrain-parts.scad terrain.scad
 	mkdir -p terrain-parts
-	openscad -D xslice=`expr substr $@ 22 1` -D zslice=`expr substr $@ 23 1` -o $@ $<
+	openscad -D xslice=`expr substr $@ 22 1` \
+				-D zslice=`expr substr $@ 23 1` \
+				-D width=$(OUTPUT_WIDTH) \
+				-D depth=$(OUTPUT_DEPTH) \
+				-o $@ $<
 
 
 terrain-parts/terrain%.obj: terrain-parts/terrain%.stl
-	wavefront-obj-tool -c -n -T 1024 1024 $^ -o $@ -L terrain.mtl -S terrain_mtl
+	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
 
 
+json-parts/terrain%.json: terrain-parts/terrain%.obj terrain-json.m4
+	mkdir -p json-parts
+	export YSIZE=`wavefront-obj-tool --py $<`; \
+	m4 -DPART=`expr substr $@ 19 2` \
+		-DYSIZE=$$YSIZE \
+		-DX=`expr substr $@ 19 1` \
+		-DZ=`expr substr $@ 20 1` \
+		-DYVAL=`echo "scale = 5; ($$YSIZE / 2) - 82" | bc` \
+		terrain-json.m4 > $@
 
-all: terrain.png terrain.obj terrain
+
+all: terrain.png terrain.obj terrain terrain.json terrain-textured.obj
 
 voronoi-terrain: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
@@ -35,6 +52,9 @@ link-libs: very-clean
 		-p '../../seth-snow2-misc' \
 		install $(LIBS)
 
+points: heightmap.pgm
+	./pnm-to-height-map-gauche.scm $^ > $@
+
 lines: points
 	cat $^ | cut -f1,3 -d' ' | $(VORONOI) 0 0 $(WIDTH) $(HEIGHT) > $@
 
@@ -43,32 +63,63 @@ terrain.pnm: lines points
 
 terrain.obj: lines points
 	./voronoi-terrain-gauche.scm --obj \
-			--output-x-size 1024 --output-y-size 1024 --output-z-size 1024 \
+			--output-x-size $(OUTPUT_WIDTH) --output-y-size $(OUTPUT_HEIGHT) --output-z-size $(OUTPUT_DEPTH) \
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
 			lines points > $@
 
 terrain.scad: lines points
 	./voronoi-terrain-gauche.scm --scad \
-			--output-x-size 1024 --output-y-size 1024 --output-z-size 1024 \
+			--output-x-size $(OUTPUT_WIDTH) --output-y-size $(OUTPUT_HEIGHT) --output-z-size $(OUTPUT_DEPTH) \
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
 			lines points > $@
+
+
+terrain-whole.stl: terrain.scad
+	openscad -o $@ $<
+
+
+terrain-texture.ppm: points lines
+	./voronoi-terrain-gauche.scm --texture \
+		--input-width $(WIDTH) --input-height $(HEIGHT) \
+		--output-x-size 512 --output-z-size 512 \
+		lines points > $@
+
+
+terrain-texture.png: terrain-texture.ppm
+	pnmtopng $^ > $@
+
+
+terrain-textured.obj: terrain-whole.stl terrain-texture.png
+	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
+
 
 terrain.png: terrain.pnm
 	pnmtopng $^ > $@
 
-TERRAIN_PARTS=$(foreach xz,00 01 02 03 04 05 06 07 10 11 12 13 14 15 16 17 20 21 22 23 24 25 26 27 30 31 32 33 34 35 36 37 40 41 42 43 44 45 46 47 50 51 52 53 54 55 56 57 60 61 62 63 64 65 66 67 70 71 72 73 74 75 76 77,terrain-parts/terrain${xz}.obj)
+PARTS=00 01 02 03 04 05 06 07 10 11 12 13 14 15 16 17 20 21 22 23 24 25 26 27 30 31 32 33 34 35 36 37 40 41 42 43 44 45 46 47 50 51 52 53 54 55 56 57 60 61 62 63 64 65 66 67 70 71 72 73 74 75 76 77
+
+TERRAIN_PARTS=$(foreach xz,$(PARTS),terrain-parts/terrain${xz}.obj)
 
 terrain: $(TERRAIN_PARTS)
 	cp terrain.mtl terrain-parts/
 	cp terrain-texture.png terrain-parts/
+
+
+JSON_PARTS=$(foreach xz,$(PARTS),json-parts/terrain${xz}.json)
+
+terrain.json: $(JSON_PARTS)
+	cat $^ > $@
 
 upload: terrain
 	rsync --delete -avP terrain-parts/ headache.hungry.com:public_html/hifi/terrain-parts/
 
 
 clean:
-	rm -f *~ voronoi-terrain lines terrain.pnm terrain.png terrain.obj terrain.scad
-	rm -rf terrain-parts
+	rm -f points lines
+	rm -f *~ voronoi-terrain terrain.pnm terrain.png terrain.obj terrain.scad terrain.json
+	rm -rf terrain-parts json-parts
+	rm -f terrain-textured.obj terrain-whole.stl terrain-whole.obj
+	rm -f terrain-texture.png terrain-texture.ppm
 
 very-clean: clean
 	rm -rf seth snow srfi foldling

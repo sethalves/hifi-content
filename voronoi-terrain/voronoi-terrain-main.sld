@@ -120,6 +120,77 @@
         (show-lines lines width height)))
 
 
+    ;; (define (write-surface-texture model width height output-x-size output-z-size height-function)
+    ;;   (define (image-x->input-x img-x)
+    ;;     (/ (* img-x width) output-x-size))
+    ;;   (define (image-y->input-y img-y)
+    ;;     (/ (* img-y height) output-z-size))
+
+    ;;   (let ((img (raster-new output-x-size output-z-size (vector 255 255 255 255))))
+    ;;     (do ((y 0 (+ y 1)))
+    ;;         ((= y output-z-size) #t)
+    ;;       (do ((x 0 (+ x 1)))
+    ;;           ((= x output-x-size) #t)
+    ;;         (let* ((input-x0 (image-x->input-x x))
+    ;;                (input-y0 (image-y->input-y y))
+    ;;                (h0 (height-function (vector input-x0 input-y0)))
+    ;;                (input-x1 (image-x->input-x (+ x 1)))
+    ;;                (input-y1 (image-y->input-y y))
+    ;;                (h1 (height-function (vector input-x1 input-y1)))
+    ;;                (input-x2 (image-x->input-x x))
+    ;;                (input-y2 (image-y->input-y (+ y 1)))
+    ;;                (h2 (height-function (vector input-x1 input-y1)))
+    ;;                ;; decide if this is more flat or more steep
+    ;;                (flat (and (< (abs (- h1 h0)) 0.0001)
+    ;;                           (< (abs (- h2 h0)) 0.0001))))
+    ;;           ;; (cerr (abs (- h1 h0)) "\n")
+    ;;           (if flat
+    ;;               (raster-set-pixel! img x y (vector 0 150 0 255))
+    ;;               (raster-set-pixel! img x y (vector 153 76 0 255)))
+
+    ;;           )))
+    ;;     (image->ppm img (current-output-port))))
+
+
+    (define (find-normal-for-point model p)
+      ;; put an vertical ray through the top of the model and find the normal for that xz point
+      (let ((result-normal #f))
+        (operate-on-faces
+         model
+         (lambda (mesh face)
+           (let ((vertices (face->vertices model face))
+                 (segment (vector (vector (vector2-x p) -2000 (vector2-y p))
+                                  (vector (vector2-x p) 2000 (vector2-y p)))))
+             (if (segment-triangle-intersection segment vertices)
+                 (set! result-normal (face->average-normal model face))))
+           face))
+        result-normal))
+
+
+    (define (write-surface-texture model width height output-x-size output-z-size height-function)
+      (let* ((output-image-width 256)
+             (output-image-height 256)
+             (img (raster-new output-image-width output-image-height (vector 255 255 255 255)))
+             (image-x->model-x (lambda (img-x) (/ (* img-x output-x-size) output-image-width)))
+             (image-y->model-z (lambda (img-y) (/ (* img-y output-z-size) output-image-height)))
+             )
+        (do ((y 0 (+ y 1)))
+            ((= y output-image-height) #t)
+          (do ((x 0 (+ x 1)))
+              ((= x output-image-width) #t)
+            (let* ((model-x (image-x->model-x x))
+                   (model-z (image-y->model-z y))
+                   (normal (find-normal-for-point model (vector model-x model-z)))
+                   ;; decide if this is more flat or more steep
+                   (flat (and normal (> (vector3-y normal) 0.9))))
+              (if flat
+                  (raster-set-pixel! img x y (vector 0 150 0 255))
+                  (raster-set-pixel! img x y (vector 153 76 0 255))))))
+
+        ;; (cerr "normal = " (find-normal-for-point model (vector 50 50)) "\n")
+        (image->ppm img (current-output-port))))
+
+
     (define (point-x-< p0 p1)
       (if (almost= (vector2-x p0) (vector2-x p1) epsilon)
           (< (vector2-y p0) (vector2-y p1))
@@ -606,19 +677,16 @@
                      (next-closest-dx
                       (vector3-length (vector2-diff next-closest point)))
                      (total-dx (+ closest-dx next-closest-dx))
-                     (closest-ratio (/ closest-dx total-dx))
-                     (next-closest-ratio (/ next-closest-dx total-dx)))
-
-                ;; (cerr "height for " point " -- "
-                ;;       closest " "
-                ;;       next-closest " -- "
-                ;;       (* (vector3-y multiplier)
-                ;;          (+ (* (vector3-y closest) closest-ratio)
-                ;;             (* (vector3-y next-closest) next-closest-ratio))) "\n")
-
+                     (closest-ratio (if (not (= total-dx 0.0))
+                                        (/ closest-dx total-dx)
+                                        0.5))
+                     (next-closest-ratio (if (not (= total-dx 0.0))
+                                             (/ next-closest-dx total-dx)
+                                             0.5)))
                 (* (vector3-y multiplier)
                    (+ (* (vector3-y closest) closest-ratio)
                       (* (vector3-y next-closest) next-closest-ratio))))
+
               (let ((p (car points))
                     (rest (cdr points)))
                 (cond ((closer? p closest)
@@ -636,6 +704,7 @@
         (cerr "    --obj                      output an obj file\n")
         (cerr "    --pnm                      output a pnm file\n")
         (cerr "    --scad                     output an openscad file\n")
+        (cerr "    --texture                  output green and brown texture\n")
         (cerr "    --input-width w            width of output\n")
         (cerr "    --input-height h           height of output\n")
         (cerr "    --output-x-size x-size     width of output\n")
@@ -646,6 +715,7 @@
       (let* ((args (parse-command-line `((--obj)
                                          (--pnm)
                                          (--scad)
+                                         (--texture)
                                          ((--input-width) width)
                                          ((--input-height) height)
                                          ((--output-x-size) width)
@@ -655,6 +725,7 @@
              (output-obj #f)
              (output-pnm #f)
              (output-scad #f)
+             (output-texture #f)
              (width #f)
              (height #f)
              (output-x-size #f)
@@ -669,18 +740,21 @@
            (case (car arg)
              ((-? -h) (usage ""))
              ((--obj)
-              (if (or output-obj output-pnm output-scad)
-                  (usage "give only one of --obj or --pnm or --scad"))
+              (if (or output-obj output-pnm output-scad output-texture)
+                  (usage "give only one of --obj or --pnm or --scad or --texture"))
               (set! output-obj #t))
              ((--pnm)
-              (if (or output-obj output-pnm output-scad)
-                  (usage "give only one of --obj or --pnm or --scad"))
+              (if (or output-obj output-pnm output-scad output-texture)
+                  (usage "give only one of --obj or --pnm or --scad or --texture"))
               (set! output-pnm #t))
              ((--scad)
-              (if (or output-obj output-pnm output-scad)
-                  (usage "give only one of --obj or --pnm or --scad"))
+              (if (or output-obj output-pnm output-scad output-texture)
+                  (usage "give only one of --obj or --pnm or --scad or --texture"))
               (set! output-scad #t))
-             ((--input-width)
+             ((--texture)
+              (if (or output-obj output-pnm output-scad output-texture)
+                  (usage "give only one of --obj or --pnm or --scad or --texture"))
+              (set! output-texture #t))             ((--input-width)
               (set! width (string->number (cadr arg))))
              ((--input-height)
               (set! height (string->number (cadr arg))))
@@ -733,23 +807,24 @@
                      (polygons (find-polygons graph))
                      (model (graph->model graph polygons
                                           multiplier
-                                          height-function)))
-                (close-model model width height height-function
-                             multiplier
-                             left-edge-points
-                             bottom-edge-points
-                             right-edge-points
-                             top-edge-points)
-                (operate-on-faces model (lambda (mesh face)
-                                          (face-set-normals! model face)
-                                          face))
-                (compact-obj-model model)
-                (fix-face-winding model)
-
+                                          height-function))
+                     (close-model (lambda()
+                                    (close-model model width height height-function
+                                                 multiplier
+                                                 left-edge-points
+                                                 bottom-edge-points
+                                                 right-edge-points
+                                                 top-edge-points)
+                                    (operate-on-faces model (lambda (mesh face)
+                                                              (face-set-normals! model face)
+                                                              face))
+                                    (compact-obj-model model)
+                                    (fix-face-winding model))))
                 (cond
 
                  (output-obj
                   ;; output a model
+                  (close-model)
                   (write-obj-model model (current-output-port)))
 
                  (output-pnm
@@ -759,7 +834,12 @@
 
                  (output-scad
                   ;; output an openscad file
+                  (close-model)
                   (write-scad-model model (current-output-port)))
+
+                 (output-texture
+                  ;; output a surface texure for the terrain
+                  (write-surface-texture model width height output-x-size output-z-size height-function))
 
                  (else
                   ;; else complain

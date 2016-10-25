@@ -15,8 +15,8 @@ module place_cuboid(low_x, high_x, low_y, high_y, low_z, high_z) {
 
 xslice = 0;
 zslice = 0;
-width = 1000;
-depth = 1000;
+width = 1024;
+depth = 1024;
 xstep = width / 8;
 zstep = depth / 8;
 
