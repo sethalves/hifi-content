@@ -30,6 +30,7 @@
                 name: '50s rocket',
                 type: 'Model',
                 modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket.obj',
+                dimensions: { x: 17.1244, y: 32.75, z: 15.4726 }, // copied out of edit.js
                 compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
                 shapeType: "compound",
                 collisionsWillMove: false,
