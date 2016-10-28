@@ -3,7 +3,7 @@
 #
 
 VORONOI=../../voronoi/voronoi
-LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)'
+LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
 WIDTH=80
 HEIGHT=80
 
@@ -36,9 +36,9 @@ json-parts/terrain%.json: terrain-parts/terrain%.obj terrain-json.m4
 		terrain-json.m4 > $@
 
 
-all: terrain.png terrain.obj terrain terrain.json terrain-textured.obj
+all: terrain-lines.png terrain-textured.obj # terrain.obj terrain terrain.json
 
-voronoi-terrain: voronoi-terrain-chicken.scm
+voronoi-terrain-chicken: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
 
 libs:
@@ -58,7 +58,7 @@ points: heightmap.pgm
 lines: points
 	cat $^ | cut -f1,3 -d' ' | $(VORONOI) 0 0 $(WIDTH) $(HEIGHT) > $@
 
-terrain.pnm: lines points
+terrain-lines.pnm: lines points
 	./voronoi-terrain-gauche.scm --pnm --input-width $(WIDTH) --input-height $(HEIGHT) lines points > $@
 
 terrain.obj: lines points
@@ -77,6 +77,8 @@ terrain.scad: lines points
 terrain-whole.stl: terrain.scad
 	openscad -o $@ $<
 
+terrain-caves.stl: terrain-caves.scad
+	openscad -o $@ $<
 
 terrain-texture.ppm: points lines
 	./voronoi-terrain-gauche.scm --texture \
@@ -89,18 +91,23 @@ terrain-texture.png: terrain-texture.ppm
 	pnmtopng $^ > $@
 
 
-terrain-textured.obj: terrain-whole.stl terrain-texture.png
-	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
+# terrain-textured.obj: terrain-whole.stl terrain-texture.png
+# 	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
-terrain.png: terrain.pnm
+terrain-textured.obj: terrain-caves.stl terrain-texture.png
+	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
+
+
+
+terrain-lines.png: terrain-lines.pnm
 	pnmtopng $^ > $@
 
 PARTS=00 01 02 03 04 05 06 07 10 11 12 13 14 15 16 17 20 21 22 23 24 25 26 27 30 31 32 33 34 35 36 37 40 41 42 43 44 45 46 47 50 51 52 53 54 55 56 57 60 61 62 63 64 65 66 67 70 71 72 73 74 75 76 77
 
 TERRAIN_PARTS=$(foreach xz,$(PARTS),terrain-parts/terrain${xz}.obj)
 
-terrain: $(TERRAIN_PARTS)
+terrain: $(TERRAIN_PARTS) terrain-texture.png
 	cp terrain.mtl terrain-parts/
 	cp terrain-texture.png terrain-parts/
 
@@ -110,15 +117,17 @@ JSON_PARTS=$(foreach xz,$(PARTS),json-parts/terrain${xz}.json)
 terrain.json: $(JSON_PARTS)
 	cat $^ > $@
 
-upload: terrain
-	rsync --delete -avP terrain-parts/ headache.hungry.com:public_html/hifi/terrain-parts/
+upload: terrain-textured.obj terrain-texture.png terrain.mtl
+	mkdir -p voronoi-terrain
+	cp $^ voronoi-terrain/
+	rsync --delete -avP voronoi-terrain/ headache.hungry.com:public_html/hifi/voronoi-terrain/
 
 
 clean:
 	rm -f points lines
-	rm -f *~ voronoi-terrain terrain.pnm terrain.png terrain.obj terrain.scad terrain.json
-	rm -rf terrain-parts json-parts
-	rm -f terrain-textured.obj terrain-whole.stl terrain-whole.obj
+	rm -f *~ terrain-lines.pnm terrain-lines.png terrain.obj terrain.scad terrain.json
+	rm -rf terrain-parts voronoi-terrain json-parts
+	rm -f terrain-textured.obj terrain-whole.stl terrain-caves.stl terrain-whole.obj
 	rm -f terrain-texture.png terrain-texture.ppm
 
 very-clean: clean

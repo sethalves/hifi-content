@@ -26,6 +26,7 @@
           (seth model-3d)
           (seth obj-model)
           (seth scad-model)
+          (seth octree)
           )
   (begin
 
@@ -72,6 +73,7 @@
          lines)
 
         (image->ppm image (current-output-port))))
+
 
     (define (point-loop->lines points)
       (let loop ((points points)
@@ -120,72 +122,55 @@
         (show-lines lines width height)))
 
 
-    ;; (define (write-surface-texture model width height output-x-size output-z-size height-function)
-    ;;   (define (image-x->input-x img-x)
-    ;;     (/ (* img-x width) output-x-size))
-    ;;   (define (image-y->input-y img-y)
-    ;;     (/ (* img-y height) output-z-size))
-
-    ;;   (let ((img (raster-new output-x-size output-z-size (vector 255 255 255 255))))
-    ;;     (do ((y 0 (+ y 1)))
-    ;;         ((= y output-z-size) #t)
-    ;;       (do ((x 0 (+ x 1)))
-    ;;           ((= x output-x-size) #t)
-    ;;         (let* ((input-x0 (image-x->input-x x))
-    ;;                (input-y0 (image-y->input-y y))
-    ;;                (h0 (height-function (vector input-x0 input-y0)))
-    ;;                (input-x1 (image-x->input-x (+ x 1)))
-    ;;                (input-y1 (image-y->input-y y))
-    ;;                (h1 (height-function (vector input-x1 input-y1)))
-    ;;                (input-x2 (image-x->input-x x))
-    ;;                (input-y2 (image-y->input-y (+ y 1)))
-    ;;                (h2 (height-function (vector input-x1 input-y1)))
-    ;;                ;; decide if this is more flat or more steep
-    ;;                (flat (and (< (abs (- h1 h0)) 0.0001)
-    ;;                           (< (abs (- h2 h0)) 0.0001))))
-    ;;           ;; (cerr (abs (- h1 h0)) "\n")
-    ;;           (if flat
-    ;;               (raster-set-pixel! img x y (vector 0 150 0 255))
-    ;;               (raster-set-pixel! img x y (vector 153 76 0 255)))
-
-    ;;           )))
-    ;;     (image->ppm img (current-output-port))))
-
-
-    (define (find-normal-for-point model p)
-      ;; put an vertical ray through the top of the model and find the normal for that xz point
-      (let ((result-normal #f))
-        (operate-on-faces
-         model
-         (lambda (mesh face)
-           (let ((vertices (face->vertices model face))
-                 (segment (vector (vector (vector2-x p) -2000 (vector2-y p))
-                                  (vector (vector2-x p) 2000 (vector2-y p)))))
-             (if (segment-triangle-intersection segment vertices)
-                 (set! result-normal (face->average-normal model face))))
-           face))
-        result-normal))
+    (define (find-face-for-point model octree p previous-face)
+      ;; put an vertical ray through the top of the model and find which face is below the xz point
+      (let ((segment (vector (vector (vector2-x p) 2000 (vector2-y p))
+                             (vector (vector2-x p) -2000 (vector2-y p)))))
+        (if (and previous-face
+                 (segment-triangle-intersection segment (face->vertices model previous-face)))
+            previous-face
+            (let loop ((octree-parts (octree-ray-intersection octree segment)))
+              (if (null? octree-parts) #f
+                  (let face-loop ((faces (octree-contents (car octree-parts))))
+                    (if (null? faces) (loop (cdr octree-parts))
+                        (let ((vertices (face->vertices model (car faces))))
+                          (if (segment-triangle-intersection segment vertices)
+                              (car faces)
+                              (face-loop (cdr faces)))))))))))
 
 
     (define (write-surface-texture model width height output-x-size output-z-size height-function)
       (let* ((output-image-width 256)
              (output-image-height 256)
+             (octree (model->octree model (model-aa-box model)))
              (img (raster-new output-image-width output-image-height (vector 255 255 255 255)))
              (image-x->model-x (lambda (img-x) (/ (* img-x output-x-size) output-image-width)))
              (image-y->model-z (lambda (img-y) (/ (* img-y output-z-size) output-image-height)))
+             (previous-normal #f)
+             (previous-face #f)
              )
         (do ((y 0 (+ y 1)))
             ((= y output-image-height) #t)
-          (do ((x 0 (+ x 1)))
-              ((= x output-image-width) #t)
-            (let* ((model-x (image-x->model-x x))
-                   (model-z (image-y->model-z y))
-                   (normal (find-normal-for-point model (vector model-x model-z)))
-                   ;; decide if this is more flat or more steep
-                   (flat (and normal (> (vector3-y normal) 0.9))))
-              (if flat
-                  (raster-set-pixel! img x y (vector 0 150 0 255))
-                  (raster-set-pixel! img x y (vector 153 76 0 255))))))
+          (let ((model-z (image-y->model-z y)))
+            (do ((x 0 (+ x 1)))
+                ((= x output-image-width) #t)
+              ;; (cerr "x=" x ", y=" y "\n")
+              (let* ((model-x (image-x->model-x x))
+                     (face (find-face-for-point model octree (vector model-x model-z) previous-face))
+                     (normal (if (and previous-normal (eq? face previous-face))
+                                 previous-normal
+                                 (if face (face->average-normal model face) #f)))
+                     (flat (if normal (> (vector3-y normal) 0.999) #f)))
+                (set! previous-normal normal)
+                (set! previous-face face)
+                (if flat
+                    (raster-set-pixel! img x y (vector 153 76 0 255))
+                    (raster-set-pixel! img x y (vector 0 150 0 255)))
+                ;; (if normal (raster-set-pixel! img x y (vector (* (- 1.0 (vector3-y normal)) 255)
+                ;;                                               76
+                ;;                                               0
+                ;;                                               255)))
+                ))))
 
         ;; (cerr "normal = " (find-normal-for-point model (vector 50 50)) "\n")
         (image->ppm img (current-output-port))))
