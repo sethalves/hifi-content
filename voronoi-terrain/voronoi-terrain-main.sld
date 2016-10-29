@@ -177,6 +177,11 @@
         (image->ppm img (current-output-port))))
 
 
+    (define (output-caves model width height output-x-size output-z-size height-function)
+
+      )
+
+
     (define (point-x-< p0 p1)
       (if (almost= (vector2-x p0) (vector2-x p1) epsilon)
           (< (vector2-y p0) (vector2-y p1))
@@ -691,6 +696,7 @@
         (cerr "    --pnm                      output a pnm file\n")
         (cerr "    --scad                     output an openscad file\n")
         (cerr "    --texture                  output green and brown texture\n")
+        (cerr "    --caves                    output a negative openscad file\n")
         (cerr "    --input-width w            width of output\n")
         (cerr "    --input-height h           height of output\n")
         (cerr "    --output-x-size x-size     width of output\n")
@@ -701,6 +707,7 @@
       (let* ((args (parse-command-line `((--obj)
                                          (--pnm)
                                          (--scad)
+                                         (--caves)
                                          (--texture)
                                          ((--input-width) width)
                                          ((--input-height) height)
@@ -711,6 +718,7 @@
              (output-obj #f)
              (output-pnm #f)
              (output-scad #f)
+             (output-caves #f)
              (output-texture #f)
              (width #f)
              (height #f)
@@ -727,19 +735,23 @@
              ((-? -h) (usage ""))
              ((--obj)
               (if (or output-obj output-pnm output-scad output-texture)
-                  (usage "give only one of --obj or --pnm or --scad or --texture"))
+                  (usage "give only one of: --obj --pnm --scad --texture --caves"))
               (set! output-obj #t))
              ((--pnm)
               (if (or output-obj output-pnm output-scad output-texture)
-                  (usage "give only one of --obj or --pnm or --scad or --texture"))
+                  (usage "give only one of: --obj --pnm --scad --texture --caves"))
               (set! output-pnm #t))
              ((--scad)
               (if (or output-obj output-pnm output-scad output-texture)
-                  (usage "give only one of --obj or --pnm or --scad or --texture"))
+                  (usage "give only one of: --obj --pnm --scad --texture --caves"))
               (set! output-scad #t))
+             ((--caves)
+              (if (or output-obj output-pnm output-caves output-texture)
+                  (usage "give only one of: --obj --pnm --caves --texture --caves"))
+              (set! output-caves #t))
              ((--texture)
               (if (or output-obj output-pnm output-scad output-texture)
-                  (usage "give only one of --obj or --pnm or --scad or --texture"))
+                  (usage "give only one of: --obj --pnm --scad --texture --caves"))
               (set! output-texture #t))             ((--input-width)
               (set! width (string->number (cadr arg))))
              ((--input-height)
@@ -821,12 +833,22 @@
                  (output-scad
                   ;; output an openscad file
                   (close-model)
-                  (write-scad-model model (current-output-port)))
+                  (write-scad-file
+                   (list (model->scad-polyhedron model))
+                   (current-output-port)))
 
                  (output-texture
                   ;; output a surface texure for the terrain
                   (write-surface-texture model width height output-x-size output-z-size height-function))
 
+                 (output-caves
+                  ;; output a negative openscad file to define caves
+                  (close-model)
+                  (write-caves-model  model width height output-x-size output-z-size height-function))
+
                  (else
                   ;; else complain
-                  (usage "give one of --obj or --pnm or --scad")))))))))))
+                  (usage "give only one of: --obj --pnm --scad --texture --caves")))))))))
+
+
+    ))
