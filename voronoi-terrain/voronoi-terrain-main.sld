@@ -164,7 +164,8 @@
                 (set! previous-normal normal)
                 (set! previous-face face)
                 (if flat
-                    (raster-set-pixel! img x y (vector 153 76 0 255))
+                    ;; (raster-set-pixel! img x y (vector 153 76 0 255))
+                    (raster-set-pixel! img x y (vector 0 76 0 255))
                     (raster-set-pixel! img x y (vector 0 150 0 255)))
                 ;; (if normal (raster-set-pixel! img x y (vector (* (- 1.0 (vector3-y normal)) 255)
                 ;;                                               76

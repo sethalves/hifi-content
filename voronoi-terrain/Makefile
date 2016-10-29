@@ -36,7 +36,7 @@ json-parts/terrain%.json: terrain-parts/terrain%.obj terrain-json.m4
 		terrain-json.m4 > $@
 
 
-all: terrain-lines.png terrain-textured.obj # terrain.obj terrain terrain.json
+all: terrain-lines.png terrain.scad terrain-textured.obj # terrain.obj terrain terrain.json
 
 voronoi-terrain-chicken: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@

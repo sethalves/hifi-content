@@ -27,8 +27,8 @@ difference() {
             }
         }
 
-        translate([350, 171, 480]) {
-            rotate([0, 0, 0]) {
+        translate([435, 129, 454]) {
+            rotate([30, 20, 0]) {
                 linear_extrude(height = 300, center = true, convexity = 10, twist = -500) {
                     translate([40, 0, 0]) {
                         circle(r = 30, $fn = 24);
@@ -37,4 +37,9 @@ difference() {
             }
         }
     }
+
+    translate([512 - 297.98831176757812, 0, 512 - 164.12950134277344]) {
+        place_cuboid(0, 100, -400, 400, 100, 200);
+    }
+
 }
