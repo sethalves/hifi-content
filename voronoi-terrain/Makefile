@@ -77,7 +77,15 @@ terrain.scad: lines points
 terrain-whole.stl: terrain.scad
 	openscad -o $@ $<
 
+
+terrain-caves.scad: cave-arcs make-caves-gauche.scm make-caves-main.sld
+	./make-caves-gauche.scm $< > $@
+
+
 terrain-caves.stl: terrain-caves.scad
+	openscad -o $@ $<
+
+terrain-with-caves.stl: terrain-with-caves.scad terrain-caves.scad terrain.scad
 	openscad -o $@ $<
 
 terrain-texture.ppm: points lines
@@ -95,7 +103,7 @@ terrain-texture.png: terrain-texture.ppm
 # 	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
-terrain-textured.obj: terrain-caves.stl terrain-texture.png
+terrain-textured.obj: terrain-with-caves.stl terrain-texture.png
 	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
@@ -129,6 +137,7 @@ clean:
 	rm -rf terrain-parts voronoi-terrain json-parts
 	rm -f terrain-textured.obj terrain-whole.stl terrain-caves.stl terrain-whole.obj
 	rm -f terrain-texture.png terrain-texture.ppm
+	rm -f terrain-caves.scad terrain-with-caves.stl
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
