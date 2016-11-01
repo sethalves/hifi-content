@@ -2,6 +2,9 @@
 #
 #
 
+# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+
 VORONOI=../../voronoi/voronoi
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
 WIDTH=80
@@ -22,12 +25,12 @@ terrain-parts/terrain%.stl: terrain-parts.scad terrain.scad
 
 
 terrain-parts/terrain%.obj: terrain-parts/terrain%.stl
-	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
+	$(WAVEFRONT_OBJ_TOOL) -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
 
 
 json-parts/terrain%.json: terrain-parts/terrain%.obj terrain-json.m4
 	mkdir -p json-parts
-	export YSIZE=`wavefront-obj-tool --py $<`; \
+	export YSIZE=`$(WAVEFRONT_OBJ_TOOL) --py $<`; \
 	m4 -DPART=`expr substr $@ 19 2` \
 		-DYSIZE=$$YSIZE \
 		-DX=`expr substr $@ 19 1` \
@@ -100,11 +103,15 @@ terrain-texture.png: terrain-texture.ppm
 
 
 # terrain-textured.obj: terrain-whole.stl terrain-texture.png
-# 	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
+# 	$(WAVEFRONT_OBJ_TOOL) -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
-terrain-textured.obj: terrain-with-caves.stl terrain-texture.png
-	wavefront-obj-tool -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
+terrain-underground-textured.obj: terrain-with-caves.stl
+	$(WAVEFRONT_OBJ_TOOL) -c -n $< -o $@ -L terrain.mtl -S dirt_mtl
+
+
+terrain-textured.obj: terrain-underground-textured.obj terrain-texture.png
+	$(WAVEFRONT_OBJ_TOOL) -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
 
@@ -138,6 +145,7 @@ clean:
 	rm -f terrain-textured.obj terrain-whole.stl terrain-caves.stl terrain-whole.obj
 	rm -f terrain-texture.png terrain-texture.ppm
 	rm -f terrain-caves.scad terrain-with-caves.stl
+	rm -f terrain-underground-textured.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
