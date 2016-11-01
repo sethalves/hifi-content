@@ -12,3 +12,8 @@ newmtl dirt_mtl
 Ka 0.65 0.16 0.16
 Kd 0.65 0.16 0.16
 Ns 10
+
+newmtl cave_floor_mtl
+Ka 0.60 0.60 0.60
+Kd 0.60 0.60 0.60
+Ns 10

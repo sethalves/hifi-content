@@ -25,7 +25,7 @@ terrain-parts/terrain%.stl: terrain-parts.scad terrain.scad
 
 
 terrain-parts/terrain%.obj: terrain-parts/terrain%.stl
-	$(WAVEFRONT_OBJ_TOOL) -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
+	$(WAVEFRONT_OBJ_TOOL) -c -n -M $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $^ -o $@ -L terrain.mtl -S terrain_mtl
 
 
 json-parts/terrain%.json: terrain-parts/terrain%.obj terrain-json.m4
@@ -103,16 +103,19 @@ terrain-texture.png: terrain-texture.ppm
 
 
 # terrain-textured.obj: terrain-whole.stl terrain-texture.png
-# 	$(WAVEFRONT_OBJ_TOOL) -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
+# 	$(WAVEFRONT_OBJ_TOOL) -c -n -M $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
 terrain-underground-textured.obj: terrain-with-caves.stl
 	$(WAVEFRONT_OBJ_TOOL) -c -n $< -o $@ -L terrain.mtl -S dirt_mtl
 
 
-terrain-textured.obj: terrain-underground-textured.obj terrain-texture.png
-	$(WAVEFRONT_OBJ_TOOL) -c -n -T $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
+terrain-underground-floor-textured.obj: terrain-underground-textured.obj
+	$(WAVEFRONT_OBJ_TOOL) -c -n -U $< -o $@ -L terrain.mtl -S cave_floor_mtl
 
+
+terrain-textured.obj: terrain-underground-floor-textured.obj terrain-texture.png
+	$(WAVEFRONT_OBJ_TOOL) -c -n -T -M $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
 terrain-lines.png: terrain-lines.pnm
@@ -145,7 +148,7 @@ clean:
 	rm -f terrain-textured.obj terrain-whole.stl terrain-caves.stl terrain-whole.obj
 	rm -f terrain-texture.png terrain-texture.ppm
 	rm -f terrain-caves.scad terrain-with-caves.stl
-	rm -f terrain-underground-textured.obj
+	rm -f terrain-underground-textured.obj terrain-underground-floor-textured.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
