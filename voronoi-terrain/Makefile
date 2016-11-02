@@ -111,7 +111,7 @@ terrain-underground-textured.obj: terrain-with-caves.stl
 
 
 terrain-underground-floor-textured.obj: terrain-underground-textured.obj
-	$(WAVEFRONT_OBJ_TOOL) -c -n -U $< -o $@ -L terrain.mtl -S cave_floor_mtl
+	$(WAVEFRONT_OBJ_TOOL) -c -n -U $< -o $@ -L terrain.mtl -S cave_floor_mtl -m 0.2
 
 
 terrain-textured.obj: terrain-underground-floor-textured.obj terrain-texture.png
@@ -135,7 +135,7 @@ JSON_PARTS=$(foreach xz,$(PARTS),json-parts/terrain${xz}.json)
 terrain.json: $(JSON_PARTS)
 	cat $^ > $@
 
-upload: terrain-textured.obj terrain-texture.png terrain.mtl
+upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg
 	mkdir -p voronoi-terrain
 	cp $^ voronoi-terrain/
 	rsync --delete -avP voronoi-terrain/ headache.hungry.com:public_html/hifi/voronoi-terrain/

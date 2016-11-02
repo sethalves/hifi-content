@@ -9,11 +9,16 @@ map_Ka terrain-texture.png
 map_Kd terrain-texture.png
 
 newmtl dirt_mtl
-Ka 0.65 0.16 0.16
-Kd 0.65 0.16 0.16
+Ka 0.75 0.26 0.26
+Kd 0.75 0.26 0.26
 Ns 10
 
 newmtl cave_floor_mtl
-Ka 0.60 0.60 0.60
-Kd 0.60 0.60 0.60
-Ns 10
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 1.0
+illum 2
+Ns 0.0
+map_Ka cave-floor.jpg
+map_Kd cave-floor.jpg
