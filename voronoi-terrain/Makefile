@@ -88,7 +88,7 @@ terrain-caves.scad: cave-arcs make-caves-gauche.scm make-caves-main.sld
 terrain-caves.stl: terrain-caves.scad
 	openscad -o $@ $<
 
-terrain-with-caves.stl: terrain-with-caves.scad terrain-caves.scad terrain.scad
+terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
 	openscad -o $@ $<
 
 terrain-texture.ppm: points lines
