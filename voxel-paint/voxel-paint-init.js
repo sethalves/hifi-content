@@ -32,8 +32,38 @@
         return null;
     };
 
+    this.linkNeighbors = function (polyvoxes, slices) {
+        // link all the polyvoxes to their neighbors
+        for (var x = 0; x < slices; x++) {
+            for (var y = 0; y < slices; y++) {
+                for (var z = 0; z < slices; z++) {
+                    var neighborProperties = {};
+                    if (x > 0) {
+                        neighborProperties.xNNeighborID = polyvoxes[x - 1][y][z];
+                    }
+                    if (x < slices-1) {
+                        neighborProperties.xPNeighborID = polyvoxes[x + 1][y][z];
+                    }
+                    if (y > 0) {
+                        neighborProperties.yNNeighborID = polyvoxes[x][y - 1][z];
+                    }
+                    if (y < slices-1) {
+                        neighborProperties.yPNeighborID = polyvoxes[x][y + 1][z];
+                    }
+                    if (z > 0) {
+                        neighborProperties.zNNeighborID = polyvoxes[x][y][z - 1];
+                    }
+                    if (z < slices-1) {
+                        neighborProperties.zPNeighborID = polyvoxes[x][y][z + 1];
+                    }
+                    Entities.editEntity(polyvoxes[x][y][z], neighborProperties);
+                }
+            }
+        }
+    };
+
     this.resetVoxelPaintSpace = function () {
-        var slices = 4;
+        var slices = 6;
 
         var platformID = this.findEntityIDByName("voxel paint floor");
         var platformProps = Entities.getEntityProperties(platformID, ['position', 'dimensions']);
@@ -57,7 +87,6 @@
             }
         }
 
-
         var polyvoxes = {};
 
         for (var x = 0; x < slices; x++) {
@@ -75,7 +104,7 @@
                         name: "voxel paint",
                         position: position,
                         dimensions: sliceSize,
-                        voxelVolumeSize: { x: 8, y: 8, z: 8 },
+                        voxelVolumeSize: { x: 16, y: 16, z: 16 },
                         voxelSurfaceStyle: 0,
                         xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
                         yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
@@ -87,6 +116,8 @@
                 }
             }
         }
+
+        this.linkNeighbors(polyvoxes, slices);
     };
 
     this.activate = function () {
@@ -102,7 +133,7 @@
 
     this.turnOff = function() {
         Entities.editEntity(this.entityID, { color: { blue: 0, green: 0, red: 255 }});
-    }
+    };
 
     this.startNearTrigger = function (entityID) {
         this.activate();
