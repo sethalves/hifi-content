@@ -24,3 +24,4 @@ upload: well.obj well.mtl
 
 clean:
 	rm -f *~ well.obj well-main.stl
+	rm -rf well
