@@ -5,9 +5,9 @@ v HALFWIDTH HALFHEIGHT 0
 v -HALFWIDTH HALFHEIGHT 0
 
 vt 0 0
-vt 0 1
-vt 1 1
 vt 1 0
+vt 1 1
+vt 0 1
 
 vn 0 0 1
 vn 0 0 1
