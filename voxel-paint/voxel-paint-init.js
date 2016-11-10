@@ -11,14 +11,19 @@
 
     this.preload = function (entityID) {
         this.entityID = entityID;
-
-        this.batonName = 'io.highfidelity.seth.voxel-paint:' + this.entityID;
-        this.baton = acBaton({
-            batonName: this.batonName,
-            timeScale: 240000,
-        });
-
         this.slices = 5;
+        this.readyBaton();
+    };
+
+    this.readyBaton = function () {
+        if (!this.baton) {
+            this.batonName = 'io.highfidelity.seth.voxel-paint:' + this.entityID;
+            this.baton = acBaton({
+                batonName: this.batonName,
+                timeScale: 5000,
+                serverTimeOut: 500 // ms
+            });
+        }
     };
 
     this.findEntityIDByName = function (entityName) {
@@ -35,6 +40,10 @@
     };
 
     this.addBrushes = function () {
+        var position = Entities.getEntityProperties(this.entityID, ['position', 'dimensions']).position;
+        var paintBrushPosition = Vec3.sum (position, { "x": 0.4, "y": 0, "z": 0 });
+        var eraseBrushPosition = Vec3.sum (position, { "x": -0.4, "y": 0, "z": 0 });
+
         var brushID = this.findEntityIDByName("voxel paint brush");
         if (!brushID) {
             brushID = Entities.addEntity({
@@ -43,11 +52,7 @@
                 "color": { "blue": 0, "green": 0, "red": 255 },
                 "dimensions": { "x": 0.03, "y": 0.3, "z": 0.03 },
                 "name": "voxel paint brush",
-                "position": {
-                    "x": 78.803085327148438,
-                    "y": 33.648857116699219,
-                    "z": 102.08351135253906
-                },
+                "position": paintBrushPosition,
                 "rotation": {
                     "w": -0.69079118967056274,
                     "x": -0.59398794174194336,
@@ -80,11 +85,7 @@
                 "color": { "blue": 0, "green": 0, "red": 255 },
                 "dimensions": { "x": 0.03, "y": 0.3, "z": 0.03 },
                 "name": "voxel paint eraser",
-                "position": {
-                    "x": 78.935508728027344,
-                    "y": 33.66534423828125,
-                    "z": 101.88143157958984
-                },
+                "position": eraseBrushPosition,
                 "rotation": {
                     "w": 0.60332643985748291,
                     "x": 0.62716102600097656,
@@ -184,13 +185,16 @@
                         dimensions: sliceSize,
                         voxelVolumeSize: { x: 16, y: 16, z: 16 },
                         voxelSurfaceStyle: 0,
-                        xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
-                        yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
-                        zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
-                        // xTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png",
-                        // yTextureURL: "http://headache.hungry.com/~seth/hifi/green.png",
-                        // zTextureURL: "http://headache.hungry.com/~seth/hifi/brown.png"
+                        collisionless: true,
+                        xTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
+                        yTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
+                        zTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg"
+                        // xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
+                        // yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
+                        // zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
                     });
+
+                    // Entities.setVoxel(polyvoxes[x][y][z], {x:8, y:8, z:8}, 255);
                 }
             }
         }
@@ -198,29 +202,37 @@
         this.linkNeighbors(polyvoxes);
     };
 
+    this.activateWithBaton = function () {
+        var state = getEntityCustomData("state", this.entityID, "off");
+        if (state == "off") {
+            Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 255 }});
+            state = "on";
+            this.createVoxelPaintSpace();
+            this.addBrushes();
+            Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 0 }});
+        } else { // if (state == "on") {
+            Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 255 }});
+            state = "off";
+            this.clearVoxelPaintSpace();
+            Entities.editEntity(this.entityID, { color: { blue: 0, green: 0, red: 255 }});
+        }
+        setEntityCustomData("state", this.entityID, state);
+        this.baton.release();
+    };
+
     this.activate = function () {
-        print("activate");
         var _this = this;
+        this.readyBaton();
         this.baton.claim(
             function () { // onGrant
-                print("baton ongrant");
-                var state = getEntityCustomData("state", _this.entityID, "off");
-                if (state == "off") {
-                    print("turning on");
-                    Entities.editEntity(_this.entityID, { color: { blue: 0, green: 255, red: 255 }});
-                    state = "on";
-                    _this.createVoxelPaintSpace();
-                    _this.addBrushes();
-                    Entities.editEntity(_this.entityID, { color: { blue: 0, green: 255, red: 0 }});
-                } else { // if (state == "on") {
-                    print("turning off");
-                    Entities.editEntity(_this.entityID, { color: { blue: 0, green: 255, red: 255 }});
-                    state = "off";
-                    _this.clearVoxelPaintSpace();
-                    Entities.editEntity(_this.entityID, { color: { blue: 0, green: 0, red: 255 }});
-                }
-                setEntityCustomData("state", _this.entityID, state);
-                _this.baton.release();
+                _this.activateWithBaton();
+            },
+            function () { // onRelease
+            },
+            function () { // onDenied
+            },
+            function () { // onNoServerResponse
+                _this.activateWithBaton();
             });
     };
 

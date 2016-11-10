@@ -9,6 +9,7 @@ acBaton = function (options) {
     this.onGrant = null;
     this.onRelease = null;
     this.onDenied = null;
+    this.sentCommand = false;
 
     var batonName = options.batonName || "unknown",
         participant = options.instanceId || MyAvatar.sessionUUID,
@@ -28,12 +29,14 @@ acBaton = function (options) {
             participant: participant,
             time: timeScale
         }));
+        _this.sentCommand = true;
 
         _this.responseTimeout = null;
         if (serverResponseTimeout > 0) {
             _this.responseTimeout = Script.setTimeout(function() {
                 // no response from server.  just go ahead
                 print("no response from server for baton " + batonName);
+                _this.sentCommand = false;
                 if (_this.onNoServerResponse) {
                     _this.onNoServerResponse();
                 }
@@ -56,6 +59,7 @@ acBaton = function (options) {
             name: batonName,
             participant: participant
         }));
+        _this.sentCommand = true;
         return exports;
     };
 
@@ -94,22 +98,26 @@ acBaton = function (options) {
             Script.clearTimeout(_this.responseTimeout);
         }
 
-        if (command == "grant") {
-            if (_this.onGrant) {
-                _this.onGrant();
+        if (_this.sentCommand) {
+            if (command == "grant") {
+                if (_this.onGrant) {
+                    _this.onGrant();
+                }
+            } else if (command == "deny") {
+                if (_this.onDenied) {
+                    _this.onDenied();
+                }
+            } else if (command == "release") {
+                if (_this.onRelease) {
+                    _this.onRelease();
+                }
             }
-        } else if (command == "deny") {
-            if (_this.onDenied) {
-                _this.onDenied();
-            }
-        } else if (command == "release") {
-            if (_this.onRelease) {
-                _this.onRelease();
-            }
+            _this.sentCommand = false;
         }
     };
 
     exports.unload = function unload() { // Disconnect from everything.
+        Messages.unsubscribe("baton");
         Messages.messageReceived.disconnect(messageHandler);
         return exports;
     };

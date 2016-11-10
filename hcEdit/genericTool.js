@@ -202,7 +202,7 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             this.entityID = entityID;
 
             // create debug indicator
-            Script.setTimeout(this.makeDebugBall, 8000);
+            // Script.setTimeout(this.makeDebugBall, 8000);
         },
 
         unload: function() {
