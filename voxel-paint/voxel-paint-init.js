@@ -112,31 +112,66 @@
     };
 
 
-    this.linkNeighbors = function (polyvoxes) {
+    this.getPolyVox = function (x, y, z) {
+        if (!this.polyvoxes) {
+            return null;
+        }
+        if (!this.polyvoxes[x]) {
+            return null;
+        }
+        if (!this.polyvoxes[x][y]) {
+            return null;
+        }
+        return this.polyvoxes[x][y][z];
+    };
+
+
+    this.linkNeighbors = function () {
         // link all the polyvoxes to their neighbors
         for (var x = 0; x < this.slices; x++) {
             for (var y = 0; y < this.slices; y++) {
                 for (var z = 0; z < this.slices; z++) {
-                    var neighborProperties = {};
-                    if (x > 0) {
-                        neighborProperties.xNNeighborID = polyvoxes[x - 1][y][z];
+                    var polyvox = this.getPolyVox(x, y, z);
+                    if (polyvox) {
+                        var neighborProperties = {};
+                        if (x > 0) {
+                            var xNNeighborID = this.getPolyVox(x - 1, y, z);
+                            if (xNNeighborID) {
+                                neighborProperties.xNNeighborID = xNNeighborID;
+                            }
+                        }
+                        if (x < this.slices - 1) {
+                            var xPNeighborID = this.getPolyVox(x + 1, y, z);
+                            if (xPNeighborID) {
+                                neighborProperties.xPNeighborID = xPNeighborID;
+                            }
+                        }
+                        if (y > 0) {
+                            var yNNeighborID = this.getPolyVox(x, y - 1, z);
+                            if (yNNeighborID) {
+                                neighborProperties.yNNeighborID = yNNeighborID;
+                            }
+                        }
+                        if (y < this.slices - 1) {
+                            var yPNeighborID = this.getPolyVox(x, y + 1, z);
+                            if (yPNeighborID) {
+                                neighborProperties.yPNeighborID = yPNeighborID;
+                            }
+                        }
+                        if (z > 0) {
+                            var zNNeighborID = this.getPolyVox(x, y, z - 1);
+                            if (zNNeighborID) {
+                                neighborProperties.zNNeighborID = zNNeighborID;
+                            }
+                        }
+                        if (z < this.slices - 1) {
+                            var zPNeighborID = this.getPolyVox(x, y, z + 1);
+                            if (zPNeighborID) {
+                                neighborProperties.zPNeighborID = zPNeighborID;
+                            }
+                        }
+                        Entities.editEntity(polyvox, neighborProperties);
                     }
-                    if (x < this.slices - 1) {
-                        neighborProperties.xPNeighborID = polyvoxes[x + 1][y][z];
-                    }
-                    if (y > 0) {
-                        neighborProperties.yNNeighborID = polyvoxes[x][y - 1][z];
-                    }
-                    if (y < this.slices - 1) {
-                        neighborProperties.yPNeighborID = polyvoxes[x][y + 1][z];
-                    }
-                    if (z > 0) {
-                        neighborProperties.zNNeighborID = polyvoxes[x][y][z - 1];
-                    }
-                    if (z < this.slices - 1) {
-                        neighborProperties.zPNeighborID = polyvoxes[x][y][z + 1];
-                    }
-                    Entities.editEntity(polyvoxes[x][y][z], neighborProperties);
                 }
             }
         }
@@ -146,6 +181,7 @@
     this.clearVoxelPaintSpace = function () {
         var myProperties = Entities.getEntityProperties(this.entityID, ['position', 'rotation']);
         var nearbyEntities = Entities.findEntities(myProperties.position, 30);
+        this.polyvoxes = {};
         for (var i = 0; i < nearbyEntities.length; i++) {
             var nearbyID = nearbyEntities[i];
             var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
@@ -156,7 +192,7 @@
     };
 
 
-    this.createVoxelPaintSpace = function () {
+    this.createVoxel = function (x, y, z) {
         var platformID = this.findEntityIDByName("voxel paint floor");
         var platformProps = Entities.getEntityProperties(platformID, ['position', 'dimensions']);
         var platformDimensions = platformProps.dimensions;
@@ -167,39 +203,53 @@
 
         var sliceSize = Vec3.multiply(platformDimensions, 1.0 / this.slices);
         var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
-        var polyvoxes = {};
+
+        var position = Vec3.sum({x: platformCorner.x + (x * sliceSize.x),
+                                 y: platformCorner.y + (y * sliceSize.y),
+                                 z: platformCorner.z + (z * sliceSize.z)},
+                                halfSliceSize);
+
+        if (!this.polyvoxes) {
+            this.polyvoxes = {};
+        }
+        if (!this.polyvoxes[x]) {
+            this.polyvoxes[x] = {};
+        }
+        if (!this.polyvoxes[x][y]) {
+            this.polyvoxes[x][y] = {};
+        }
+        this.polyvoxes[x][y][z] = Entities.addEntity({
+            type: "PolyVox",
+            name: "voxel paint",
+            position: position,
+            dimensions: sliceSize,
+            voxelVolumeSize: { x: 16, y: 16, z: 16 },
+            voxelSurfaceStyle: 0,
+            collisionless: true,
+            xTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
+            yTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
+            zTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg"
+            // xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
+            // yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
+            // zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
+        });
+
+        this.linkNeighbors(this.polyvoxes);
+
+        // Entities.setVoxel(this.polyvoxes[x][y][z], {x:8, y:8, z:8}, 255);
+    };
+
+
+    this.createVoxelPaintSpace = function () {
+        this.polyvoxes = {};
 
         for (var x = 0; x < this.slices; x++) {
-            polyvoxes[x] = {};
             for (var y = 0; y < this.slices; y++) {
-                polyvoxes[x][y] = {};
                 for (var z = 0; z < this.slices; z++) {
-                    var position = Vec3.sum({x: platformCorner.x + (x * sliceSize.x),
-                                             y: platformCorner.y + (y * sliceSize.y),
-                                             z: platformCorner.z + (z * sliceSize.z)},
-                                            halfSliceSize);
-                    polyvoxes[x][y][z] = Entities.addEntity({
-                        type: "PolyVox",
-                        name: "voxel paint",
-                        position: position,
-                        dimensions: sliceSize,
-                        voxelVolumeSize: { x: 16, y: 16, z: 16 },
-                        voxelSurfaceStyle: 0,
-                        collisionless: true,
-                        xTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
-                        yTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
-                        zTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg"
-                        // xTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg",
-                        // yTextureURL: "http://headache.hungry.com/~seth/hifi/grass.png",
-                        // zTextureURL: "http://headache.hungry.com/~seth/hifi/dirt.jpeg"
-                    });
-
-                    // Entities.setVoxel(polyvoxes[x][y][z], {x:8, y:8, z:8}, 255);
+                    this.createVoxel(x, y, z);
                 }
             }
         }
-
-        this.linkNeighbors(polyvoxes);
     };
 
     this.activateWithBaton = function () {
