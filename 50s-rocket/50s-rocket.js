@@ -63,13 +63,19 @@
                 _this.doorID = _this.findDoor();
             }, 5000);
 
-            this.batonName = 'io.highfidelity.seth.50sRocket:' + this.rocketID;
-            this.baton = acBaton({
-                batonName: this.batonName,
-                timeScale: 15000
-            });
-
+            this.readyBaton();
             this.doMaintenance();
+        };
+
+        this.readyBaton = function () {
+            if (!this.baton) {
+                this.batonName = 'io.highfidelity.seth.50sRocket:' + this.rocketID;
+                this.baton = acBaton({
+                    batonName: this.batonName,
+                    timeScale: 15000,
+                    serverTimeOut: 3000 // ms
+                });
+            }
         };
 
         this.handleMessages = function(id, params) {
@@ -172,6 +178,7 @@
         };
 
         this.toggleDoor = function() {
+            _this.readyBaton();
             _this.baton.claim(
                 function () { // onGrant
                     _this.doMaintenance();
