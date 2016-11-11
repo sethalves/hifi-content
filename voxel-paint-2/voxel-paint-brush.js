@@ -23,7 +23,7 @@
 
 
     brush.slices = 5;
-
+    brush.voxelSize = 16;
 
     brush.getPolyVox = function (x, y, z) {
         if (!this.polyvoxes) {
@@ -120,7 +120,6 @@
         var sliceSize = Vec3.multiply(platformDimensions, 1.0 / this.slices);
         var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
 
-
         // find all the current polyvox entities
         this.polyvoxes = {};
         for (i = 0; i < ids.length; i++) {
@@ -143,51 +142,69 @@
         }
 
         var brushOffset = Vec3.subtract(brushPosition, platformCorner);
-        var brushIndex = { x: Math.round(brushOffset.x / sliceSize.x),
-                           y: Math.round(brushOffset.y / sliceSize.y),
-                           z: Math.round(brushOffset.z / sliceSize.z) };
-        if (brushIndex.x >= 0 && brushIndex.x < this.slices &&
-            brushIndex.y >= 0 && brushIndex.y < this.slices &&
-            brushIndex.z >= 0 && brushIndex.z < this.slices) {
-            if (!this.polyvoxes[brushIndex.x]) {
-                this.polyvoxes[brushIndex.x] = {};
-            }
-            if (!this.polyvoxes[brushIndex.x][brushIndex.y]) {
-                this.polyvoxes[brushIndex.x][brushIndex.y] = {};
-            }
-            if (!this.polyvoxes[brushIndex.x][brushIndex.y][brushIndex.z]) {
-                var position = Vec3.sum({x: platformCorner.x + (brushIndex.x * sliceSize.x),
-                                         y: platformCorner.y + (brushIndex.y * sliceSize.y),
-                                         z: platformCorner.z + (brushIndex.z * sliceSize.z)},
-                                        halfSliceSize);
-                this.polyvoxes[brushIndex.x][brushIndex.y][brushIndex.z] = Entities.addEntity({
-                    type: "PolyVox",
-                    name: "voxel paint",
-                    position: position,
-                    dimensions: sliceSize,
-                    voxelVolumeSize: { x: 16, y: 16, z: 16 },
-                    voxelSurfaceStyle: 0,
-                    collisionless: true,
-                    xTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
-                    yTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
-                    zTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg"
-                });
-
-                this.linkToNeighbors(brushIndex.x, brushIndex.y, brushIndex.z);
-                this.linkToNeighbors(brushIndex.x - 1, brushIndex.y, brushIndex.z);
-                this.linkToNeighbors(brushIndex.x + 1, brushIndex.y, brushIndex.z);
-                this.linkToNeighbors(brushIndex.x, brushIndex.y + 1, brushIndex.z);
-                this.linkToNeighbors(brushIndex.x, brushIndex.y - 1, brushIndex.z);
-                this.linkToNeighbors(brushIndex.x, brushIndex.y, brushIndex.z - 1);
-                this.linkToNeighbors(brushIndex.x, brushIndex.y, brushIndex.z + 1);
-
-                Entities.setVoxel(this.polyvoxes[brushIndex.x][brushIndex.y][brushIndex.z], {x:8, y:8, z:8}, 255);
-            }
-        }
+        var brushRatio = { x: brushOffset.x / sliceSize.x,
+                           y: brushOffset.y / sliceSize.y,
+                           z: brushOffset.z / sliceSize.z };
+        var brushRatioCenter = Vec3.subtract(brushRatio, {x:0.5, y:0.5, z:0.5});
+        var brushIndex = { x: Math.round(brushRatioCenter.x),
+                           y: Math.round(brushRatioCenter.y),
+                           z: Math.round(brushRatioCenter.z) };
+        this.addPolyVox(brushIndex.x, brushIndex.y, brushIndex.z, platformCorner, sliceSize);
 
         return ids;
     };
 
+
+    brush.addPolyVox = function (x, y, z, platformCorner, sliceSize) {
+        if (x < 0 || x >= this.slices ||
+            y < 0 || y >= this.slices ||
+            z < 0 || z >= this.slices) {
+            return;
+        }
+        if (!this.polyvoxes[x]) {
+            this.polyvoxes[x] = {};
+        }
+        if (!this.polyvoxes[x][y]) {
+            this.polyvoxes[x][y] = {};
+        }
+        if (this.polyvoxes[x][y][z]) {
+            return;
+        }
+
+        var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
+        var position = Vec3.sum({x: platformCorner.x + (x * sliceSize.x),
+                                 y: platformCorner.y + (y * sliceSize.y),
+                                 z: platformCorner.z + (z * sliceSize.z)},
+                                halfSliceSize);
+        this.polyvoxes[x][y][z] = Entities.addEntity({
+            type: "PolyVox",
+            name: "voxel paint",
+            position: position,
+            dimensions: sliceSize,
+            voxelVolumeSize: { x: this.voxelSize, y: this.voxelSize, z: this.voxelSize },
+            voxelSurfaceStyle: 0,
+            collisionless: true,
+            lifetime: 28800.0, // 8 hours
+            xTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
+            yTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg",
+            zTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg"
+        });
+
+        this.linkToNeighbors(x, y, z);
+        this.linkToNeighbors(x - 1, y, z);
+        this.linkToNeighbors(x + 1, y, z);
+        this.linkToNeighbors(x, y + 1, z);
+        this.linkToNeighbors(x, y - 1, z);
+        this.linkToNeighbors(x, y, z - 1);
+        this.linkToNeighbors(x, y, z + 1);
+
+        // for (var debugX = 0; debugX < this.voxelSize - 1; debugX++) {
+        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:0, z:0}, 255);
+        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:this.voxelSize - 1, z:0}, 255);
+        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:0, z:this.voxelSize - 1}, 255);
+        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:this.voxelSize - 1, z:this.voxelSize - 1}, 255);
+        // }
+    };
 
     return brush;
 });
