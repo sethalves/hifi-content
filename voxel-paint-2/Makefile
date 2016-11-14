@@ -5,7 +5,7 @@
 all:
 
 
-upload: voxel-paint-init.js voxel-paint-brush.js voxel-paint-eraser.js
+upload: voxel-paint-init.js voxel-paint-brush.js voxel-paint-eraser.js unitBoxTransparent.fbx
 	rm -rf voxel-paint
 	mkdir -p voxel-paint
 	cp $^ voxel-paint/

@@ -118,7 +118,7 @@
         for (var i = 0; i < nearbyEntities.length; i++) {
             var nearbyID = nearbyEntities[i];
             var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-            if (nearbyName == "voxel paint") {
+            if (nearbyName == "voxel paint" || nearbyName == "voxel paint debug cube") {
                 Entities.deleteEntity(nearbyID);
             }
         }

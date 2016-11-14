@@ -10,10 +10,11 @@
         },
         function() { // continue
             var brushProps = Entities.getEntityProperties(this.brush, ["position", "rotation",
-                                                                        "dimensions", "registrationPoint"]);
-            var ids = this.addPolyVoxIfNeeded(brushProps.position);
+                                                                       "dimensions", "registrationPoint"]);
+            // var editSphereRadius = 0.035;
+            var editSphereRadius = brushProps.dimensions.x / 2.0;
+            var ids = this.addPolyVoxIfNeeded(brushProps.position, editSphereRadius);
 
-            var editSphereRadius = 0.035;
             for (var i = 0; i < ids.length; i++) {
                 Entities.setVoxelSphere(ids[i], brushProps.position, editSphereRadius, 255);
             }
@@ -22,7 +23,7 @@
 
 
 
-    brush.slices = 5;
+    brush.slices = 10;
     brush.voxelSize = 16;
 
     brush.getPolyVox = function (x, y, z) {
@@ -40,6 +41,12 @@
 
 
     brush.linkToNeighbors = function (x, y, z) {
+        if (x < 0 || x >= this.slices ||
+            y < 0 || y >= this.slices ||
+            z < 0 || z >= this.slices) {
+            return null;
+        }
+
         // link all the polyvoxes to their neighbors
         var polyvox = this.getPolyVox(x, y, z);
         if (polyvox) {
@@ -85,7 +92,12 @@
     };
 
 
-    brush.addPolyVoxIfNeeded = function (brushPosition) {
+    brush.clamp = function (v) {
+        return Math.min(Math.max(v, 0), this.slices - 1);
+    };
+
+
+    brush.addPolyVoxIfNeeded = function (brushPosition, editSphereRadius) {
         // find all nearby entities
         var searchRadius = 3.0;
 
@@ -109,7 +121,7 @@
         }
 
         if (!platformID) {
-            return;
+            return ids;
         }
 
         var platformProps = props[platformID];
@@ -129,38 +141,75 @@
             }
             var centerOffset = Vec3.subtract(props[possiblePolyVoxID].position, platformCorner);
             var lowCornerOffset = Vec3.subtract(centerOffset, halfSliceSize);
-            var x = Math.round(lowCornerOffset.x / sliceSize.x);
-            var y = Math.round(lowCornerOffset.y / sliceSize.y);
-            var z = Math.round(lowCornerOffset.z / sliceSize.z);
-            if (!this.polyvoxes[x]) {
-                this.polyvoxes[x] = {};
+            var xFind = Math.round(lowCornerOffset.x / sliceSize.x);
+            var yFind = Math.round(lowCornerOffset.y / sliceSize.y);
+            var zFind = Math.round(lowCornerOffset.z / sliceSize.z);
+            if (!this.polyvoxes[xFind]) {
+                this.polyvoxes[xFind] = {};
             }
-            if (!this.polyvoxes[x][y]) {
-                this.polyvoxes[x][y] = {};
+            if (!this.polyvoxes[xFind][yFind]) {
+                this.polyvoxes[xFind][yFind] = {};
             }
-            this.polyvoxes[x][y][z] = possiblePolyVoxID;
+            this.polyvoxes[xFind][yFind][zFind] = possiblePolyVoxID;
         }
 
         var brushOffset = Vec3.subtract(brushPosition, platformCorner);
-        var brushRatio = { x: brushOffset.x / sliceSize.x,
+        var brushPosInVoxSpace = { x: brushOffset.x / sliceSize.x,
                            y: brushOffset.y / sliceSize.y,
                            z: brushOffset.z / sliceSize.z };
-        var brushRatioCenter = Vec3.subtract(brushRatio, {x:0.5, y:0.5, z:0.5});
-        var brushIndex = { x: Math.round(brushRatioCenter.x),
-                           y: Math.round(brushRatioCenter.y),
-                           z: Math.round(brushRatioCenter.z) };
-        this.addPolyVox(brushIndex.x, brushIndex.y, brushIndex.z, platformCorner, sliceSize);
+
+        var radiusInVoxelSpace = editSphereRadius / sliceSize.x;
+        var sliceHalfDiag = 0.866; // Vec3.length({x:0.5, y:0.5, z:0.5});
+        var sliceRezDistance = radiusInVoxelSpace + sliceHalfDiag;
+
+        var lowX = this.clamp(Math.floor(brushPosInVoxSpace.x - sliceRezDistance));
+        var highX = this.clamp(Math.ceil(brushPosInVoxSpace.x + sliceRezDistance));
+        var lowY = this.clamp(Math.floor(brushPosInVoxSpace.y - sliceRezDistance));
+        var highY = this.clamp(Math.ceil(brushPosInVoxSpace.y + sliceRezDistance));
+        var lowZ = this.clamp(Math.floor(brushPosInVoxSpace.z - sliceRezDistance));
+        var highZ = this.clamp(Math.ceil(brushPosInVoxSpace.z + sliceRezDistance));
+
+        this.dirtyNeighbors = {};
+
+        for (var x = lowX; x < highX; x++) {
+            for (var y = lowY; y < highY; y++) {
+                for (var z = lowZ; z < highZ; z++) {
+                    if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, {x:0.5, y:0.5, z:0.5}),
+                                      brushPosInVoxSpace) < sliceRezDistance) {
+                    // if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, halfSliceSize), brushPosInVoxSpace) < sliceRezDistance) {
+                        var newID = this.addPolyVox(x, y, z, platformCorner, sliceSize);
+                        if (newID) {
+                            ids.push(newID);
+                            // keep track of which PolyVoxes need their neighbors hooked up
+                            for (var dx = -1; dx <= 1; dx++) {
+                                for (var dy = -1; dy <= 1; dy++) {
+                                    for (var dz = -1; dz <= 1; dz++) {
+                                        this.dirtyNeighbors["" + (x+dx) + "," + (y+dy) + "," + (z+dz)] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (var neighborKey in this.dirtyNeighbors) {
+            if (this.dirtyNeighbors.hasOwnProperty(neighborKey)) {
+                var xyz = neighborKey.split(",");
+                var nX = parseInt(xyz[0]);
+                var nY = parseInt(xyz[1]);
+                var nZ = parseInt(xyz[2]);
+                print("linking to neighbors of " + nX + " " + nY + " " + nZ);
+                this.linkToNeighbors(nX, nY, nZ);
+            }
+        }
 
         return ids;
     };
 
 
     brush.addPolyVox = function (x, y, z, platformCorner, sliceSize) {
-        if (x < 0 || x >= this.slices ||
-            y < 0 || y >= this.slices ||
-            z < 0 || z >= this.slices) {
-            return;
-        }
         if (!this.polyvoxes[x]) {
             this.polyvoxes[x] = {};
         }
@@ -168,7 +217,7 @@
             this.polyvoxes[x][y] = {};
         }
         if (this.polyvoxes[x][y][z]) {
-            return;
+            return null;
         }
 
         var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
@@ -190,20 +239,17 @@
             zTextureURL: "http://headache.hungry.com/~seth/hifi/wood.jpg"
         });
 
-        this.linkToNeighbors(x, y, z);
-        this.linkToNeighbors(x - 1, y, z);
-        this.linkToNeighbors(x + 1, y, z);
-        this.linkToNeighbors(x, y + 1, z);
-        this.linkToNeighbors(x, y - 1, z);
-        this.linkToNeighbors(x, y, z - 1);
-        this.linkToNeighbors(x, y, z + 1);
+        Entities.addEntity({
+            name: "voxel paint debug cube",
+            type: "Model",
+            modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-2/unitBoxTransparent.fbx",
+            position: position,
+            dimensions: sliceSize,
+            collisionless: true,
+            // lifetime: 60.0
+        });
 
-        // for (var debugX = 0; debugX < this.voxelSize - 1; debugX++) {
-        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:0, z:0}, 255);
-        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:this.voxelSize - 1, z:0}, 255);
-        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:0, z:this.voxelSize - 1}, 255);
-        //     Entities.setVoxel(this.polyvoxes[x][y][z], {x:debugX, y:this.voxelSize - 1, z:this.voxelSize - 1}, 255);
-        // }
+        return this.polyvoxes[x][y][z];
     };
 
     return brush;
