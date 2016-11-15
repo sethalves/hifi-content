@@ -1,28 +1,11 @@
 
-/* global Entities, Vec3, Script, acBaton, getEntityCustomData, setEntityCustomData */
+/* global Entities, Vec3, Script */
 
 (function () {
     Script.include("/~/system/libraries/utils.js");
-    Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
-
-
-    this.batonName = null;
-    this.baton = null;
 
     this.preload = function (entityID) {
         this.entityID = entityID;
-        this.readyBaton();
-    };
-
-    this.readyBaton = function () {
-        if (!this.baton) {
-            this.batonName = 'io.highfidelity.seth.voxel-paint:' + this.entityID;
-            this.baton = acBaton({
-                batonName: this.batonName,
-                timeScale: 5000,
-                serverTimeOut: 500 // ms
-            });
-        }
     };
 
     this.findEntityIDByName = function (entityName) {
@@ -178,36 +161,13 @@
 
 
     this.activateWithBaton = function () {
-        var state = getEntityCustomData("state", this.entityID, "off");
-        if (state == "off") {
-            Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 255 }});
-            state = "on";
-            this.addBrushes();
-            Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 0 }});
-        } else { // if (state == "on") {
-            Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 255 }});
-            state = "off";
-            this.clearVoxelPaintSpace();
-            Entities.editEntity(this.entityID, { color: { blue: 0, green: 0, red: 255 }});
-        }
-        setEntityCustomData("state", this.entityID, state);
-        this.baton.release();
+        this.addBrushes();
+        this.clearVoxelPaintSpace();
     };
 
     this.activate = function () {
         var _this = this;
-        this.readyBaton();
-        this.baton.claim(
-            function () { // onGrant
-                _this.activateWithBaton();
-            },
-            function () { // onRelease
-            },
-            function () { // onDenied
-            },
-            function () { // onNoServerResponse
-                _this.activateWithBaton();
-            });
+        _this.activateWithBaton();
     };
 
     this.startNearTrigger = function (entityID) {

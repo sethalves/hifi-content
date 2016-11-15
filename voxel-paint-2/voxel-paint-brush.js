@@ -160,7 +160,7 @@
             var cFind = userData.color;
 
             if (cFind != color) {
-                continue
+                continue;
             }
 
             var centerOffset = Vec3.subtract(props[possiblePolyVoxID].position, platformCorner);
@@ -259,7 +259,8 @@
         this.polyvoxes[x][y][z][c] = Entities.addEntity({
             type: "PolyVox",
             name: "voxel paint",
-            position: position,
+            // offset each color slightly to try to avoid z-buffer fighting
+            position: Vec3.sum(position, Vec3.multiply({x: c, y: c, z: c}, 0.002)),
             dimensions: sliceSize,
             voxelVolumeSize: { x: this.voxelSize, y: this.voxelSize, z: this.voxelSize },
             voxelSurfaceStyle: 0,
