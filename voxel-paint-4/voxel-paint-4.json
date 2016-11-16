@@ -1,0 +1,15 @@
+{
+    "Entities": [
+        {
+            "collisionless": 1,
+            "color": { "blue": 0, "green": 0, "red": 255 },
+            "dimensions": { "x": 0.2, "y": 0.2, "z": 0.2 },
+            "ignoreForCollisions": 1,
+            "name": "voxel paint reset button",
+            "script": "http://headache.hungry.com/~seth/hifi/voxel-paint-4/voxel-paint-init.js",
+            "type": "Sphere",
+            "userData": "{\"state\":\"off\",\"grabbableKey\":{\"wantsTrigger\":true}}"
+        }
+    ],
+    "Version": 65
+}

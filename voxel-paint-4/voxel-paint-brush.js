@@ -287,7 +287,7 @@
         // Entities.addEntity({
         //     name: "voxel paint debug cube",
         //     type: "Model",
-        //     modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-3/unitBoxTransparent.fbx",
+        //     modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-4/unitBoxTransparent.fbx",
         //     localPosition: localPosition,
         //     dimensions: sliceSize,
         //     collisionless: true,

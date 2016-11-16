@@ -4,7 +4,19 @@
 (function () {
     Script.include("/~/system/libraries/utils.js");
 
-    this.dimension = 1.15; // fits in a circle of radius 1
+    this.dimension = 4;
+    this.paintBucketSize = 0.2;
+    this.paintBucketStride = 0.3;
+    this.paintBucketOffGround = 1.0;
+    this.paintBuckets = [ { red: 0, green: 0, blue: 0 },
+                          { red: 0, green: 0, blue: 255 },
+                          { red: 0, green: 255, blue: 0 },
+                          { red: 0, green: 255, blue: 255 },
+                          { red: 255, green: 0, blue: 0 },
+                          { red: 255, green: 0, blue: 255 },
+                          { red: 255, green: 255, blue: 0 },
+                          { red: 255, green: 255, blue: 255 }
+                        ];
 
     this.preload = function (entityID) {
         this.entityID = entityID;
@@ -44,7 +56,7 @@
             color: { red: 75, green: 75, blue: 75 },
             dimensions: { x: this.dimension, y: 0.02, z: this.dimension },
             name: name,
-            position: Vec3.sum(platformPosition, { x: this.dimension, y: 0, z: this.dimension }),
+            position: Vec3.sum(platformPosition, { x: this.dimension / 2, y: 0, z: this.dimension / 2 }),
             shape: "Cube",
             type: "Box"
         });
@@ -57,12 +69,12 @@
         var position = props.position;
         var dimensions = props.dimensions;
         dimensions.y = this.dimension;
-        var aetherPosition = Vec3.sum(position, { x: 0, y: 1.5, z: 0 });
+        var aetherPosition = Vec3.sum(position, { x: 0, y: this.dimension / 2, z: 0 });
 
         var aetherID = Entities.addEntity({
             name: name,
             type: "Model",
-            modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-3/unitBoxTransparent.fbx",
+            modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-4/unitBoxTransparent.fbx",
             position: aetherPosition,
             dimensions: dimensions,
             collisionless: true,
@@ -101,7 +113,7 @@
                 y: -0.29726099967956543,
                 z: 0.28578627109527588
             },
-            script: "http://headache.hungry.com/~seth/hifi/voxel-paint-3/voxel-paint-brush.js",
+            script: "http://headache.hungry.com/~seth/hifi/voxel-paint-4/voxel-paint-brush.js",
             shape: "Cube",
             type: "Box",
             userData: JSON.stringify({
@@ -147,7 +159,7 @@
                 y: 0.44969868659973145,
                 z: -0.20100706815719604
             },
-            script: "http://headache.hungry.com/~seth/hifi/voxel-paint-3/voxel-paint-eraser.js",
+            script: "http://headache.hungry.com/~seth/hifi/voxel-paint-4/voxel-paint-eraser.js",
             shape: "Cube",
             type: "Box",
             userData: JSON.stringify({
@@ -211,17 +223,53 @@
     };
 
 
+    this.addPaintBucketIfNeeded = function (textureIndex, color, platformID) {
+        var bucketName = "voxel paint color bucket " + textureIndex;
+        var bucketID = this.findEntityIDByName(bucketName);
+        if (bucketID) {
+            return bucketID;
+        }
+
+        var platformProps = Entities.getEntityProperties(platformID, ['position', 'dimensions']);
+        var platformHalfDimensions = Vec3.multiply(platformProps.dimensions, 0.5);
+        var bucket0Position = { x: platformProps.position.x + platformHalfDimensions.x,
+                                y: platformProps.position.y + this.paintBucketOffGround,
+                                z: platformProps.position.z - platformHalfDimensions.z };
+        var bucketPosition = { x: bucket0Position.x,
+                               y: bucket0Position.y,
+                               z: bucket0Position.z + textureIndex * this.paintBucketStride };
+
+        bucketID = Entities.addEntity({
+            color: color,
+            dimensions: { x: this.paintBucketSize, y: this.paintBucketSize, z: this.paintBucketSize },
+            name: bucketName,
+            position: bucketPosition,
+            shape: "Cube",
+            type: "Box",
+            collidesWith: "",
+            collisionMask: 0,
+            userData: JSON.stringify({ grabbableKey: {grabbable: true}, color: textureIndex })
+        });
+
+        return bucketID;
+    };
+
+
     this.clearVoxelPaintSpace = function () {
         var myProperties = Entities.getEntityProperties(this.entityID, ['position', 'rotation']);
         var nearbyEntities = Entities.findEntities(myProperties.position, 30);
         this.polyvoxes = {};
         for (var i = 0; i < nearbyEntities.length; i++) {
             var nearbyID = nearbyEntities[i];
-            var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
-            if (nearbyName == "voxel paint" ||
-                nearbyName == "voxel paint debug cube" ||
-                nearbyName == "voxel paint aether") {
-                Entities.deleteEntity(nearbyID);
+            var nearbyProps = Entities.getEntityProperties(nearbyID, ['name']);
+            if (nearbyProps) {
+                var nearbyName = nearbyProps.name;
+                if (nearbyName && (nearbyName == "voxel paint" ||
+                                   nearbyName == "voxel paint debug cube" ||
+                                   nearbyName == "voxel paint aether" ||
+                                   nearbyName.substring(0, 25) == "voxel paint color bucket ")) {
+                    Entities.deleteEntity(nearbyID);
+                }
             }
         }
     };
@@ -244,6 +292,10 @@
         }
 
         this.addBrushes();
+
+        for (var textureIndex = 0; textureIndex < this.paintBuckets.length; textureIndex++) {
+            this.addPaintBucketIfNeeded(textureIndex, this.paintBuckets[textureIndex], platformID);
+        }
     };
 
     this.startNearTrigger = function (entityID) {
