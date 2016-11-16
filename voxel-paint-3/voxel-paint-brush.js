@@ -116,6 +116,8 @@
         // find all nearby entities
         var searchRadius = 3.0;
 
+        print("ADD polyvox if needed" + JSON.stringify(brushPosition));
+
         var ids = Entities.findEntities(brushPosition, searchRadius);
 
         // gather properties
@@ -123,7 +125,8 @@
         for (var i = 0; i < ids.length; i++) {
             var nearbyID = ids[i];
             props[nearbyID] = Entities.getEntityProperties(nearbyID,
-                                                           ['type', 'name', 'position', 'dimensions', 'userData']);
+                                                           ['type', 'name', 'localPosition',
+                                                            'position', 'rotation', 'dimensions', 'userData']);
         }
 
         // find the base-plate and aether
@@ -143,10 +146,19 @@
         }
 
         if (!platformID) {
+            print("ADD no platform");
+            return ids;
+        }
+
+        if (!aetherID) {
+            print("ADD no aether");
             return ids;
         }
 
         var platformProps = props[platformID];
+        var aetherProps = props[aetherID];
+        var aetherDimensions = aetherProps.dimensions;
+        var aetherHalfDimensions = Vec3.multiply(aetherDimensions, 0.5);
         var platformDimensions = platformProps.dimensions;
         var platformHalfDimensions = Vec3.multiply(platformDimensions, 0.5);
         var platformCorner = Vec3.subtract(platformProps.position, platformHalfDimensions);
@@ -169,11 +181,13 @@
                 continue;
             }
 
-            var centerOffset = Vec3.subtract(props[possiblePolyVoxID].position, platformCorner);
+            var centerOffset = Vec3.sum(props[possiblePolyVoxID].localPosition, aetherHalfDimensions);
             var lowCornerOffset = Vec3.subtract(centerOffset, halfSliceSize);
             var xFind = Math.round(lowCornerOffset.x / sliceSize.x);
             var yFind = Math.round(lowCornerOffset.y / sliceSize.y);
             var zFind = Math.round(lowCornerOffset.z / sliceSize.z);
+
+            print("FOUND at " + JSON.stringify([xFind, yFind, zFind]));
 
             if (!this.polyvoxes[xFind]) {
                 this.polyvoxes[xFind] = {};
@@ -188,10 +202,16 @@
             withThisColorIDs.push(possiblePolyVoxID);
         }
 
-        var brushOffset = Vec3.subtract(brushPosition, platformCorner);
+        var brushOffset = Vec3.multiplyQbyV(aetherProps.rotation, Vec3.subtract(brushPosition, aetherProps.position));
+        brushOffset = Vec3.sum(brushOffset, Vec3.multiply(aetherProps.dimensions, 0.5));
         var brushPosInVoxSpace = { x: brushOffset.x / sliceSize.x,
-                           y: brushOffset.y / sliceSize.y,
-                           z: brushOffset.z / sliceSize.z };
+                                   y: brushOffset.y / sliceSize.y,
+                                   z: brushOffset.z / sliceSize.z };
+
+        print("ADD aetherID = " + aetherID);
+        print("ADD aether position = " + JSON.stringify(aetherProps.position));
+        print("ADD brushOffset = " + JSON.stringify(brushOffset));
+        print("ADD brushPosInVoxSpace = " + JSON.stringify(brushPosInVoxSpace));
 
         var radiusInVoxelSpace = editSphereRadius / sliceSize.x;
         var sliceHalfDiag = 0.866; // Vec3.length({x:0.5, y:0.5, z:0.5});
@@ -212,7 +232,8 @@
                     if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, {x:0.5, y:0.5, z:0.5}),
                                       brushPosInVoxSpace) < sliceRezDistance) {
                     // if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, halfSliceSize), brushPosInVoxSpace) < sliceRezDistance) {
-                        var newID = this.addPolyVox(x, y, z, color, platformCorner, sliceSize, aetherID);
+                        var newID = this.addPolyVox(x, y, z, color, platformCorner,
+                                                    sliceSize, aetherID, aetherProps.dimensions);
                         if (newID) {
                             withThisColorIDs.push(newID);
                             // keep track of which PolyVoxes need their neighbors hooked up
@@ -229,6 +250,8 @@
             }
         }
 
+        print("ADD linking");
+
         for (var neighborKey in this.dirtyNeighbors) {
             if (this.dirtyNeighbors.hasOwnProperty(neighborKey)) {
                 var xyz = neighborKey.split(",");
@@ -243,7 +266,7 @@
     };
 
 
-    brush.addPolyVox = function (x, y, z, c, platformCorner, sliceSize, aetherID) {
+    brush.addPolyVox = function (x, y, z, c, platformCorner, sliceSize, aetherID, aetherDimensions) {
         if (!this.polyvoxes[x]) {
             this.polyvoxes[x] = {};
         }
@@ -257,16 +280,23 @@
             return null;
         }
 
+        print("ADD polyvox at" + JSON.stringify([x, y, z, c]));
+
+
         var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
-        var position = Vec3.sum({x: platformCorner.x + (x * sliceSize.x),
-                                 y: platformCorner.y + (y * sliceSize.y),
-                                 z: platformCorner.z + (z * sliceSize.z)},
-                                halfSliceSize);
+        // var position = Vec3.sum({x: platformCorner.x + (x * sliceSize.x),
+        //                          y: platformCorner.y + (y * sliceSize.y),
+        //                          z: platformCorner.z + (z * sliceSize.z)},
+        //                         halfSliceSize);
+
+        var localPosition = Vec3.sum({x: x * sliceSize.x, y: y * sliceSize.y, z: z * sliceSize.z}, halfSliceSize);
+        localPosition = Vec3.subtract(localPosition, Vec3.multiply(aetherDimensions, 0.5));
+
         this.polyvoxes[x][y][z][c] = Entities.addEntity({
             type: "PolyVox",
             name: "voxel paint",
             // offset each color slightly to try to avoid z-buffer fighting
-            position: Vec3.sum(position, Vec3.multiply({x: c, y: c, z: c}, 0.002)),
+            localPosition: Vec3.sum(localPosition, Vec3.multiply({x: c, y: c, z: c}, 0.002)),
             dimensions: sliceSize,
             voxelVolumeSize: { x: this.voxelSize, y: this.voxelSize, z: this.voxelSize },
             voxelSurfaceStyle: 0,
@@ -279,15 +309,16 @@
             parentID: aetherID
         });
 
-        // Entities.addEntity({
-        //     name: "voxel paint debug cube",
-        //     type: "Model",
-        //     modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-3/unitBoxTransparent.fbx",
-        //     position: position,
-        //     dimensions: sliceSize,
-        //     collisionless: true,
-        //     // lifetime: 60.0
-        // });
+        Entities.addEntity({
+            name: "voxel paint debug cube",
+            type: "Model",
+            modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-3/unitBoxTransparent.fbx",
+            localPosition: localPosition,
+            dimensions: sliceSize,
+            collisionless: true,
+            // lifetime: 60.0
+            parentID: aetherID
+        });
 
         return this.polyvoxes[x][y][z][c];
     };

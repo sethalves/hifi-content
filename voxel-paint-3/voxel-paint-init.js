@@ -68,12 +68,16 @@
         // });
 
         var aetherID = Entities.addEntity({
-            name: name,
-            type: "Box",
-            position: aetherPosition,
+            color: { red: 0, green: 0, blue: 0 },
             dimensions: dimensions,
-            collisionless: true,
-            visible: false
+            name: name,
+            position: aetherPosition,
+            shape: "Cube",
+            type: "Box",
+            collidesWith: "",
+            collisionMask: 0,
+            visible: false,
+            userData: JSON.stringify({ grabbableKey: {grabbable: true} })
         });
 
         return aetherID;
@@ -222,6 +226,8 @@
 
     this.activate = function () {
 
+        this.clearVoxelPaintSpace();
+
         var platformName = "voxel paint floor";
         var platformID = this.findEntityIDByName(platformName);
         if (!platformID) {
@@ -234,9 +240,7 @@
             aetherID = this.addAether(aetherName, platformID);
         }
 
-
         this.addBrushes();
-        this.clearVoxelPaintSpace();
     };
 
     this.startNearTrigger = function (entityID) {
