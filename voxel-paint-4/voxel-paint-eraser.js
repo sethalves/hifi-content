@@ -12,7 +12,7 @@
             var brushProps = Entities.getEntityProperties(this.brush, ["position", "rotation",
                                                                        "dimensions", "registrationPoint"]);
             var searchRadius = 2.0;
-            var editSphereRadius = 0.035;
+            var editSphereRadius = brushProps.dimensions.x / 2.0;
 
             var ids = Entities.findEntities(brushProps.position, searchRadius);
             for (var i = 0; i < ids.length; i++) {

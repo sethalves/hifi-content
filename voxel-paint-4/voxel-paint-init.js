@@ -94,7 +94,7 @@
     };
 
 
-    this.addPaintBrush = function (name, radius, color, colorIndex, position) {
+    this.addPaintBrush = function (name, radius, colorIndex, position) {
         var brushID = Entities.addEntity({
             collidesWith: "",
             collisionMask: 0,
@@ -126,7 +126,7 @@
         Entities.addEntity({
             collidesWith: "",
             collisionMask: 0,
-            color: color,
+            color: paintBucketColors[ colorIndex ],
             dimensions: { x: 2*radius, y: 2*radius, z: 2*radius },
             name: "voxel paint brush tip",
             parentID: brushID,
@@ -138,11 +138,11 @@
         return brushID;
     };
 
-    this.addEraserBrush = function (name, radius, color, position) {
+    this.addEraserBrush = function (name, radius, position) {
         var eraserID = Entities.addEntity({
             collidesWith: "",
             collisionMask: 0,
-            color: { blue: 100, green: 100, red: 100 },
+            color: { red: 160, green: 0, blue: 0 },
             dimensions: { x: 0.03, y: 0.3, z: 0.03 },
             name: name,
             position: position,
@@ -172,7 +172,7 @@
         Entities.addEntity({
             collidesWith: "",
             collisionMask: 0,
-            color: color,
+            color: { red: 0, green: 0, blue: 0 },
             dimensions: { x: 2*radius, y: 2*radius, z: 2*radius },
             name: "voxel paint eraser tip",
             parentID: eraserID,
@@ -190,28 +190,42 @@
         var brush0ID = this.findEntityIDByName(brush0Name);
         if (!brush0ID) {
             var paintBrush0Position = Vec3.sum (position, { x: 0.4, y: 0, z: 0 });
-            brush0ID = this.addPaintBrush(brush0Name, 0.08, {blue: 0, green: 255, red: 0}, 0, paintBrush0Position);
+            brush0ID = this.addPaintBrush(brush0Name, 0.08, 0, paintBrush0Position);
         }
 
         var brush1Name = "voxel paint brush 1";
         var brush1ID = this.findEntityIDByName(brush1Name);
         if (!brush1ID) {
             var paintBrush1Position = Vec3.sum (position, { x: 0.8, y: 0, z: 0 });
-            brush1ID = this.addPaintBrush(brush1Name, 0.025, {blue: 0, green: 0, red: 255}, 1, paintBrush1Position);
+            brush1ID = this.addPaintBrush(brush1Name, 0.025, 1, paintBrush1Position);
         }
 
         var brush2Name = "voxel paint brush 2";
         var brush2ID = this.findEntityIDByName(brush2Name);
         if (!brush2ID) {
             var paintBrush2Position = Vec3.sum (position, { x: 1.2, y: 0, z: 0 });
-            brush2ID = this.addPaintBrush(brush2Name, 0.08, {blue: 255, green: 0, red: 0}, 2, paintBrush2Position);
+            brush2ID = this.addPaintBrush(brush2Name, 0.08, 2, paintBrush2Position);
         }
 
         var eraser0Name = "voxel paint eraser 0";
-        var eraserID = this.findEntityIDByName(eraser0Name);
-        if (!eraserID) {
-            var eraseBrushPosition = Vec3.sum (position, { x: -0.4, y: 0, z: 0 });
-            eraserID = this.addEraserBrush(eraser0Name, 0.025, {blue: 0, green: 0, red: 0}, eraseBrushPosition);
+        var eraser0ID = this.findEntityIDByName(eraser0Name);
+        if (!eraser0ID) {
+            var eraser0BrushPosition = Vec3.sum (position, { x: -0.4, y: 0, z: 0 });
+            eraser0ID = this.addEraserBrush(eraser0Name, 0.025, eraser0BrushPosition);
+        }
+
+        var eraser1Name = "voxel paint eraser 1";
+        var eraser1ID = this.findEntityIDByName(eraser1Name);
+        if (!eraser1ID) {
+            var eraser1BrushPosition = Vec3.sum (position, { x: -0.8, y: 0, z: 0 });
+            eraser1ID = this.addEraserBrush(eraser1Name, 0.08, eraser1BrushPosition);
+        }
+
+        var eraser2Name = "voxel paint eraser 2";
+        var eraser2ID = this.findEntityIDByName(eraser2Name);
+        if (!eraser2ID) {
+            var eraser2BrushPosition = Vec3.sum (position, { x: -1.2, y: 0, z: 0 });
+            eraser2ID = this.addEraserBrush(eraser2Name, 0.16, eraser2BrushPosition);
         }
     };
 
