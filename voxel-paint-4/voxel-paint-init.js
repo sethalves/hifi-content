@@ -63,29 +63,32 @@
         dimensions.y = this.dimension;
         var aetherPosition = Vec3.sum(position, { x: 0, y: this.dimension / 2, z: 0 });
 
-        var aetherID = Entities.addEntity({
-            name: name,
-            type: "Model",
-            modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-4/unitBoxTransparent.fbx",
-            position: aetherPosition,
-            dimensions: dimensions,
-            collisionless: true,
-            userData: JSON.stringify({ grabbableKey: {grabbable: true} })
-            // lifetime: 60.0
-        });
-
-        // var aetherID = Entities.addEntity({
-        //     color: { red: 0, green: 0, blue: 0 },
-        //     dimensions: dimensions,
-        //     name: name,
-        //     position: aetherPosition,
-        //     shape: "Cube",
-        //     type: "Box",
-        //     collidesWith: "",
-        //     collisionMask: 0,
-        //     visible: false,
-        //     userData: JSON.stringify({ grabbableKey: {grabbable: true} })
-        // });
+        var aetherID;
+        if (false) {
+            aetherID = Entities.addEntity({
+                name: name,
+                type: "Model",
+                modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-4/unitBoxTransparent.fbx",
+                position: aetherPosition,
+                dimensions: dimensions,
+                collisionless: true,
+                userData: JSON.stringify({ grabbableKey: {grabbable: true} })
+                // lifetime: 60.0
+            });
+        } else {
+            aetherID = Entities.addEntity({
+                color: { red: 0, green: 0, blue: 0 },
+                dimensions: dimensions,
+                name: name,
+                position: aetherPosition,
+                shape: "Cube",
+                type: "Box",
+                collidesWith: "",
+                collisionMask: 0,
+                visible: false,
+                userData: JSON.stringify({ grabbableKey: {grabbable: true} })
+            });
+        }
 
         return aetherID;
     };
@@ -118,9 +121,7 @@
                                          {x: 0.2807741165161133, y: 0.6332069635391235,
                                           z: 0.2997693121433258, w: -0.6557632088661194}]
                             }
-                },
-                color: colorIndex})
-        });
+                }})});
 
         Entities.addEntity({
             collidesWith: "",
