@@ -1,22 +1,14 @@
 
-/* global Entities, Vec3, Script */
+/* global Entities, Vec3, Script, paintBucketColors */
 
 (function () {
     Script.include("/~/system/libraries/utils.js");
+    Script.include("http://headache.hungry.com/~seth/hifi/voxel-paint-4/voxel-paint-shared.js");
 
     this.dimension = 4;
     this.paintBucketSize = 0.2;
     this.paintBucketStride = 0.3;
     this.paintBucketOffGround = 1.0;
-    this.paintBuckets = [ { red: 0, green: 0, blue: 0 },
-                          { red: 0, green: 0, blue: 255 },
-                          { red: 0, green: 255, blue: 0 },
-                          { red: 0, green: 255, blue: 255 },
-                          { red: 255, green: 0, blue: 0 },
-                          { red: 255, green: 0, blue: 255 },
-                          { red: 255, green: 255, blue: 0 },
-                          { red: 255, green: 255, blue: 255 }
-                        ];
 
     this.preload = function (entityID) {
         this.entityID = entityID;
@@ -293,8 +285,8 @@
 
         this.addBrushes();
 
-        for (var textureIndex = 0; textureIndex < this.paintBuckets.length; textureIndex++) {
-            this.addPaintBucketIfNeeded(textureIndex, this.paintBuckets[textureIndex], platformID);
+        for (var textureIndex = 0; textureIndex < paintBucketColors.length; textureIndex++) {
+            this.addPaintBucketIfNeeded(textureIndex, paintBucketColors[textureIndex], platformID);
         }
     };
 

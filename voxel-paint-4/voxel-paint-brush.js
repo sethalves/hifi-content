@@ -1,20 +1,9 @@
 
-/* global Entities, genericTool, Script, Vec3, Quat */
+/* global Entities, genericTool, Script, Vec3, Quat, textureIndexToURLs */
 
 (function() {
     Script.include("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
-
-    var colorToUrl = {
-        0: ["http://headache.hungry.com/~seth/hifi/wood.jpg",
-            "http://headache.hungry.com/~seth/hifi/wood.jpg",
-            "http://headache.hungry.com/~seth/hifi/wood.jpg"],
-        1: ["http://headache.hungry.com/~seth/hifi/green.png",
-            "http://headache.hungry.com/~seth/hifi/green.png",
-            "http://headache.hungry.com/~seth/hifi/green.png"],
-        2: ["http://headache.hungry.com/~seth/hifi/dirt.jpeg",
-            "http://headache.hungry.com/~seth/hifi/grass.png",
-            "http://headache.hungry.com/~seth/hifi/dirt.jpeg"]
-    };
+    Script.include("http://headache.hungry.com/~seth/hifi/voxel-paint-4/voxel-paint-shared.js");
 
     var brush = genericTool(
         function() { // start
@@ -277,9 +266,9 @@
             voxelSurfaceStyle: 0,
             collisionless: true,
             lifetime: 28800.0, // 8 hours
-            xTextureURL: colorToUrl[c][0],
-            yTextureURL: colorToUrl[c][1],
-            zTextureURL: colorToUrl[c][2],
+            xTextureURL: textureIndexToURLs[c][0],
+            yTextureURL: textureIndexToURLs[c][1],
+            zTextureURL: textureIndexToURLs[c][2],
             userData: JSON.stringify({color: c}),
             parentID: aetherID
         });
