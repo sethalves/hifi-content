@@ -25,7 +25,15 @@ textureIndexToURLs = {
         "http://headache.hungry.com/~seth/hifi/voxel-paint-4/textures/color-ff-ff-0.png"],
     7: ["http://headache.hungry.com/~seth/hifi/voxel-paint-4/textures/color-ff-ff-ff.png",
         "http://headache.hungry.com/~seth/hifi/voxel-paint-4/textures/color-ff-ff-ff.png",
-        "http://headache.hungry.com/~seth/hifi/voxel-paint-4/textures/color-ff-ff-ff.png"]
+        "http://headache.hungry.com/~seth/hifi/voxel-paint-4/textures/color-ff-ff-ff.png"],
+
+    8: ["http://headache.hungry.com/~seth/hifi/wood.jpg",
+        "http://headache.hungry.com/~seth/hifi/wood.jpg",
+        "http://headache.hungry.com/~seth/hifi/wood.jpg"],
+    9: ["http://headache.hungry.com/~seth/hifi/dirt.jpeg",
+        "http://headache.hungry.com/~seth/hifi/grass.png",
+        "http://headache.hungry.com/~seth/hifi/dirt.jpeg"]
+
 };
 
 
@@ -36,5 +44,7 @@ paintBucketColors = [ { red: 0, green: 0, blue: 0 },       // 0
                       { red: 255, green: 0, blue: 0 },     // 4
                       { red: 255, green: 0, blue: 255 },   // 5
                       { red: 255, green: 255, blue: 0 },   // 6
-                      { red: 255, green: 255, blue: 255 }  // 7
+                      { red: 255, green: 255, blue: 255 }, // 7
+                      { red: 153, green: 76, blue: 0 },    // 8
+                      { red: 0, green: 76, blue: 0 }       // 9
                     ];

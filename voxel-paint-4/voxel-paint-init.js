@@ -85,6 +85,7 @@
                 type: "Box",
                 collidesWith: "",
                 collisionMask: 0,
+                collisionless: true,
                 visible: false,
                 userData: JSON.stringify({ grabbableKey: {grabbable: true} })
             });
