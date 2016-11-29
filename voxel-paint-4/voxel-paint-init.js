@@ -72,7 +72,7 @@
                 position: aetherPosition,
                 dimensions: dimensions,
                 collisionless: true,
-                userData: JSON.stringify({ grabbableKey: {grabbable: true} })
+                userData: JSON.stringify({ grabbableKey: {grabbable: false} })
                 // lifetime: 60.0
             });
         } else {
@@ -87,7 +87,7 @@
                 collisionMask: 0,
                 collisionless: true,
                 visible: false,
-                userData: JSON.stringify({ grabbableKey: {grabbable: true} })
+                userData: JSON.stringify({ grabbableKey: {grabbable: false} })
             });
         }
 
