@@ -271,7 +271,7 @@
             voxelVolumeSize: { x: this.voxelSize, y: this.voxelSize, z: this.voxelSize },
             voxelSurfaceStyle: 0,
             collisionless: true,
-            lifetime: 28800.0, // 8 hours
+            // lifetime: 28800.0, // 8 hours
             xTextureURL: textureIndexToURLs[c][0],
             yTextureURL: textureIndexToURLs[c][1],
             zTextureURL: textureIndexToURLs[c][2],
