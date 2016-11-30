@@ -27,9 +27,9 @@
                     type: "Sphere",
                     position: hitPoint,
                     color: {red: 0, green: 200, blue: 200},
-                    visible: false,
-                    dimensions: 0.6,
-                    lifetime: 1.0
+                    visible: true,
+                    dimensions: { x: 0.6, y: 0.6, z: 0.6 },
+                    lifetime: 2.0
                 });
             } else {
                 distance = 20;
@@ -74,6 +74,8 @@
         //     Entities.editEntity(this.rayID, { lifetime: age + 5 });
         // }
     };
+
+    rayGun.laserOffsets = { x: 0, y: 0.008, z: 0.12 };
 
     return rayGun;
 });
