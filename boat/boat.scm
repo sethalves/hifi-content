@@ -3,10 +3,11 @@
 
 (add-to-load-path "../../ao/bind/guile")
 
-(use-modules (ao bind))
+;; (use-modules (ao bind))
+(use-modules (ao sys libao))
 
 (ao-init-guile)
-(use-modules (ao operators) (ao user) (ao export)
+(use-modules (ao sys operators) (ao sys user)
              (ao shapes) (ao csg) (ao transforms))
 
 
