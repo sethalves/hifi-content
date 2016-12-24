@@ -17,9 +17,15 @@ union() {
         }
     }
 
+    // well
     translate([90, 0, 77]) {
         rotate([90, 0, 0]) {
             cylinder(h=16, r=1.2, center=true, $fn=12);
         }
+    }
+
+    // origin
+    translate([0, 0, 0]) {
+        sphere(3);
     }
 }
