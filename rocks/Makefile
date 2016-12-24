@@ -2,15 +2,18 @@
 #
 #
 
-rock-%.obj: rock-%-points.obj
+rock-%-no-txtr.obj: rock-%-points.obj
 	$(VHACD) -g -i $< -o $@
 
+rock-%.obj: rock-%-no-txtr.obj
+	wavefront-obj-tool -m 0.8 -S rock_mtl -L rock.mtl $< -o $@
 
 
 VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 LIBS='(foldling command-line)' '(seth obj-model)' '(srfi 27)'
+OUTPUTS=rock-0.obj rock-1.obj rock-2.obj rock-3.obj
 
-all: rock-0.obj rock-1.obj rock-2.obj
+all: $(OUTPUTS)
 
 
 rock-0-points.obj:
@@ -22,6 +25,8 @@ rock-1-points.obj:
 rock-2-points.obj:
 	./rocks-gauche.scm --random-i 12 --random-j 3 $@ 12
 
+rock-3-points.obj:
+	./rocks-gauche.scm --size 10 --random-i 200 --random-j 20 $@ 15
 
 
 libs:
@@ -35,11 +40,19 @@ link-libs: very-clean
 		-p '../../seth-snow2-misc' \
 		install $(LIBS)
 
+
+upload: $(OUTPUTS) rock.jpg rock.mtl
+	mkdir -p rocks
+	cp $^ rocks/
+	rsync --delete -avP rocks/ headache.hungry.com:public_html/hifi/rocks/
+
+
 clean:
 	rm -f *~
-	rm -f rock-0-points.obj rock-0.obj
-	rm -f rock-1-points.obj rock-1.obj
-	rm -f rock-2-points.obj rock-2.obj
+	rm -f rock-0-points.obj rock-0-no-txtr.obj rock-0.obj
+	rm -f rock-1-points.obj rock-1-no-txtr.obj rock-1.obj
+	rm -f rock-2-points.obj rock-2-no-txtr.obj rock-2.obj
+	rm -f rock-3-points.obj rock-3-no-txtr.obj rock-3.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
