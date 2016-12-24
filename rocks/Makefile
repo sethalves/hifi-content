@@ -26,7 +26,7 @@ rock-2-points.obj:
 	./rocks-gauche.scm --random-i 12 --random-j 3 $@ 12
 
 rock-3-points.obj:
-	./rocks-gauche.scm --size 10 --random-i 200 --random-j 20 $@ 15
+	time ./rocks-gauche.scm --size 10 --random-i 200 --random-j 20 $@ 200
 
 
 libs:
@@ -49,6 +49,7 @@ upload: $(OUTPUTS) rock.jpg rock.mtl
 
 clean:
 	rm -f *~
+	rm -rf rocks
 	rm -f rock-0-points.obj rock-0-no-txtr.obj rock-0.obj
 	rm -f rock-1-points.obj rock-1-no-txtr.obj rock-1.obj
 	rm -f rock-2-points.obj rock-2-no-txtr.obj rock-2.obj

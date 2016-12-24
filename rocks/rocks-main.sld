@@ -38,7 +38,8 @@
              ((--random-j)
               (set! random-j (string->number (cadr arg))))
              ((--size)
-              (set! size (string->number (cadr arg))))             ((--)
+              (set! size (string->number (cadr arg))))
+             ((--)
               (set! extra-arguments (cdr arg)))))
          args)
 
@@ -65,55 +66,15 @@
           (random-source-pseudo-randomize! random-source random-i random-j)
           (model-prepend-mesh! model mesh)
           (let loop ((i 0))
-            (cond ((= i point-count)
-
-                   (do ((a 0 (+ a 1)))
-                       ((= a i) a)
-                     (do ((b 0 (+ b 1)))
-                         ((= b i) b)
-                       (do ((c 0 (+ c 1)))
-                           ((= c i) c)
-                         (cond ((= a b) #t)
-                               ((= b c) #t)
-                               ((= a c) #t)
-                               (else
-                                (mesh-append-face! model mesh
-                                                   (make-face model
-                                                              (vector (make-face-corner a 'unset 'unset)
-                                                                      (make-face-corner b 'unset 'unset)
-                                                                      (make-face-corner c 'unset 'unset))
-                                                              #f)))))))
-
-                   ;; (let face-loop ((a 2))
-                   ;;   (cond ((= a point-count) #t)
-                   ;;         (else
-                   ;;          (mesh-append-face! model mesh
-                   ;;                             (make-face model
-                   ;;                                        (vector (make-face-corner a 'unset 'unset)
-                   ;;                                                (make-face-corner (- a 1) 'unset 'unset)
-                   ;;                                                (make-face-corner (- a 2) 'unset 'unset))
-                   ;;                                        #f))
-                   ;;          (face-loop (+ a 1)))))
-
-                   #t
-                   )
+            (cond ((= i point-count) #t)
                   (else
                    (let* ((point-3d (vector (inexact (- (random-integer rand-max) half-rand-max))
                                             (inexact (- (random-integer rand-max) half-rand-max))
                                             (inexact (- (random-integer rand-max) half-rand-max))))
                           (point-3d-str (vector-map number->string (vector3-scale point-3d (/ 1.0 reso)))))
                      (model-append-vertex! model point-3d-str)
-                     ;; (if (> i 1)
-                     ;;     (mesh-append-face! model mesh
-                     ;;                        (make-face model
-                     ;;                                   (vector (make-face-corner 0 'unset 'unset)
-                     ;;                                           (make-face-corner 1 'unset 'unset)
-                     ;;                                           (make-face-corner i 'unset 'unset))
-                     ;;                                   #f)))
                      (loop (+ i 1))))))
 
-
-
-          (write-obj-model model output-handle)
+          (write-obj-model (model->convex-hull model) output-handle)
           (if (not (equal? output-filename "-"))
               (close-output-port output-handle)))))))
