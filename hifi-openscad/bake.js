@@ -1,3 +1,9 @@
+//
+//
+//
+
+/*global Script, acBaton, Entities, Vec3, Quat */
+
 (function () {
     Script.include("http://headache.hungry.com/~seth/hifi/baton-client.js");
 
@@ -14,29 +20,25 @@
             timeScale: 240000,
         });
 
-    }
+    };
 
     this.turnOn = function () {
         Entities.editEntity(this.entityID, { color: { blue: 0, green: 255, red: 0 }});
-
-        // this.findInputs();
-
         var _this = this;
         this.baton.claim(
             function () { // onGrant
                 _this.findInputs();
             });
-    }
+    };
 
     this.turnOff = function () {
         Entities.editEntity(this.entityID, { color: { blue: 0, green: 0, red: 255 }});
-    }
+    };
 
     this.findInputs = function () {
         // figure out the center of the input area
         var inputPlatformID = this.findEntityIDByName("openscad input platform");
         if (!inputPlatformID) {
-            print("Error -- can't find openscad input platform");
             this.turnOff();
             return;
         }
@@ -46,8 +48,7 @@
         // search for input entities
         var inputs = [];
         var nearbyEntities = Entities.findEntities(inputAreaCenter, 1.5);
-        var success = false;
-        for (i = 0; i < nearbyEntities.length; i++) {
+        for (var i = 0; i < nearbyEntities.length; i++) {
             var nearbyID = nearbyEntities[i];
             var nearbyProperties = Entities.getEntityProperties(nearbyID);
             if (nearbyProperties.locked) {
@@ -82,7 +83,7 @@
         }
 
         this.invokeOpenScad(inputs, platformPosition);
-    }
+    };
 
     this.invokeOpenScad = function (inputs, platformPosition) {
         var _this = this;
@@ -92,10 +93,12 @@
         req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         req.send(JSON.stringify(inputs));
         if (req.status == 200) {
-            var keys = Object.keys(req.response)
-            for (keyIndex in keys) {
-                var key = keys[keyIndex];
-                print("    " + key + " = " + req.response[key]);
+            var keys = Object.keys(req.response);
+            for (var keyIndex in keys) {
+                if (keys.hasOwnProperty(keyIndex)) {
+                    var key = keys[keyIndex];
+                    // print("    " + key + " = " + req.response[key]);
+                }
             }
 
             var modelURL = req.response.modelURL;
@@ -111,14 +114,12 @@
             _this.turnOff();
         }
         _this.baton.release();
-    }
-
+    };
 
     this.findEntityIDByName = function (entityName) {
         var myProperties = Entities.getEntityProperties(this.entityID, ['position', 'rotation']);
         var nearbyEntities = Entities.findEntities(myProperties.position, 2);
-        var success = false;
-        for (i = 0; i < nearbyEntities.length; i++) {
+        for (var i = 0; i < nearbyEntities.length; i++) {
             var nearbyID = nearbyEntities[i];
             var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
             if (nearbyName == entityName) {
@@ -127,27 +128,27 @@
             // print("'" + nearbyName + "' != '" + entityName + "'");
         }
         return null;
-    }
+    };
 
     this.startNearTrigger = function (entityID) {
-        print("startNearTrigger calling turnOn");
+        // print("startNearTrigger calling turnOn");
         // this.entityID = entityID;
         this.turnOn();
-    }
+    };
 
     this.stopNearTrigger = function (entityID) {
         // this.entityID = entityID;
         // this.turnOff();
-    }
+    };
 
     this.clickDownOnEntity = function (entityID, mouseEvent) {
-        print("clickDownOnEntity calling turnOn");
+        // print("clickDownOnEntity calling turnOn");
         // this.entityID = entityID;
         this.turnOn();
-    }
+    };
 
     this.clickReleaseOnEntity = function (entityID, mouseEvent) {
         // this.entityID = entityID;
         // this.turnOff();
-    }
+    };
 })
