@@ -11,7 +11,7 @@ rock-%.obj: rock-%-no-txtr.obj
 
 VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 LIBS='(foldling command-line)' '(seth obj-model)' '(srfi 27)'
-OUTPUTS=rock-0.obj rock-1.obj rock-2.obj rock-3.obj
+OUTPUTS=rock-0.obj rock-1.obj rock-2.obj rock-3.obj crystal-0.obj
 
 all: $(OUTPUTS)
 
@@ -23,10 +23,13 @@ rock-1-points.obj:
 	./rocks-gauche.scm --random-i 2 --random-j 8 $@ 12
 
 rock-2-points.obj:
-	./rocks-gauche.scm --random-i 12 --random-j 3 $@ 12
+	./rocks-gauche.scm --sphere --random-i 12 --random-j 3 $@ 200
 
 rock-3-points.obj:
-	time ./rocks-gauche.scm --size 10 --random-i 200 --random-j 20 $@ 200
+	./rocks-gauche.scm --size 10 --random-i 200 --random-j 20 $@ 20
+
+crystal-0.obj:
+	./rocks-gauche.scm --crystal --size 10 --random-i 200 --random-j 20 $@ 6
 
 
 libs:
@@ -54,6 +57,7 @@ clean:
 	rm -f rock-1-points.obj rock-1-no-txtr.obj rock-1.obj
 	rm -f rock-2-points.obj rock-2-no-txtr.obj rock-2.obj
 	rm -f rock-3-points.obj rock-3-no-txtr.obj rock-3.obj
+	rm -f crystal-0.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
