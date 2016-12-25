@@ -9,8 +9,14 @@
           (seth cout)
           (seth model-3d)
           (seth math-3d)
+          (seth scad-model)
           (seth obj-model))
   (begin
+
+    (define (vector-3->strings v)
+      (vector (number->pretty-string (vector-ref v 0) 6)
+              (number->pretty-string (vector-ref v 1) 6)
+              (number->pretty-string (vector-ref v 2) 6)))
 
     (define (create-points-for-cube model point-count size)
       (let* ((reso 5.0)
@@ -22,7 +28,7 @@
                  (let* ((point-3d (vector (inexact (- (random-integer rand-max) half-rand-max))
                                           (inexact (- (random-integer rand-max) half-rand-max))
                                           (inexact (- (random-integer rand-max) half-rand-max))))
-                        (point-3d-str (vector-map number->string (vector3-scale point-3d (/ 1.0 reso)))))
+                        (point-3d-str (vector-3->strings (vector3-scale point-3d (/ 1.0 reso)))))
                    (model-append-vertex! model point-3d-str)
                    (loop (+ i 1))))))))
 
@@ -37,29 +43,28 @@
                         (theta (* (/ (random-integer 100) 100.0) pi))
                         (phi (* (/ (random-integer 100) 100.0) pi*2))
                         (point-3d (polar-coordinates->cartesian radius theta phi))
-                        (point-3d-str (vector-map number->string (vector3-scale point-3d (/ 1.0 reso)))))
+                        (point-3d-str (vector-3->strings (vector3-scale point-3d (/ 1.0 reso)))))
                    (model-append-vertex! model point-3d-str)
                    (loop (+ i 1))))))))
 
 
     (define (create-points-for-crystal model point-count size)
-      (let ((top-point (vector 0 (/ size 2.0) 0))
-            (bottom-point (vector 0 (/ size -2.0) 0))
-            (upper-ring-y (* size 0.30))
+      (let ((top-point (vector 0.0 size 0.0))
+            (bottom-point (vector 0.0 0.0 0.0))
+            (upper-ring-y (* size 0.80))
             (upper-radius (* size 0.18))
-            (lower-ring-y (* size -0.4))
+            (lower-ring-y (* size 0.1))
             (lower-radius (* size 0.10))
             (a (/ pi*2 point-count)))
-
-        (model-append-vertex! model (vector-map number->string top-point))
-        (model-append-vertex! model (vector-map number->string bottom-point))
+        (model-append-vertex! model (vector-3->strings top-point))
+        (model-append-vertex! model (vector-3->strings bottom-point))
         (let loop ((i 0))
           (cond ((= i point-count) #t)
                 (else
                  (let* ((x (* (cos (* a i)) upper-radius))
                         (z (* (sin (* a i)) upper-radius))
                         (p (vector x upper-ring-y z)))
-                   (model-append-vertex! model (vector-map number->string p))
+                   (model-append-vertex! model (vector-3->strings p))
                    (loop (+ i 1))))))
         (let loop ((i 0))
           (cond ((= i point-count) #t)
@@ -67,7 +72,7 @@
                  (let* ((x (* (cos (* a i)) lower-radius))
                         (z (* (sin (* a i)) lower-radius))
                         (p (vector x lower-ring-y z)))
-                   (model-append-vertex! model (vector-map number->string p))
+                   (model-append-vertex! model (vector-3->strings p))
                    (loop (+ i 1))))))))
 
 
@@ -81,10 +86,12 @@
         (cerr "  --cube                  distribute points in a cube shape (default)\n")
         (cerr "  --sphere                distribute points in a sphere shape\n")
         (cerr "  --crystal               make a crystal shape\n")
+        (cerr "  --scad                  output scad rather than obj\n")
         (exit 1))
 
       (let* ((args (parse-command-line `((-?) (-h)
                                          ((--cube --sphere --crystal))
+                                         (--scad)
                                          (--random-i random-i)
                                          (--random-j random-j)
                                          (--size size))))
@@ -96,6 +103,7 @@
              (shape-cube #f)
              (shape-sphere #f)
              (shape-crystal #f)
+             (output-scad #f)
              (extra-arguments '()))
         (for-each
          (lambda (arg)
@@ -119,6 +127,9 @@
               (if (or shape-cube shape-sphere shape-crystal)
                   (usage "give --cube or --sphere or --crystal only once"))
               (set! shape-crystal #t))
+             ((--scad)
+              (if output-scad (usage "give --output-scad only once"))
+              (set! output-scad #t))
              ((--)
               (set! extra-arguments (cdr arg)))))
          args)
@@ -144,10 +155,17 @@
           (random-source-pseudo-randomize! random-source random-i random-j)
           (model-prepend-mesh! model mesh)
 
-          (cond (shape-cube (create-points-for-cube model point-count size))
-                (shape-sphere (create-points-for-sphere model point-count size))
-                (shape-crystal (create-points-for-crystal model point-count size)))
+          (cond (shape-cube (create-points-for-cube model point-count (inexact size)))
+                (shape-sphere (create-points-for-sphere model point-count (inexact size)))
+                (shape-crystal (create-points-for-crystal model point-count (inexact size))))
 
-          (write-obj-model (model->convex-hull model) output-handle)
+          (let ((hull-model (model->convex-hull model)))
+            (cond (output-scad
+                   (write-scad-file
+                    (list (model->scad-polyhedron hull-model))
+                    output-handle))
+                  (else
+                   (write-obj-model hull-model output-handle))))
+
           (if (not (equal? output-filename "-"))
               (close-output-port output-handle)))))))
