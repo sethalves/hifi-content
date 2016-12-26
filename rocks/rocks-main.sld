@@ -13,11 +13,6 @@
           (seth obj-model))
   (begin
 
-    (define (vector-3->strings v)
-      (vector (number->pretty-string (vector-ref v 0) 6)
-              (number->pretty-string (vector-ref v 1) 6)
-              (number->pretty-string (vector-ref v 2) 6)))
-
     (define (create-points-for-cube model point-count size)
       (let* ((reso 5.0)
              (rand-max (exact (* size reso)))
