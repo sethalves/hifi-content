@@ -1,15 +1,18 @@
 "use strict";
 
-/* global Entities, Script, Tablet, Vec3, Quat, getEntityCustomData, setEntityCustomData */
+/* global Entities, Script, Tablet, Vec3, Quat, getEntityCustomData, setEntityCustomData, Overlays */
 
 (function() { // BEGIN LOCAL_SCOPE
 
     Script.include("/~/system/libraries/utils.js");
 
-    // var overlays = [];
+    var overlays = [];
     var GROW_RANGE = 100;
     var seedSize = 0.05;
     var NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
+    var showOverlays = false;
+    var active = false;
+    var timer = null;
 
     var initialPlantData = {
         age: 0.0,
@@ -45,6 +48,28 @@
             direction: Vec3.normalize(Vec3.multiplyQbyV(tipRotation, dir))
         };
     }
+
+    function getLeafEdge(pos, rot, plantSize, n, w) {
+        var leafHalfWidth = 0.3;
+        var leafLowPoint = 0.8;
+        var leafEdge;
+        var dir;
+        if (w === 0) {
+            leafEdge = { x: leafHalfWidth * plantSize, y: leafLowPoint * plantSize, z: 0.5 * plantSize };
+            dir = { x: 0.2, y: 0, z: 0 };
+        } else {
+            leafEdge = { x: -leafHalfWidth * plantSize, y: leafLowPoint * plantSize, z: 0.5 * plantSize };
+            dir = { x: -0.2, y: 0, z: 0 };
+        }
+        var edgeRotation = Quat.multiply(rot, Quat.fromVec3Degrees({ x: 0, y: 120 * n, z: 0 }));
+        var leafEdgeRotated = Vec3.multiplyQbyV(edgeRotation, leafEdge);
+        var edge = Vec3.sum(pos, leafEdgeRotated);
+        return {
+            edge: edge,
+            direction: Vec3.normalize(Vec3.multiplyQbyV(edgeRotation, dir))
+        };
+    }
+
 
     function calculateZReg() {
         var a = 1 + Math.sin(Math.PI / 6.0);
@@ -90,7 +115,28 @@
                 direction: leafTip.direction
             };
             var intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
-            // print(JSON.stringify(intersection));
+            if (intersection.intersects && intersection.distance < 0.2) {
+                canGrow = false;
+                break;
+            }
+
+            var leafEdge0 = getLeafEdge(pos, rot, plantSize, i, 0);
+            pickRay = {
+                origin: leafEdge0.edge,
+                direction: leafEdge0.direction
+            };
+            intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
+            if (intersection.intersects && intersection.distance < 0.2) {
+                canGrow = false;
+                break;
+            }
+
+            var leafEdge1 = getLeafEdge(pos, rot, plantSize, i, 0);
+            pickRay = {
+                origin: leafEdge1.edge,
+                direction: leafEdge1.direction
+            };
+            intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
             if (intersection.intersects && intersection.distance < 0.2) {
                 canGrow = false;
                 break;
@@ -120,19 +166,35 @@
         var pos = properties.position;
         var rot = properties.rotation;
 
-        // var line0start = pos;
-        // var line0end = Vec3.sum(line0start, { x: 0, y: 1, z: 0 });
-        // var line0ID = Overlays.addOverlay("line3d", { start: line0start, end: line0end });
-        // overlays.push(line0ID);
+        if (showOverlays) {
+            // var line0start = pos;
+            // var line0end = Vec3.sum(line0start, { x: 0, y: 1, z: 0 });
+            // var line0ID = Overlays.addOverlay("line3d", { start: line0start, end: line0end });
+            // overlays.push(line0ID);
 
-        // for (var i = 0; i < 3; i++) {
-        //     var leafTip = getLeafTip(pos, rot, plantSize, i);
-        //     var lineTipID = Overlays.addOverlay("line3d", {
-        //         start: leafTip.tip,
-        //         end: Vec3.sum(leafTip.tip, Vec3.multiply(leafTip.direction, 0.2))
-        //     });
-        //     overlays.push(lineTipID);
-        // }
+            for (var i = 0; i < 3; i++) {
+                var leafTip = getLeafTip(pos, rot, plantSize, i);
+                var lineTipID = Overlays.addOverlay("line3d", {
+                    start: leafTip.tip,
+                    end: Vec3.sum(leafTip.tip, Vec3.multiply(leafTip.direction, 0.2))
+                });
+                overlays.push(lineTipID);
+
+                var leafEdge0 = getLeafEdge(pos, rot, plantSize, i, 0);
+                var lineEdge0ID = Overlays.addOverlay("line3d", {
+                    start: leafEdge0.edge,
+                    end: Vec3.sum(leafEdge0.edge, Vec3.multiply(leafEdge0.direction, 0.2))
+                });
+                overlays.push(lineEdge0ID);
+
+                var leafEdge1 = getLeafEdge(pos, rot, plantSize, i, 1);
+                var lineEdge1ID = Overlays.addOverlay("line3d", {
+                    start: leafEdge1.edge,
+                    end: Vec3.sum(leafEdge1.edge, Vec3.multiply(leafEdge1.direction, 0.2))
+                });
+                overlays.push(lineEdge1ID);
+            }
+        }
 
         var canGrow = getCanGrow(plantID, pos, rot, plantSize);
 
@@ -143,11 +205,11 @@
         }
         setPlantData(plantID, plantSize, plantAge);
 
-        if (Math.random() >= 0.9) {
+        if (plantSize > 0.7 && Math.random() >= 0.9) {
             makeSeed(plantID, pos, rot);
         }
 
-        if (plantAge >= 20) {
+        if (plantAge >= 30) {
             Entities.deleteEntity(plantID);
         }
     }
@@ -181,7 +243,7 @@
     }
 
 
-    function onClicked() {
+    function run() {
         var allEntities = Entities.findEntities({ x: 90, y: 0, z: 90 }, GROW_RANGE);
         allEntities.forEach(function(entityID) {
             var props = Entities.getEntityProperties(entityID, ["name", "modelURL", "position", "rotation", "dimensions"]);
@@ -194,13 +256,33 @@
             return false;
         });
 
-        // Script.setTimeout(function() {
-        //     overlays.forEach(function(overlayID) {
-        //         Overlays.deleteOverlay(overlayID);
-        //     });
-        //     overlays = [];
-        // }, 4000);
+        if (showOverlays) {
+            Script.setTimeout(function() {
+                overlays.forEach(function(overlayID) {
+                    Overlays.deleteOverlay(overlayID);
+                });
+                overlays = [];
+            }, 4000);
+        }
     }
+
+
+    function onClicked() {
+        active = !active;
+        if (active) {
+            if (!timer) {
+                timer = Script.setInterval(function() {
+                    run();
+                }, 10000);
+            }
+        } else {
+            if (timer) {
+                Script.clearInterval(timer);
+            }
+            timer = null;
+        }
+    }
+
 
     function cleanup() {
         button.clicked.disconnect(onClicked);
