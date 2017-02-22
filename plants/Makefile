@@ -33,7 +33,7 @@ link-libs: very-clean
 		install $(LIBS)
 
 
-upload: $(OUTPUTS) plant.jpg plant.mtl
+upload: $(OUTPUTS) plant-0.obj plants.mtl grow-plants.js plants.svg
 	mkdir -p plants
 	cp $^ plants/
 	rsync --delete -avP plants/ headache.hungry.com:public_html/hifi/plants/
