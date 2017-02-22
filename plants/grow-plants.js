@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Entities, Script, Tablet, Vec3, Quat, getEntityCustomData, setEntityCustomData, Overlays */
+/* global Entities, Script, Tablet, Vec3, Quat, getEntityCustomData, setEntityCustomData, Overlays, MyAvatar */
 
 (function() { // BEGIN LOCAL_SCOPE
 
@@ -12,7 +12,6 @@
     var NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
     var showOverlays = false;
     var active = false;
-    var timer = null;
 
     var initialPlantData = {
         age: 0.0,
@@ -106,8 +105,29 @@
         });
     }
 
-    function getCanGrow(plantID, pos, rot, plantSize) {
-        var canGrow = true;
+    function getLightAmount(plantID, pos, rot, plantSize) {
+        var sun = 0;
+        var possibleSun = 0;
+
+        for (var xAngle = -90; xAngle < 90; xAngle += 5) {
+            var sunQuat = Quat.fromVec3Degrees({ x: xAngle, y: 0, z: 0 });
+            var sunDirection = Vec3.multiplyQbyV(sunQuat, { x: 0, y: 1.0, z: 0 });
+            var pickRay = {
+                origin: Vec3.sum(pos, { x: 0, y: 0.01, z: 0 }),
+                direction: sunDirection
+            };
+            var intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
+            if (!intersection.intersects) {
+                sun += 1;
+            }
+            possibleSun += 1;
+        }
+
+        return sun / possibleSun;
+    }
+
+    function getHasRoomToGrow(plantID, pos, rot, plantSize) {
+        var hasRoomToGrow = true;
         for (var i = 0; i < 3; i++) {
             var leafTip = getLeafTip(pos, rot, plantSize, i);
             var pickRay = {
@@ -116,7 +136,7 @@
             };
             var intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
             if (intersection.intersects && intersection.distance < 0.2) {
-                canGrow = false;
+                hasRoomToGrow = false;
                 break;
             }
 
@@ -127,7 +147,7 @@
             };
             intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
             if (intersection.intersects && intersection.distance < 0.2) {
-                canGrow = false;
+                hasRoomToGrow = false;
                 break;
             }
 
@@ -138,17 +158,18 @@
             };
             intersection = Entities.findRayIntersection(pickRay, true, [], [plantID], true, false);
             if (intersection.intersects && intersection.distance < 0.2) {
-                canGrow = false;
+                hasRoomToGrow = false;
                 break;
             }
         }
-        return canGrow;
+        return hasRoomToGrow;
     }
 
-    function setPlantData(plantID, plantSize, plantAge) {
+    function setPlantData(plantID, plantSize, plantAge, sun) {
         setEntityCustomData("plant", plantID, {
             size: plantSize,
-            age: plantAge + 1
+            age: plantAge + 1,
+            light: sun
         });
     }
 
@@ -196,20 +217,26 @@
             }
         }
 
-        var canGrow = getCanGrow(plantID, pos, rot, plantSize);
+        var hasRoomToGrow = getHasRoomToGrow(plantID, pos, rot, plantSize);
+        var sun = 0;
 
-        if (canGrow) {
-            // grow plant
-            plantSize += 0.1;
-            fixUpPlant(plantID, plantSize);
+        if (hasRoomToGrow) {
+            // grow plant if it has enough light
+            sun = getLightAmount(plantID, pos, rot, plantSize);
+            if (Math.random() < sun + 0.2) {
+                plantSize += 0.1;
+                fixUpPlant(plantID, plantSize);
+            } else {
+                plantAge += 2;
+            }
         }
-        setPlantData(plantID, plantSize, plantAge);
+        setPlantData(plantID, plantSize, plantAge, sun);
 
-        if (plantSize > 0.7 && Math.random() >= 0.9) {
+        if (plantSize > 0.5 && Math.random() >= 0.7) {
             makeSeed(plantID, pos, rot);
         }
 
-        if (plantAge >= 30) {
+        if (plantAge > 50) {
             Entities.deleteEntity(plantID);
         }
     }
@@ -224,7 +251,7 @@
         var eulerRot = Quat.safeEulerAngles(rot);
         rot = Quat.fromVec3Radians({ x: 0, y: eulerRot.y, z: 0 });
 
-        if (getCanGrow(NULL_UUID, pos, rot, plantSize)) {
+        if (getHasRoomToGrow(NULL_UUID, pos, rot, plantSize)) {
             var zReg = calculateZReg();
             var plantID = Entities.addEntity({
                 type: "Model",
@@ -244,7 +271,7 @@
 
 
     function run() {
-        var allEntities = Entities.findEntities({ x: 90, y: 0, z: 90 }, GROW_RANGE);
+        var allEntities = Entities.findEntities(MyAvatar.position, GROW_RANGE);
         allEntities.forEach(function(entityID) {
             var props = Entities.getEntityProperties(entityID, ["name", "modelURL", "position", "rotation", "dimensions"]);
             if (props.name == "Plant-0") {
@@ -262,7 +289,11 @@
                     Overlays.deleteOverlay(overlayID);
                 });
                 overlays = [];
-            }, 4000);
+            }, 2000);
+        }
+
+        if (active) {
+            Script.setTimeout(run, 2000);
         }
     }
 
@@ -270,16 +301,7 @@
     function onClicked() {
         active = !active;
         if (active) {
-            if (!timer) {
-                timer = Script.setInterval(function() {
-                    run();
-                }, 10000);
-            }
-        } else {
-            if (timer) {
-                Script.clearInterval(timer);
-            }
-            timer = null;
+            run();
         }
     }
 
