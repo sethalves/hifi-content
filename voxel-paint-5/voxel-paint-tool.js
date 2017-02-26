@@ -252,36 +252,6 @@
             return Math.min(Math.max(v, 0), this.slices - 1);
         },
         addPolyVoxIfNeeded: function (brushPosition, editSphereRadius) {
-            // find all nearby entities
-            var searchRadius = 3.0;
-
-            var ids = Entities.findEntities(brushPosition, searchRadius);
-
-            // gather properties
-            var props = {};
-            for (var i = 0; i < ids.length; i++) {
-                var nearbyID = ids[i];
-                props[nearbyID] = Entities.getEntityProperties(nearbyID,
-                    ['type', 'name', 'localPosition',
-                        'position', 'rotation', 'dimensions', 'userData']);
-            }
-
-            // find the aether
-            var aetherID = null;
-            for (i = 0; i < ids.length; i++) {
-                var possibleAetherID = ids[i];
-                if (props[possibleAetherID].name == "voxel paint aether") {
-                    aetherID = possibleAetherID;
-                    break;
-                }
-            }
-
-            if (!aetherID) {
-                return ids;
-            }
-
-            // this.aetherID = aetherID;
-
             if (!this.aetherID) {
                 var aetherSearchRadius = 3.0;
                 var possibleAetherIDs = Entities.findEntities(brushPosition, aetherSearchRadius);
@@ -300,23 +270,20 @@
                 return Entities.findEntities(brushPosition, editSphereRadius);
             }
 
-            // var aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
             var aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
             var aetherDimensions = aetherProps.dimensions;
             var aetherHalfDimensions = Vec3.multiply(aetherDimensions, 0.5);
             var sliceSize = Vec3.multiply(aetherDimensions, 1.0 / this.slices);
             var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
 
-            // var ids = Entities.findEntities(brushPosition, editSphereRadius);
+            var ids = Entities.findEntities(brushPosition, editSphereRadius);
 
             // find all the current polyvox entities
             var withThisColorIDs = [];
             this.polyvoxes = {};
             for (var i = 0; i < ids.length; i++) {
                 var possiblePolyVoxID = ids[i];
-                var props = Entities.getEntityProperties(possiblePolyVoxID,
-                                                         ['type', 'name', 'localPosition',
-                                                          'position', 'rotation', 'dimensions', 'userData']);
+                var props = Entities.getEntityProperties(possiblePolyVoxID, ['name', 'localPosition', 'userData']);
                 if (props.name != "voxel paint") {
                     continue;
                 }
