@@ -19,23 +19,29 @@ t: ${TEXTURES}
 
 
 textures/color-%.png:
-mkdir -p textures
-ppmmake "rgb:`echo $@ | sed 's/textures.color-//' | sed 's/.png//' | sed 'sx-x/xg'`" 1 1 | /usr/bin/pnmtopng > $@
+	mkdir -p textures
+	ppmmake "rgb:`echo $@ | sed 's/textures.color-//' | sed 's/.png//' | sed 'sx-x/xg'`" 1 1 | /usr/bin/pnmtopng > $@
 
 #	ppmmake rgb:0/0/0 1 1 |	/usr/bin/pnmtopng > $@
 
 
-upload: voxel-paint-init.js voxel-paint-brush.js voxel-paint-eraser.js unitBoxTransparent.fbx voxel-paint-shared.js ${TEXTURES}
-rm -rf voxel-paint
-mkdir -p voxel-paint
-cp voxel-paint-init.js voxel-paint-brush.js voxel-paint/
-cp voxel-paint-eraser.js unitBoxTransparent.fbx voxel-paint-shared.js voxel-paint/
-mkdir -p voxel-paint/textures
-cp ${TEXTURES} voxel-paint/textures
-rsync --delete -avP voxel-paint/ headache.hungry.com:public_html/hifi/voxel-paint-5/
+upload: ${TEXTURES} voxel-paint-tool.js voxel-paint-palette.js voxel-paint-shared.js textures/grass.png textures/wood.png \
+	textures/dirt.png brushSet.json models/painter_Palette2.fbx models/arrows.fbx models/palette.fbx \
+	models/painter_Palette.fbx models/painter_Palette_L.fbx models/studioFloor.fbx models/smallBrush.fbx \
+	models/smallpaintRag.fbx models/largepaintRag.fbx models/unitBoxTransparent.fbx models/largeBrush.fbx \
+	models/medpaintRag.fbx models/medBrush.fbx voxel-paint-init.js voxel-paint-aether.js handyAttacher.js
+	rm -rf voxel-paint
+	mkdir -p voxel-paint
+	cp brushSet.json handyAttacher.js voxel-paint-aether.js voxel-paint-init.js voxel-paint/
+	cp voxel-paint-palette.js voxel-paint-shared.js voxel-paint-tool.js voxel-paint/
+	mkdir -p voxel-paint/models
+	cp models/*.fbx voxel-paint/models/
+	mkdir -p voxel-paint/textures
+	cp textures/*.png voxel-paint/textures/
+	rsync --delete -avP voxel-paint/ headache.hungry.com:public_html/hifi/voxel-paint-5/
 
 
 clean:
-rm -f *~
-rm -rf voxel-paint
-rm -rf textures
+	rm -f *~
+	rm -rf voxel-paint
+	rm -f textures/color-*png

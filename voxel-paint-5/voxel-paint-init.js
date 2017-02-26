@@ -3,9 +3,9 @@
 
 (function () {
     Script.include('/~/system/libraries/utils.js');
-    Script.include(Script.resolvePath('voxel-paint-shared.js?v13'));
+    Script.include(Script.resolvePath('voxel-paint-shared.js'));
 
-    this.dimension = 8;
+    this.dimension = 3;
 
     this.preload = function (entityID) {
         this.entityID = entityID;
@@ -81,7 +81,7 @@
     };
 
     this.addPaletteSpawner = function(position) {
-        
+
         var properties = Entities.getEntityProperties(this.entityID, ['position', 'rotation', 'dimensions']);
         var pickRay = {
             origin: properties.position,
@@ -97,7 +97,8 @@
         } else {
             paletteSpawnerPosition = properties.position;
         }
-        var paletteSpawnerPosition = Vec3.sum(paletteSpawnerPosition, Vec3.multiplyQbyV(properties.rotation, { x: 1,  y: 0, z: 1 }));
+        var paletteSpawnerPosition = Vec3.sum(paletteSpawnerPosition,
+                                              Vec3.multiplyQbyV(properties.rotation, { x: 1,  y: 0, z: 1 }));
         var paletteSpawnerID = Entities.addEntity({
             dimensions: { x: 0.63, y: 0.63, z: 0.63 },
             name: 'voxel paint palette spawner',

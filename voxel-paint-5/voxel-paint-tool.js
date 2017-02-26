@@ -1,8 +1,8 @@
 
-/* global Entities, genericTool, Script, Vec3, Quat, textureIndexToURLs, paintBucketColors */
+/* global Entities, Script, Vec3, Quat, Controller, VoxelPaintTool, Overlays, PALETTE_COLORS, VOXEL_TOOLS, MODELS_PATH */
 
 (function() {
-    Script.include(Script.resolvePath('voxel-paint-shared.js?v13'));
+    Script.include(Script.resolvePath('voxel-paint-shared.js'));
     var _this;
 
     var NULL_UUID = '{00000000-0000-0000-0000-000000000000}';
@@ -18,14 +18,19 @@
     VoxelPaintTool = function() {
         _this = this;
         _this.selectionSphere = false;
+
         _this.slices = 20;
         _this.voxelSize = 16;
-        _this.showPolyVoxes = false;
+        // _this.slices = 5;
+        // _this.voxelSize = 64;
+
+        _this.showPolyVoxes = true;
         _this.toolRadius = 0.025;
         _this.toolLength = 0.275;
         _this.color = 0;
         _this.tool = 0;
         _this.toolEntity = null;
+        _this.aetherID = null;
     };
 
     VoxelPaintTool.prototype = {
@@ -59,7 +64,11 @@
                 });
             }
             Overlays.editOverlay(_this.brushOverlay, {
-                dimensions: _this.showSelectionSphere ? SELECTION_SPHERE_DIMENSIONS : {x: _this.toolRadius * 2, y: _this.toolRadius * 2, z: _this.toolRadius * 2},
+                dimensions: _this.showSelectionSphere ? SELECTION_SPHERE_DIMENSIONS : {
+                    x: _this.toolRadius * 2,
+                    y: _this.toolRadius * 2,
+                    z: _this.toolRadius * 2
+                },
                 localPosition: {x: 0, y: _this.toolLength, z: 0}
             });
         },
@@ -96,18 +105,23 @@
             _this.toggleWithTriggerPressure();
             var properties = Entities.getEntityProperties(id, ['position', 'rotation']);
             if (_this.active) {
-                var brushPosition = Vec3.sum(Vec3.multiplyQbyV(properties.rotation, {x: 0, y: _this.toolLength, z: 0}), properties.position);
+                var brushPosition = Vec3.sum(Vec3.multiplyQbyV(properties.rotation, {
+                    x: 0,
+                    y: _this.toolLength,
+                    z: 0
+                }), properties.position);
                 var toolType = VOXEL_TOOLS[_this.tool].type;
+                var ids;
                 if (toolType === 'brush') {
-                    var ids = _this.addPolyVoxIfNeeded(brushPosition, _this.toolRadius);
+                    ids = _this.addPolyVoxIfNeeded(brushPosition, _this.toolRadius);
                     for (var i = 0; i < ids.length; i++) {
                         Entities.setVoxelSphere(ids[i], brushPosition, _this.toolRadius, 255);
                     }
                 } else if (toolType === 'eraser') {
                     var searchRadius = 2.0;
-                    var ids = Entities.findEntities(brushPosition, searchRadius);
-                    for (var i = 0; i < ids.length; i++) {
-                        Entities.setVoxelSphere(ids[i], brushPosition, _this.toolRadius, 0);
+                    ids = Entities.findEntities(brushPosition, searchRadius);
+                    for (var j = 0; j < ids.length; j++) {
+                        Entities.setVoxelSphere(ids[j], brushPosition, _this.toolRadius, 0);
                     }
                 }
             } else {
@@ -159,9 +173,10 @@
         },
         releaseEquip: function(id, params) {
             _this.cleanup();
-            // FIXME: it seems to release quickly while auto-attaching, added this to make sure it doesn't delete the entity at that time
+            // FIXME: it seems to release quickly while auto-attaching, added this to make sure it doesn't delete the
+            // entity at that time
             var MIN_CLEANUP_TIME = 1000;
-            if (_this.equipped && (Date.now() - _this.startEquipTime) > 1000) {
+            if (_this.equipped && (Date.now() - _this.startEquipTime) > MIN_CLEANUP_TIME) {
                 Entities.deleteEntity(_this.entityID);
             }
         },
@@ -265,29 +280,54 @@
                 return ids;
             }
 
-            var aetherProps = props[aetherID];
+            this.aetherID = aetherID;
+
+            // if (!this.aetherID) {
+            //     var aetherSearchRadius = 3.0;
+            //     var possibleAetherIDs = Entities.findEntities(brushPosition, aetherSearchRadius);
+            //     for (var j = 0; j < possibleAetherIDs.length; j++) {
+            //         var possibleAetherID = possibleAetherIDs[j];
+            //         var possibleAetherProps = Entities.getEntityProperties(possibleAetherID, ['name']);
+            //         if (possibleAetherProps.name == "voxel paint aether") {
+            //             this.aetherID = possibleAetherProps;
+            //             break;
+            //         }
+            //     }
+            // }
+
+            // if (!this.aetherID) {
+            //     print("error -- voxel-paint-tool can't find aether");
+            //     return Entities.findEntities(brushPosition, editSphereRadius);
+            // }
+
+            // var aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
+            var aetherProps = Entities.getEntityProperties(aetherID, ['position', 'rotation', 'dimensions']);
             var aetherDimensions = aetherProps.dimensions;
             var aetherHalfDimensions = Vec3.multiply(aetherDimensions, 0.5);
             var sliceSize = Vec3.multiply(aetherDimensions, 1.0 / this.slices);
             var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
 
+            // var ids = Entities.findEntities(brushPosition, editSphereRadius);
 
             // find all the current polyvox entities
             var withThisColorIDs = [];
             this.polyvoxes = {};
-            for (i = 0; i < ids.length; i++) {
+            for (var i = 0; i < ids.length; i++) {
                 var possiblePolyVoxID = ids[i];
-                if (props[possiblePolyVoxID].name != "voxel paint") {
+                var props = Entities.getEntityProperties(possiblePolyVoxID,
+                                                         ['type', 'name', 'localPosition',
+                                                          'position', 'rotation', 'dimensions', 'userData']);
+                if (props.name != "voxel paint") {
                     continue;
                 }
-                var userData = JSON.parse(props[possiblePolyVoxID].userData);
+                var userData = JSON.parse(props.userData);
                 var cFind = userData.color;
 
                 if (cFind != this.color) {
                     continue;
                 }
 
-                var centerOffset = Vec3.sum(props[possiblePolyVoxID].localPosition, aetherHalfDimensions);
+                var centerOffset = Vec3.sum(props.localPosition, aetherHalfDimensions);
                 var lowCornerOffset = Vec3.subtract(centerOffset, halfSliceSize);
                 var xFind = Math.round(lowCornerOffset.x / sliceSize.x);
                 var yFind = Math.round(lowCornerOffset.y / sliceSize.y);
@@ -332,7 +372,7 @@
                         if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, {x:0.5, y:0.5, z:0.5}),
                                 brushPosInVoxSpace) < sliceRezDistance) {
                             // if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, halfSliceSize), brushPosInVoxSpace) < sliceRezDistance) {
-                            var newID = this.addPolyVox(x, y, z, this.color, sliceSize, aetherID, aetherProps.dimensions);
+                            var newID = this.addPolyVox(x, y, z, this.color, sliceSize, aetherProps.dimensions);
                             if (newID) {
                                 withThisColorIDs.push(newID);
                                 // keep track of which PolyVoxes need their neighbors hooked up
@@ -361,7 +401,7 @@
 
             return withThisColorIDs;
         },
-        addPolyVox: function (x, y, z, c, sliceSize, aetherID, aetherDimensions) {
+        addPolyVox: function (x, y, z, c, sliceSize, aetherDimensions) {
             if (!this.polyvoxes[x]) {
                 this.polyvoxes[x] = {};
             }
@@ -372,6 +412,7 @@
                 this.polyvoxes[x][y][z] = {};
             }
             if (this.polyvoxes[x][y][z][c]) {
+                // we already have a polyvox for this position and color
                 return null;
             }
 
@@ -400,7 +441,7 @@
                 yTextureURL: xyzTextures[1],
                 zTextureURL: xyzTextures[2],
                 userData: JSON.stringify({color: c}),
-                parentID: aetherID
+                parentID: this.aetherID
             });
 
             if (_this.showPolyVoxes) {
@@ -412,7 +453,7 @@
                     dimensions: sliceSize,
                     collisionless: true,
                     // lifetime: 60.0
-                    parentID: aetherID
+                    parentID: this.aetherID
                 });
             }
 

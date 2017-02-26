@@ -1,5 +1,5 @@
 (function() {
-    Script.include(Script.resolvePath('voxel-paint-shared.js?v13'));
+    Script.include(Script.resolvePath('voxel-paint-shared.js'));
 
     var _this = null;
 
@@ -23,7 +23,7 @@
                     y: 0.43398189544677734,
                     z: -0.10347139835357666
                 },
-                script: Script.resolvePath('voxel-paint-palette.js') + '?t=' + Date.now(),
+                script: Script.resolvePath('voxel-paint-palette.js'),
                 shapeType: 'none',
                 collisionless: true,
                 type: 'Sphere',

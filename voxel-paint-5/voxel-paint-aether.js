@@ -1,5 +1,5 @@
 (function() {
-    this.leaveEntity = function() { 
+    this.leaveEntity = function() {
         // While leaving the aether disable the hands short
         Script.setTimeout(function() {
             Messages.sendLocalMessage('Hifi-Hand-Disabler', 'both');
