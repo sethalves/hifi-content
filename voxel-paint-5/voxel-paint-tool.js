@@ -15,22 +15,42 @@
 
     var SELECTION_SPHERE_DIMENSIONS = {x: 0.05, y: 0.05, z: 0.05};
 
+    function AABoxTouchesSphere(center, radius, AAMin, AAMax) {
+        // Avro's algorithm from this paper: http://www.mrtc.mdh.se/projects/3Dgraphics/paperF.pdf
+        var e0 = {
+            x: Math.max(AAMin.x - center.x, 0),
+            y: Math.max(AAMin.y - center.y, 0),
+            z: Math.max(AAMin.z - center.z, 0)
+        };
+        var e1 = {
+            x: Math.max(center.x - AAMax.x, 0),
+            y: Math.max(center.y - AAMax.y, 0),
+            z: Math.max(center.z - AAMax.z, 0)
+        };
+        var e = Vec3.sum(e0, e1);
+        return Vec3.length(e) <= radius;
+    }
+
+
     VoxelPaintTool = function() {
         _this = this;
         _this.selectionSphere = false;
 
-        _this.slices = 20;
-        _this.voxelSize = 16;
-        // _this.slices = 5;
-        // _this.voxelSize = 64;
+        // _this.slices = 20;    // current
+        // _this.voxelSize = 16; // current
+        _this.slices = 6;
+        _this.voxelSize = 32;
 
-        _this.showPolyVoxes = true;
+
+        _this.showPolyVoxes = false;
         _this.toolRadius = 0.025;
         _this.toolLength = 0.275;
         _this.color = 0;
         _this.tool = 0;
         _this.toolEntity = null;
         _this.aetherID = null;
+        _this.aetherProps = null;
+        _this.propsCache = {};
     };
 
     VoxelPaintTool.prototype = {
@@ -260,6 +280,7 @@
                     var possibleAetherProps = Entities.getEntityProperties(possibleAetherID, ['name']);
                     if (possibleAetherProps.name == "voxel paint aether") {
                         this.aetherID = possibleAetherID;
+                        this.aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
                         break;
                     }
                 }
@@ -270,23 +291,30 @@
                 return Entities.findEntities(brushPosition, editSphereRadius);
             }
 
-            var aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
-            var aetherDimensions = aetherProps.dimensions;
+            var aetherDimensions = this.aetherProps.dimensions;
             var aetherHalfDimensions = Vec3.multiply(aetherDimensions, 0.5);
             var sliceSize = Vec3.multiply(aetherDimensions, 1.0 / this.slices);
             var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
 
-            var ids = Entities.findEntities(brushPosition, editSphereRadius);
+            var ids = Entities.findEntities(brushPosition, Vec3.length(sliceSize));
 
             // find all the current polyvox entities
             var withThisColorIDs = [];
             this.polyvoxes = {};
             for (var i = 0; i < ids.length; i++) {
                 var possiblePolyVoxID = ids[i];
-                var props = Entities.getEntityProperties(possiblePolyVoxID, ['name', 'localPosition', 'userData']);
-                if (props.name != "voxel paint") {
-                    continue;
+
+                var props;
+                if (possiblePolyVoxID in this.propsCache) {
+                    props = this.propsCache[possiblePolyVoxID];
+                } else {
+                    props = Entities.getEntityProperties(possiblePolyVoxID, ['name', 'localPosition', 'userData']);
+                    if (props.name != "voxel paint") {
+                        continue;
+                    }
+                    this.propsCache[possiblePolyVoxID] = props;
                 }
+
                 var userData = JSON.parse(props.userData);
                 var cFind = userData.color;
 
@@ -313,8 +341,8 @@
                 withThisColorIDs.push(possiblePolyVoxID);
             }
 
-            var brushOffset = Vec3.multiplyQbyV(Quat.inverse(aetherProps.rotation),
-                Vec3.subtract(brushPosition, aetherProps.position));
+            var brushOffset = Vec3.multiplyQbyV(Quat.inverse(this.aetherProps.rotation),
+                Vec3.subtract(brushPosition, this.aetherProps.position));
             brushOffset = Vec3.sum(brushOffset, Vec3.multiply(aetherDimensions, 0.5));
             var brushPosInVoxSpace = { x: brushOffset.x / sliceSize.x,
                 y: brushOffset.y / sliceSize.y,
@@ -336,9 +364,8 @@
             for (var x = lowX; x < highX; x++) {
                 for (var y = lowY; y < highY; y++) {
                     for (var z = lowZ; z < highZ; z++) {
-                        if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, {x:0.5, y:0.5, z:0.5}),
-                                brushPosInVoxSpace) < sliceRezDistance) {
-                            // if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, halfSliceSize), brushPosInVoxSpace) < sliceRezDistance) {
+                        if (AABoxTouchesSphere(brushPosInVoxSpace, radiusInVoxelSpace,
+                                               {x:x, y:y, z:z}, Vec3.sum({x:x, y:y, z:z}, {x:1.0, y:1.0, z:1.0}))) {
                             var newID = this.addPolyVox(x, y, z, this.color, sliceSize, aetherDimensions);
                             if (newID) {
                                 withThisColorIDs.push(newID);
@@ -411,7 +438,7 @@
                 parentID: this.aetherID
             });
 
-            if (_this.showPolyVoxes) {
+            if (this.showPolyVoxes) {
                 Entities.addEntity({
                     name: "voxel paint debug cube",
                     type: "Model",
