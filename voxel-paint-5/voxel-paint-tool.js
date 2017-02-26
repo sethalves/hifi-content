@@ -280,28 +280,28 @@
                 return ids;
             }
 
-            this.aetherID = aetherID;
+            // this.aetherID = aetherID;
 
-            // if (!this.aetherID) {
-            //     var aetherSearchRadius = 3.0;
-            //     var possibleAetherIDs = Entities.findEntities(brushPosition, aetherSearchRadius);
-            //     for (var j = 0; j < possibleAetherIDs.length; j++) {
-            //         var possibleAetherID = possibleAetherIDs[j];
-            //         var possibleAetherProps = Entities.getEntityProperties(possibleAetherID, ['name']);
-            //         if (possibleAetherProps.name == "voxel paint aether") {
-            //             this.aetherID = possibleAetherProps;
-            //             break;
-            //         }
-            //     }
-            // }
+            if (!this.aetherID) {
+                var aetherSearchRadius = 3.0;
+                var possibleAetherIDs = Entities.findEntities(brushPosition, aetherSearchRadius);
+                for (var j = 0; j < possibleAetherIDs.length; j++) {
+                    var possibleAetherID = possibleAetherIDs[j];
+                    var possibleAetherProps = Entities.getEntityProperties(possibleAetherID, ['name']);
+                    if (possibleAetherProps.name == "voxel paint aether") {
+                        this.aetherID = possibleAetherID;
+                        break;
+                    }
+                }
+            }
 
-            // if (!this.aetherID) {
-            //     print("error -- voxel-paint-tool can't find aether");
-            //     return Entities.findEntities(brushPosition, editSphereRadius);
-            // }
+            if (!this.aetherID) {
+                print("error -- voxel-paint-tool can't find aether");
+                return Entities.findEntities(brushPosition, editSphereRadius);
+            }
 
             // var aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
-            var aetherProps = Entities.getEntityProperties(aetherID, ['position', 'rotation', 'dimensions']);
+            var aetherProps = Entities.getEntityProperties(this.aetherID, ['position', 'rotation', 'dimensions']);
             var aetherDimensions = aetherProps.dimensions;
             var aetherHalfDimensions = Vec3.multiply(aetherDimensions, 0.5);
             var sliceSize = Vec3.multiply(aetherDimensions, 1.0 / this.slices);
@@ -348,7 +348,7 @@
 
             var brushOffset = Vec3.multiplyQbyV(Quat.inverse(aetherProps.rotation),
                 Vec3.subtract(brushPosition, aetherProps.position));
-            brushOffset = Vec3.sum(brushOffset, Vec3.multiply(aetherProps.dimensions, 0.5));
+            brushOffset = Vec3.sum(brushOffset, Vec3.multiply(aetherDimensions, 0.5));
             var brushPosInVoxSpace = { x: brushOffset.x / sliceSize.x,
                 y: brushOffset.y / sliceSize.y,
                 z: brushOffset.z / sliceSize.z };
@@ -372,7 +372,7 @@
                         if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, {x:0.5, y:0.5, z:0.5}),
                                 brushPosInVoxSpace) < sliceRezDistance) {
                             // if (Vec3.distance(Vec3.sum({x:x, y:y, z:z}, halfSliceSize), brushPosInVoxSpace) < sliceRezDistance) {
-                            var newID = this.addPolyVox(x, y, z, this.color, sliceSize, aetherProps.dimensions);
+                            var newID = this.addPolyVox(x, y, z, this.color, sliceSize, aetherDimensions);
                             if (newID) {
                                 withThisColorIDs.push(newID);
                                 // keep track of which PolyVoxes need their neighbors hooked up
