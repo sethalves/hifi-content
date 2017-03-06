@@ -24,6 +24,11 @@
         text: "PLANTS",
         sortOrder: 15
     });
+    var bakeButton = tablet.addButton({
+        icon: "http://headache.hungry.com/~seth/hifi/plants/plants.svg",
+        text: "BAKE PLANTS",
+        sortOrder: 16
+    });
 
 
     function getDimensions(plantSize) {
@@ -297,7 +302,6 @@
         }
     }
 
-
     function onClicked() {
         active = !active;
         if (active) {
@@ -305,12 +309,63 @@
         }
     }
 
+    function onBakeClicked() {
+        var allPlants = [];
+        var allEntities = Entities.findEntities(MyAvatar.position, GROW_RANGE);
+        allEntities.forEach(function(entityID) {
+            var props = Entities.getEntityProperties(entityID, ["name", "modelURL", "position", "rotation", "dimensions"]);
+            if (props.name == "Plant-0") {
+                var trimmedProps = {
+                    position: props.position,
+                    rotation: props.rotation,
+                    dimensions: props.dimensions
+                };
+
+                allPlants.push(trimmedProps);
+            }
+        });
+
+        bakePlants(allPlants);
+    }
+
+    function bakePlants(allPlants) {
+        var req = new XMLHttpRequest();
+        req.responseType = 'json';
+        req.open("POST", "http://headache.hungry.com/~seth/hifi/plants/plant-consolidator.cgi", false);
+        req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        req.send(JSON.stringify(allPlants));
+        if (req.status == 200) {
+            // var keys = Object.keys(req.response);
+            // for (var keyIndex in keys) {
+            //     if (keys.hasOwnProperty(keyIndex)) {
+            //         var key = keys[keyIndex];
+            //         // print("    " + key + " = " + req.response[key]);
+            //     }
+            // }
+
+            var modelURL = req.response.modelURL;
+
+            // Entities.addEntity({
+            //     type: 'Model',
+            //     modelURL: modelURL,
+            //     position: Vec3.sum(platformPosition, { x: 0, y: 1.0, z: -2 }),
+            //     userData: JSON.stringify({"grabbableKey":{"grabbable":true}})
+            // });
+
+            print("modelURL is " + modelURL);
+        } else {
+            print("Error loading data: " + req.status + " " + req.statusText + ", " + req.errorCode);
+        }
+    }
 
     function cleanup() {
         button.clicked.disconnect(onClicked);
+        bakeButton.clicked.disconnect(onClicked);
         tablet.removeButton(button);
+        tablet.removeButton(bakeButton);
     }
 
     button.clicked.connect(onClicked);
+    bakeButton.clicked.connect(onBakeClicked);
     Script.scriptEnding.connect(cleanup);
 }()); // END LOCAL_SCOPE
