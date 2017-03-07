@@ -17,7 +17,7 @@ OUTPUTS=plant-0.obj
 all: $(OUTPUTS)
 
 
-plant-0.obj:
+plant-0.obj: plants-main.sld plants-gauche.scm
 	./plants-gauche.scm --type 0 $@
 
 
