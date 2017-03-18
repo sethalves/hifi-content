@@ -42,7 +42,9 @@
             name: "polyvox mesh extract test 0",
             lifetime: 600,
             dynamic: false,
-            collisionless: true
+            collisionless: true,
+            // voxelSurfaceStyle: 2 // cubic
+            voxelSurfaceStyle: 3 // edged marching-cubes
         });
 
         var voxelID1 = Entities.addEntity({
@@ -54,7 +56,9 @@
             name: "polyvox mesh extract test 1",
             lifetime: 600,
             dynamic: false,
-            collisionless: true
+            collisionless: true,
+            // voxelSurfaceStyle: 2 // edged cubic
+            voxelSurfaceStyle: 3 // edged marching-cubes
         });
 
 
@@ -80,7 +84,7 @@
                         Entities.addEntity({
                             type: "Model",
                             modelURL: "atp:" + fileName,
-                            dimensions: { x: 2, y: 2, z: 2 },
+                            // dimensions: { x: 2, y: 2, z: 2 },
                             position: Vec3.sum(position, { x: 0, y: 2, z: 0 }),
                             // rotation: MyAvatar.orientation,
                             name: "polyvox mesh extract test model",
