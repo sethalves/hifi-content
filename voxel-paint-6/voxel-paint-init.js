@@ -1,5 +1,5 @@
 
-/* global Entities, Vec3, Script, paintBucketColors, Settings */
+/* global Entities, Vec3, Script, PALETTE_COLORS, Settings */
 
 (function () {
     Script.include("/~/system/libraries/utils.js");
@@ -74,7 +74,7 @@
             collisionMask: 0,
             collisionless: true,
             visible: false,
-            script: Script.resolvePath("voxel-paint-aether.js"),
+            // script: Script.resolvePath("voxel-paint-aether.js"),
             userData: JSON.stringify({ grabbableKey: {grabbable: false} })
         });
         return aetherID;
@@ -114,7 +114,7 @@
         Entities.addEntity({
             collidesWith: "",
             collisionMask: 0,
-            color: paintBucketColors[ colorIndex ],
+            color: PALETTE_COLORS[ colorIndex ].color,
             dimensions: { x: 2*radius, y: 2*radius, z: 2*radius },
             name: "voxel paint brush tip",
             parentID: brushID,
@@ -220,7 +220,7 @@
     };
 
 
-    this.addPaintBucketIfNeeded = function (textureIndex, color, platformID) {
+    this.addPaintBucketIfNeeded = function (textureIndex, palette_color, platformID) {
         var bucketName = "voxel paint color bucket " + textureIndex;
         var bucketID = this.findEntityIDByName(bucketName);
         if (bucketID) {
@@ -237,7 +237,7 @@
                                z: bucket0Position.z + textureIndex * this.paintBucketStride };
 
         bucketID = Entities.addEntity({
-            color: color,
+            color: palette_color.color,
             dimensions: { x: this.paintBucketSize, y: this.paintBucketSize, z: this.paintBucketSize },
             name: bucketName,
             position: bucketPosition,
@@ -291,8 +291,8 @@
 
         this.addBrushes();
 
-        for (var textureIndex = 0; textureIndex < paintBucketColors.length; textureIndex++) {
-            this.addPaintBucketIfNeeded(textureIndex, paintBucketColors[textureIndex], platformID);
+        for (var textureIndex = 0; textureIndex < PALETTE_COLORS.length; textureIndex++) {
+            this.addPaintBucketIfNeeded(textureIndex, PALETTE_COLORS[textureIndex], platformID);
         }
     };
 

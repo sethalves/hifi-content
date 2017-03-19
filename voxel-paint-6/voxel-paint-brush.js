@@ -1,5 +1,5 @@
 
-/* global Entities, genericTool, Script, Vec3, Quat, textureIndexToURLs, paintBucketColors */
+/* global Entities, genericTool, Script, Vec3, Quat, PALETTE_COLORS */
 
 (function() {
     Script.include("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
@@ -8,6 +8,7 @@
     var brush = genericTool(
         function() { // start
             this.brush = Entities.getChildrenIDs(this.entityID)[0];
+            this.previousBrushPositionSet = false;
         },
         function() { // continue
             var brushProps = Entities.getEntityProperties(this.brush, ["position", "rotation",
@@ -15,6 +16,11 @@
             // var editSphereRadius = 0.035;
             var editSphereRadius = brushProps.dimensions.x / 2.0;
             this.color = JSON.parse(brushProps.userData).color;
+
+            if (!this.previousBrushPositionSet) {
+                this.previousBrushPositionSet = true;
+                this.previousBrushPosition = brushProps.position;
+            }
 
             var ids = this.addPolyVoxIfNeeded(this.previousBrushPosition, brushProps.position, editSphereRadius);
 
@@ -29,7 +35,9 @@
     brush.slices = 10;
     brush.voxelSize = 16;
     brush.showPolyVoxes = true;
-
+    brush.propsCache = {};
+    brush.previousBrushPosition = null;
+    brush.previousBrushPositionSet = false;
 
     brush.getPolyVox = function (x, y, z, c) {
         if (!this.polyvoxes) {
@@ -158,8 +166,7 @@
                 var newColorIndex = JSON.parse(props.userData).color;
                 if (newColorIndex != this.color) {
                     this.color = newColorIndex;
-                    print("switch to color: " + newColorIndex);
-                    Entities.editEntity(this.brush, { color: paintBucketColors[ newColorIndex ],
+                    Entities.editEntity(this.brush, { color: PALETTE_COLORS[ newColorIndex ].color,
                                                       userData: JSON.stringify({color: newColorIndex})});
                 }
             }
@@ -266,7 +273,7 @@
     };
 
 
-    brush.addPolyVox = function (x, y, z, c, sliceSize, aetherID, aetherDimensions) {
+    brush.addPolyVox = function (x, y, z, c, sliceSize, aetherDimensions) {
         if (!this.polyvoxes[x]) {
             this.polyvoxes[x] = {};
         }
@@ -286,6 +293,12 @@
         var localPosition = Vec3.sum({x: x * sliceSize.x, y: y * sliceSize.y, z: z * sliceSize.z}, halfSliceSize);
         localPosition = Vec3.subtract(localPosition, Vec3.multiply(aetherDimensions, 0.5));
 
+        var xyzTextures = typeof PALETTE_COLORS[c].textures === 'string' ? [
+            PALETTE_COLORS[c].textures,
+            PALETTE_COLORS[c].textures,
+            PALETTE_COLORS[c].textures
+        ] : PALETTE_COLORS[c].textures;
+
         this.polyvoxes[x][y][z][c] = Entities.addEntity({
             type: "PolyVox",
             name: "voxel paint",
@@ -296,11 +309,11 @@
             voxelSurfaceStyle: 0,
             collisionless: true,
             // lifetime: 28800.0, // 8 hours
-            xTextureURL: textureIndexToURLs[c][0],
-            yTextureURL: textureIndexToURLs[c][1],
-            zTextureURL: textureIndexToURLs[c][2],
+            xTextureURL: xyzTextures[0],
+            yTextureURL: xyzTextures[1],
+            zTextureURL: xyzTextures[2],
             userData: JSON.stringify({color: c}),
-            parentID: aetherID
+            parentID: this.aetherID
         });
 
         if (this.showPolyVoxes) {
@@ -312,7 +325,7 @@
                 dimensions: sliceSize,
                 collisionless: true,
                 // lifetime: 60.0
-                parentID: aetherID
+                parentID: this.aetherID
             });
         }
 
