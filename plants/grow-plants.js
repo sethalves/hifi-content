@@ -228,7 +228,7 @@
         if (hasRoomToGrow) {
             // grow plant if it has enough light
             sun = getLightAmount(plantID, pos, rot, plantSize);
-            if (Math.random() < sun + 0.2) {
+            if (Math.random() < sun + 0.3) {
                 plantSize += 0.1;
                 fixUpPlant(plantID, plantSize);
             } else {

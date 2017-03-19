@@ -33,7 +33,11 @@ link-libs: very-clean
 		install $(LIBS)
 
 
-upload: $(OUTPUTS) plant-0.obj plants.mtl grow-plants.js plants.svg plant-consolidator.cgi
+plants.obj: plants-3e4f2ae2-46b9-4060-9f7e-bb4ef295ab93.sexp plants-4ec771c8-fa90-42b1-9dfb-e412e6ed351c.sexp plants-c4a58a3f-78fd-40a7-b6fc-b5e5f1f35f5a.sexp
+	./plants-gauche.scm --group plants-3e4f2ae2-46b9-4060-9f7e-bb4ef295ab93.sexp --group plants-4ec771c8-fa90-42b1-9dfb-e412e6ed351c.sexp --group plants-c4a58a3f-78fd-40a7-b6fc-b5e5f1f35f5a.sexp $@
+
+
+upload: $(OUTPUTS) plant-0.obj plants.mtl grow-plants.js plants.svg plant-consolidator.cgi plants.obj
 	mkdir -p plants
 	cp $^ plants/
 	rsync -avP plants/ headache.hungry.com:public_html/hifi/plants/
@@ -43,6 +47,7 @@ clean:
 	rm -f *~
 	rm -rf plants
 	rm -f plant-0.obj
+	rm -f plants.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
