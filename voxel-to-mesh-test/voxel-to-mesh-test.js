@@ -36,7 +36,7 @@
         var voxelID0 = Entities.addEntity({
             type: "PolyVox",
             dimensions: { x: 2, y: 2, z: 2 },
-            voxelVolumeSiez: { x: 32, y: 32, z: 32 },
+            voxelVolumeSize: { x: 32, y: 32, z: 32 },
             position: Vec3.sum(position, toTheSide),
             rotation: MyAvatar.orientation,
             name: "polyvox mesh extract test 0",
@@ -50,7 +50,7 @@
         var voxelID1 = Entities.addEntity({
             type: "PolyVox",
             dimensions: { x: 2, y: 2, z: 2 },
-            voxelVolumeSiez: { x: 32, y: 32, z: 32 },
+            voxelVolumeSize: { x: 32, y: 32, z: 32 },
             position: Vec3.subtract(position, toTheSide),
             rotation: MyAvatar.orientation,
             name: "polyvox mesh extract test 1",
