@@ -15,22 +15,21 @@
 
     var SELECTION_SPHERE_DIMENSIONS = {x: 0.05, y: 0.05, z: 0.05};
 
-    function AABoxTouchesSphere(center, radius, AAMin, AAMax) {
-        // Avro's algorithm from this paper: http://www.mrtc.mdh.se/projects/3Dgraphics/paperF.pdf
-        var e0 = {
-            x: Math.max(AAMin.x - center.x, 0),
-            y: Math.max(AAMin.y - center.y, 0),
-            z: Math.max(AAMin.z - center.z, 0)
-        };
-        var e1 = {
-            x: Math.max(center.x - AAMax.x, 0),
-            y: Math.max(center.y - AAMax.y, 0),
-            z: Math.max(center.z - AAMax.z, 0)
-        };
-        var e = Vec3.sum(e0, e1);
-        return Vec3.length(e) <= radius;
-    }
-
+    // function AABoxTouchesSphere(center, radius, AAMin, AAMax) {
+    //     // Avro's algorithm from this paper: http://www.mrtc.mdh.se/projects/3Dgraphics/paperF.pdf
+    //     var e0 = {
+    //         x: Math.max(AAMin.x - center.x, 0),
+    //         y: Math.max(AAMin.y - center.y, 0),
+    //         z: Math.max(AAMin.z - center.z, 0)
+    //     };
+    //     var e1 = {
+    //         x: Math.max(center.x - AAMax.x, 0),
+    //         y: Math.max(center.y - AAMax.y, 0),
+    //         z: Math.max(center.z - AAMax.z, 0)
+    //     };
+    //     var e = Vec3.sum(e0, e1);
+    //     return Vec3.length(e) <= radius;
+    // }
 
     VoxelPaintTool = function() {
         _this = this;
@@ -38,8 +37,12 @@
 
         // _this.slices = 20;    // current
         // _this.voxelSize = 16; // current
-        _this.slices = 6;
-        _this.voxelSize = 32;
+
+        _this.slices = 10;
+        _this.voxelSize = 26;
+
+        // _this.slices = 6;
+        // _this.voxelSize = 32;
 
 
         _this.showPolyVoxes = false;
@@ -58,6 +61,7 @@
             _this.active = false;
             _this.entityID = id;
             _this.brushOverlay = null;
+            _this.previousBrushPositionSet = false;
         },
         // remote called function
         setColor: function(id, params) {
@@ -115,6 +119,7 @@
                 _this.targetAvatar = null;
                 _this.canActivate = true;
                 _this.active = false;
+                _this.previousBrushPositionSet = false;
             }
             if (_this.canActivate === true && _this.triggerValue > 0.55) {
                 _this.canActivate = false;
@@ -133,10 +138,15 @@
                 var toolType = VOXEL_TOOLS[_this.tool].type;
                 var ids;
                 if (toolType === 'brush') {
-                    ids = _this.addPolyVoxIfNeeded(brushPosition, _this.toolRadius);
-                    for (var i = 0; i < ids.length; i++) {
-                        Entities.setVoxelSphere(ids[i], brushPosition, _this.toolRadius, 255);
+                    if (!_this.previousBrushPositionSet) {
+                        _this.previousBrushPositionSet = true;
+                        _this.previousBrushPosition = brushPosition;
                     }
+                    ids = _this.addPolyVoxIfNeeded(_this.previousBrushPosition, brushPosition, _this.toolRadius);
+                    for (var i = 0; i < ids.length; i++) {
+                        Entities.setVoxelCapsule(ids[i], _this.previousBrushPosition, brushPosition, _this.toolRadius, 255);
+                    }
+                    _this.previousBrushPosition = brushPosition;
                 } else if (toolType === 'eraser') {
                     var searchRadius = 2.0;
                     ids = Entities.findEntities(brushPosition, searchRadius);
@@ -271,7 +281,7 @@
         clamp: function (v) {
             return Math.min(Math.max(v, 0), this.slices - 1);
         },
-        addPolyVoxIfNeeded: function (brushPosition, editSphereRadius) {
+        addPolyVoxIfNeeded: function (previousBrushPosition, brushPosition, editSphereRadius) {
             if (!this.aetherID) {
                 var aetherSearchRadius = 3.0;
                 var possibleAetherIDs = Entities.findEntities(brushPosition, aetherSearchRadius);
@@ -295,8 +305,11 @@
             var aetherHalfDimensions = Vec3.multiply(aetherDimensions, 0.5);
             var sliceSize = Vec3.multiply(aetherDimensions, 1.0 / this.slices);
             var halfSliceSize = Vec3.multiply(sliceSize, 0.5);
+            var sliceRadius = Math.sqrt(Vec3.dot(halfSliceSize, halfSliceSize));
+            var capsuleLength = 2 * editSphereRadius + Vec3.length(Vec3.subtract(brushPosition, previousBrushPosition));
+            var capsuleCenter = Vec3.multiply(Vec3.sum(brushPosition, previousBrushPosition), 0.5);
 
-            var ids = Entities.findEntities(brushPosition, Vec3.length(sliceSize));
+            var ids = Entities.findEntities(capsuleCenter, capsuleLength + sliceRadius + 0.05);
 
             // find all the current polyvox entities
             var withThisColorIDs = [];
@@ -341,12 +354,22 @@
                 withThisColorIDs.push(possiblePolyVoxID);
             }
 
+            var previousBrushOffset = Vec3.multiplyQbyV(Quat.inverse(this.aetherProps.rotation),
+                                                        Vec3.subtract(this.previousBrushPosition,
+                                                                      this.aetherProps.position));
+            previousBrushOffset = Vec3.sum(previousBrushOffset, Vec3.multiply(aetherDimensions, 0.5));
+            var previousBrushPosInVoxSpace = { x: previousBrushOffset.x / sliceSize.x,
+                                               y: previousBrushOffset.y / sliceSize.y,
+                                               z: previousBrushOffset.z / sliceSize.z };
+
+
             var brushOffset = Vec3.multiplyQbyV(Quat.inverse(this.aetherProps.rotation),
                 Vec3.subtract(brushPosition, this.aetherProps.position));
             brushOffset = Vec3.sum(brushOffset, Vec3.multiply(aetherDimensions, 0.5));
             var brushPosInVoxSpace = { x: brushOffset.x / sliceSize.x,
                 y: brushOffset.y / sliceSize.y,
                 z: brushOffset.z / sliceSize.z };
+
 
             var radiusInVoxelSpace = editSphereRadius / sliceSize.x;
             var sliceHalfDiag = 0.866; // Vec3.length({x:0.5, y:0.5, z:0.5});
@@ -359,13 +382,23 @@
             var lowZ = this.clamp(Math.floor(brushPosInVoxSpace.z - sliceRezDistance));
             var highZ = this.clamp(Math.ceil(brushPosInVoxSpace.z + sliceRezDistance));
 
+            lowX = Math.min(lowX, this.clamp(Math.floor(previousBrushPosInVoxSpace.x - sliceRezDistance)));
+            highX = Math.max(highX, this.clamp(Math.ceil(previousBrushPosInVoxSpace.x + sliceRezDistance)));
+            lowY = Math.min(lowY, this.clamp(Math.floor(previousBrushPosInVoxSpace.y - sliceRezDistance)));
+            highY = Math.max(highY, this.clamp(Math.ceil(previousBrushPosInVoxSpace.y + sliceRezDistance)));
+            lowZ = Math.min(lowZ, this.clamp(Math.floor(previousBrushPosInVoxSpace.z - sliceRezDistance)));
+            highZ = Math.max(highZ, this.clamp(Math.ceil(previousBrushPosInVoxSpace.z + sliceRezDistance)));
+
             this.dirtyNeighbors = {};
 
             for (var x = lowX; x < highX; x++) {
                 for (var y = lowY; y < highY; y++) {
                     for (var z = lowZ; z < highZ; z++) {
-                        if (AABoxTouchesSphere(brushPosInVoxSpace, radiusInVoxelSpace,
-                                               {x:x, y:y, z:z}, Vec3.sum({x:x, y:y, z:z}, {x:1.0, y:1.0, z:1.0}))) {
+                        var touches;
+                        touches = Entities.AABoxIntersectsCapsule({x:x, y:y, z:z}, {x:1.0, y:1.0, z:1.0},
+                                                                  previousBrushPosInVoxSpace, brushPosInVoxSpace,
+                                                                  radiusInVoxelSpace);
+                        if (touches) {
                             var newID = this.addPolyVox(x, y, z, this.color, sliceSize, aetherDimensions);
                             if (newID) {
                                 withThisColorIDs.push(newID);
