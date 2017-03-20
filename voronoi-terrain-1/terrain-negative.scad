@@ -1,5 +1,7 @@
 union() {
-    include <terrain-caves.scad>
+    translate([310, -75, 170]) {
+        include <terrain-caves.scad>
+    }
     translate([0, -8, 100]) {
         cube([100 - 0, 100 - -8, 200 - 100], false);
     };
