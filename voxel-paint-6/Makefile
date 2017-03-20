@@ -25,10 +25,11 @@ textures/color-%.png:
 #	ppmmake rgb:0/0/0 1 1 |	/usr/bin/pnmtopng > $@
 
 
-upload: voxel-paint-init.js voxel-paint-brush.js voxel-paint-eraser.js unitBoxTransparent.fbx voxel-paint-shared.js ${TEXTURES}
+upload: voxel-paint-init.js voxel-paint-brush.js voxel-paint-eraser.js unitBoxTransparent.fbx \
+		voxel-paint-shared.js voxel-paint-export.js ${TEXTURES}
 	rm -rf voxel-paint
 	mkdir -p voxel-paint
-	cp voxel-paint-init.js voxel-paint-brush.js voxel-paint/
+	cp voxel-paint-init.js voxel-paint-brush.js voxel-paint-export.js voxel-paint/
 	cp voxel-paint-eraser.js unitBoxTransparent.fbx voxel-paint-shared.js voxel-paint/
 	mkdir -p voxel-paint/textures
 	cp ${TEXTURES} voxel-paint/textures
