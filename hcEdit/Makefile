@@ -6,7 +6,9 @@ EXPORT_FILES=genericTool.js toolMaterials.mtl \
 	horizontalTranslation.js \
 	rotation.js \
 	verticalTranslation.js \
-	hangPicture.js hangPictureTool.obj hangPictureIcon.png
+	hangPicture.js hangPictureTool.obj hangPictureIcon.png \
+	base-tool.obj \
+	horiz-trans-edit-tool.json rotate-edit-tool.json vert-trans-edit-tool.json
 
 ###
 

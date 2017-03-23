@@ -1,0 +1,16 @@
+{
+    "Entities": [
+        {
+            "dimensions": {
+                "x": 0.04999919980764389,
+                "y": 0.11799900233745575,
+                "z": 0.19249899685382843
+            },
+            "modelURL": "http://headache.hungry.com/~seth/hifi/hcEdit/base-tool.obj",
+            "script": "http://headache.hungry.com/~seth/hifi/hcEdit/verticalTranslation.js",
+            "type": "Model",
+            "userData": "{ \"grabbableKey\": { \"grabbable\": true }, \"wearable\": { \"joints\": { \"LeftHand\": [ { \"x\": -0.06589794903993607, \"y\": 0.14683279395103455, \"z\": 0.030722394585609436 }, { \"x\": -0.5422520041465759, \"y\": 0.47700217366218567, \"z\": 0.5084763169288635, \"w\": 0.46891868114471436 } ], \"RightHand\": [ { \"x\": 0.0327, \"y\": 0.1609, \"z\": 0.0349 }, {\"x\":0.44710448384284973,\"y\":0.3774378001689911,\"z\":0.49717506766319275,\"w\":-0.6406691670417786} ] } } }"
+        }
+    ],
+    "Version": 68
+}
