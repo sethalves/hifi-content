@@ -162,7 +162,8 @@
             // });
 
 
-            if (rayPickResult.intersects && rayPickResult.distance < brickLength) {
+            print(JSON.stringify(rayPickResult));
+            if (rayPickResult.intersects && rayPickResult.distance < brickLength + 0.01) {
                 return false;
             }
         }
@@ -258,7 +259,7 @@
         var newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, highAngle);
         var pickRay = newBrickData.pickRay;
         var rayPickResult = findRayIntersection(pickRay, !force);
-        if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
+        if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
             highIntersects = true;
         }
 
@@ -266,13 +267,13 @@
         newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, lowAngle);
         pickRay = newBrickData.pickRay;
         rayPickResult = findRayIntersection(pickRay, !force);
-        if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
+        if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
             lowIntersects = true;
         }
 
         var hole = "";
         if (!lowIntersects && !highIntersects) {
-            // no hole on either side, go straight
+            // holes on both sides, go straight
             highAngle = 0.0;
             lowAngle = 0.0;
             hole = "both";
@@ -297,7 +298,7 @@
                 newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, angle);
                 pickRay = newBrickData.pickRay;
                 rayPickResult = findRayIntersection(pickRay, !force);
-                if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
+                if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                     middleIntersects = true;
                     if (angle < 0) {
                         highAngle = angle;
@@ -309,6 +310,10 @@
                         hole = "high";
                     }
                 }
+            }
+            if (!force && !middleIntersects) {
+                // don't put bricks over open air
+                return null;
             }
         }
 
@@ -333,7 +338,7 @@
             //     lifetime: 60
             // });
 
-            if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
+            if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                 if (hole == "high") {
                     lowAngle = middleAngle;
                 } else {
@@ -409,10 +414,10 @@
         var lastBrickID = findLastBrick();
         if (!lastBrickID) {
             print("...addFirstBrick");
-            addFirstBrick(params);
+            return addFirstBrick(params);
         } else {
             print("...addFollowingBrick after " + lastBrickID);
-            addFollowingBrick(lastBrickID, params, true, force);
+            return addFollowingBrick(lastBrickID, params, true, force);
         }
     }
 
@@ -441,6 +446,40 @@
                 placedAny = true;
             }
         }
+    }
+
+    function reverseWallDirection(params, half) {
+        var lastBrickID = findLastBrick();
+        var lastBrickProps = Entities.getEntityProperties(lastBrickID, ["position", "rotation", "dimensions"]);
+        var lastBrickTrans = new Xform(lastBrickProps.rotation, lastBrickProps.position);
+
+        var brickDimensions = {
+            x: params["brick-width"],
+            y: params["brick-height"],
+            z: params["brick-length"]
+        };
+        if (half) {
+            brickDimensions.z /= 2.0;
+        }
+        var newBrickPosition = Vec3.sum(lastBrickProps.position, lastBrickTrans.xformVector({
+            x: 0,
+            y: lastBrickProps.dimensions.y / 2.0 + brickDimensions.y / 2.0,
+            z: lastBrickProps.dimensions.z / 2.0 - brickDimensions.z / 2.0
+        }));
+        var newBrickRotation = Quat.multiply(lastBrickProps.rotation, Quat.fromVec3Degrees({ x: 0, y: 180, z: 0}));
+
+        var newBrickID = Entities.addEntity({
+            name: "brick",
+            type: "Box",
+            color: { blue: 128, green: 128, red: 128 },
+            dimensions: brickDimensions,
+            position: newBrickPosition,
+            rotation: newBrickRotation,
+            dynamic: false,
+            collisionless: true
+        });
+
+        setBrickIndex(newBrickID, getBrickIndex(lastBrickID) + 1);
     }
 
     function resetBricks(params) {
@@ -679,41 +718,74 @@
                 };
 
                 if (event["brick-walls-command"] == "add-brick") {
-                    print("add brick");
+                    addBrick(params, false);
+                }
+                if (event["brick-walls-command"] == "add-half-brick") {
+                    params["brick-length"] /= 2.0;
                     addBrick(params, false);
                 }
                 if (event["brick-walls-command"] == "force-add-brick") {
-                    print("add brick");
+                    addBrick(params, true);
+                }
+                if (event["brick-walls-command"] == "force-add-half-brick") {
+                    params["brick-length"] /= 2.0;
                     addBrick(params, true);
                 }
                 if (event["brick-walls-command"] == "add-brick-row") {
-                    print("add brick row");
                     addBrickRow(params);
                 }
                 if (event["brick-walls-command"] == "bake-brick-wall") {
-                    print("bake brick wall");
                     bricksToOBJ(params);
                 }
                 if (event["brick-walls-command"] == "undo-one-brick") {
-                    print("undo one brick");
                     undoOneBrick(params);
                 }
                 if (event["brick-walls-command"] == "reset-bricks") {
-                    print("reset bricks");
                     resetBricks(params);
+                }
+                if (event["brick-walls-command"] == "reverse-wall-direction") {
+                    reverseWallDirection(params, false);
+                }
+                if (event["brick-walls-command"] == "reverse-wall-direction-half") {
+                    reverseWallDirection(params,  true);
                 }
             }
         }
     }
 
+    var onBricksScreen = false;
+    var shouldActivateButton = false;
+
     function onClicked() {
-        tablet.gotoWebScreen(BRICK_WALLS_URL +
-                             "?brick-width=" + DEFAULT_BRICK_SIZE.x +
-                             "&brick-height=" + DEFAULT_BRICK_SIZE.y +
-                             "&brick-length=" + DEFAULT_BRICK_SIZE.z +
-                             "&max-bricks-per-row=" + DEFAULT_BRICKS_PER_ROW +
-                             "&gap=" + DEFAULT_GAP
-                            );
+        if (onBricksScreen) {
+            tablet.gotoHomeScreen();
+        } else {
+            shouldActivateButton = true;
+
+            var firstBrickID = findFirstBrick();
+            var defaultBrickSize = DEFAULT_BRICK_SIZE;
+            if (firstBrickID) {
+                var props = Entities.getEntityProperties(firstBrickID, ["dimensions"]);
+                if (props && props.dimensions) {
+                    defaultBrickSize = props.dimensions;
+                }
+            }
+            tablet.gotoWebScreen(BRICK_WALLS_URL +
+                                 "?brick-width=" + defaultBrickSize.x +
+                                 "&brick-height=" + defaultBrickSize.y +
+                                 "&brick-length=" + defaultBrickSize.z +
+                                 "&max-bricks-per-row=" + DEFAULT_BRICKS_PER_ROW +
+                                 "&gap=" + DEFAULT_GAP
+                                );
+            onBricksScreen = true;
+        }
+    }
+
+    function onScreenChanged() {
+        // for toolbar mode: change button to active when window is first openend, false otherwise.
+        button.editProperties({isActive: shouldActivateButton});
+        shouldActivateButton = false;
+        onBricksScreen = false;
     }
 
     function cleanup() {
@@ -723,5 +795,6 @@
 
     button.clicked.connect(onClicked);
     tablet.webEventReceived.connect(onWebEventReceived);
+    tablet.screenChanged.connect(onScreenChanged);
     Script.scriptEnding.connect(cleanup);
 }()); // END LOCAL_SCOPE

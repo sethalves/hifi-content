@@ -28,8 +28,14 @@ $(document).ready(function() {
     $("#add-brick-button").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-brick" })));
     });
+    $("#add-half-brick-button").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-half-brick" })));
+    });
     $("#force-add-brick-button").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "force-add-brick" })));
+    });
+    $("#force-add-half-brick-button").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "force-add-half-brick" })));
     });
     $("#add-brick-row-button").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-brick-row" })));
@@ -42,6 +48,12 @@ $(document).ready(function() {
     });
     $("#bake-brick-wall").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "bake-brick-wall" })));
+    });
+    $("#reverse-wall-direction").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "reverse-wall-direction" })));
+    });
+    $("#reverse-wall-direction-half").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "reverse-wall-direction-half" })));
     });
 
     var brickWidth = getParameterByName('brick-width');
