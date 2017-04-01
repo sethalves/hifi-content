@@ -3,20 +3,28 @@
     <title>Brick Wall Builder</title>
     <meta charset="utf-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $("#add-brick-button").click(function() {
-                EventBridge.emitWebEvent(JSON.stringify({ "brick-walls-command": "add-brick" }));
-            });
-            $("#reset-bricks-button").click(function() {
-                EventBridge.emitWebEvent(JSON.stringify({ "brick-walls-command": "reset-bricks" }));
-            });
-        });
-    </script>
-</head>
+    <script src="brick-walls-interface.js"></script>
+  </head>
   <body>
 
     <input type="button" id="add-brick-button" value="Add Brick"><br>
+    <input type="button" id="add-brick-row-button" value="Add Row of Bricks"><br>
+
+    <hr>
+    <h2>brick size</h2>
+    <input id="brick-width" type="text" size=6>
+    <input id="brick-height" type="text" size=6>
+    <input id="brick-length" type="text" size=6><br>
+
+    <hr>
+    <h2>gap</h2>
+    <input id="gap" type="text" size=6>
+
+    <hr>
+    <h2>max bricks per row</h2>
+    <input id="max-bricks-per-row" type="text" size=6>
+
+    <hr>
     <input type="button" id="reset-bricks-button" value="Reset"><br>
 
   </body>
