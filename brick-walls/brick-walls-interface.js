@@ -28,11 +28,17 @@ $(document).ready(function() {
     $("#add-brick-button").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-brick" })));
     });
+    $("#force-add-brick-button").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "force-add-brick" })));
+    });
     $("#add-brick-row-button").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-brick-row" })));
     });
     $("#reset-bricks-button").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "reset-bricks" })));
+    });
+    $("#undo-one-brick").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "undo-one-brick" })));
     });
 
     var brickWidth = getParameterByName('brick-width');

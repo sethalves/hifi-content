@@ -17,6 +17,7 @@
     var DEFAULT_BRICK_SIZE = { x: 0.2, y: 0.2, z: 0.4 };
     var DEFAULT_BRICKS_PER_ROW = 30;
     var DEFAULT_GAP = 0.03;
+    var DEFAULT_BRICK_DATA = { index: 0 };
 
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     var button = tablet.addButton({
@@ -25,50 +26,56 @@
         sortOrder: 15
     });
 
-    function findBrick(brickType) {
-        var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
-        for (var i = 0; i < allEntities.length; i++) {
-            var entityID = allEntities[i];
-            var props = Entities.getEntityProperties(entityID, ["name"]);
-            if (props.name == "brick") {
-                var brickData = getEntityCustomData("brick", entityID, {});
-                if (brickData[brickType]) {
-                    return entityID;
-                }
-            }
-        }
-        return null;
-    }
-
     function getEntityName(entityID) {
         var props = Entities.getEntityProperties(entityID, ["name"]);
         return props.name;
     }
 
+    function setBrickIndex(entityID, index) {
+        setEntityCustomData("brick", entityID, { index: index });
+    }
+
+    function getBrickIndex(entityID) {
+        var brickData = getEntityCustomData("brick", entityID, DEFAULT_BRICK_DATA);
+        return brickData.index;
+    }
+
+    function isBrick(entityID) {
+        return getEntityName(entityID) == "brick";
+    }
+
     function findFirstBrick() {
-        return findBrick("first");
+        var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+        var firstBrickID = null;
+        var lowestIndex = -1;
+        for (var i = 0; i < allEntities.length; i++) {
+            var entityID = allEntities[i];
+            if (getEntityName(entityID) == "brick") {
+                var brickIndex = getBrickIndex(entityID);
+                if (lowestIndex < 0 || brickIndex < lowestIndex) {
+                    lowestIndex = brickIndex;
+                    firstBrickID = entityID;
+                }
+            }
+        }
+        return firstBrickID;
     }
 
     function findLastBrick() {
-        return findBrick("last");
-    }
-
-    function setBrickAsFirst(entityID, value) {
-        var brickData = getEntityCustomData("brick", entityID, {});
-        brickData.first = value;
-        setEntityCustomData("brick", entityID, brickData);
-    }
-
-    function setBrickAsRowFirst(entityID, value) {
-        var brickData = getEntityCustomData("brick", entityID, {});
-        brickData.rowFirst = value;
-        setEntityCustomData("brick", entityID, brickData);
-    }
-
-    function setBrickAsLast(entityID, value) {
-        var brickData = getEntityCustomData("brick", entityID, {});
-        brickData.last = value;
-        setEntityCustomData("brick", entityID, brickData);
+        var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+        var lastBrickID = null;
+        var highestIndex = -1;
+        for (var i = 0; i < allEntities.length; i++) {
+            var entityID = allEntities[i];
+            if (getEntityName(entityID) == "brick") {
+                var brickIndex = getBrickIndex(entityID);
+                if (brickIndex > highestIndex) {
+                    highestIndex = brickIndex;
+                    lastBrickID = entityID;
+                }
+            }
+        }
+        return lastBrickID;
     }
 
     function addFirstBrick(params) {
@@ -79,7 +86,6 @@
             y: params["brick-height"],
             z: params["brick-length"]
         };
-
 
         var newBrickID = Entities.addEntity({
             name: "brick",
@@ -93,9 +99,26 @@
             gravity: { x: 0, y: -1, z: 0 }
         });
 
-        setBrickAsFirst(newBrickID, true);
-        setBrickAsRowFirst(newBrickID, true);
-        setBrickAsLast(newBrickID, true);
+        setBrickIndex(newBrickID, 0);
+        return newBrickID;
+    }
+
+    function findRayIntersection(pickRay, includeNonBricks) {
+        var toIgnore = [];
+        while (true) {
+            var rayPickResult = Entities.findRayIntersection(pickRay, true, [], toIgnore);
+            if (includeNonBricks) {
+                return rayPickResult;
+            }
+            if (rayPickResult.intersects) {
+                if (isBrick(rayPickResult.entityID)) {
+                    return rayPickResult;
+                }
+                toIgnore.push(rayPickResult.entityID);
+            } else {
+                return rayPickResult;
+            }
+        }
     }
 
     function brickFits(newBrickPosition, newBrickRotation, brickDimensions) {
@@ -115,7 +138,7 @@
             // print("pickRay.direction="+JSON.stringify(pickRay.direction));
             // print("pickRay.length="+JSON.stringify(pickRay.length));
 
-            var rayPickResult = Entities.findRayIntersection(pickRay, true);
+            var rayPickResult = findRayIntersection(pickRay, true);
 
             // Entities.addEntity({
             //     name: "brick debug",
@@ -212,7 +235,7 @@
         };
     }
 
-    function addFollowingBrick(lastBrickID, params, canStartNewRow) {
+    function addFollowingBrick(lastBrickID, params, canStartNewRow, force) {
         var lastBrickProps = Entities.getEntityProperties(lastBrickID, ["position", "rotation", "dimensions"]);
 
         var brickHeight = lastBrickProps.dimensions.y;
@@ -237,7 +260,7 @@
         // check the high limit
         var newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, highAngle);
         var pickRay = newBrickData.pickRay;
-        var rayPickResult = Entities.findRayIntersection(pickRay, true);
+        var rayPickResult = findRayIntersection(pickRay, !force);
         if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
             highIntersects = true;
         }
@@ -245,7 +268,7 @@
         // check the low limit
         newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, lowAngle);
         pickRay = newBrickData.pickRay;
-        rayPickResult = Entities.findRayIntersection(pickRay, true);
+        rayPickResult = findRayIntersection(pickRay, !force);
         if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
             lowIntersects = true;
         }
@@ -276,7 +299,7 @@
                  angle += 5 * DEG_TO_RAD) {
                 newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, angle);
                 pickRay = newBrickData.pickRay;
-                rayPickResult = Entities.findRayIntersection(pickRay, true);
+                rayPickResult = findRayIntersection(pickRay, !force);
                 if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
                     middleIntersects = true;
                     if (angle < 0) {
@@ -300,7 +323,7 @@
             newBrickRotation = newBrickData.newBrickRotation;
             newBrickClosePosition = newBrickData.newBrickClosePosition;
 
-            rayPickResult = Entities.findRayIntersection(pickRay, true);
+            rayPickResult = findRayIntersection(pickRay, !force);
 
             // Entities.addEntity({
             //     name: "brick debug",
@@ -349,7 +372,7 @@
             z: params["brick-length"]
         };
 
-        if (brickFits(newBrickPosition, newBrickRotation, brickDimensions)) {
+        if (force || brickFits(newBrickPosition, newBrickRotation, brickDimensions)) {
             print("... brick fits -- " + JSON.stringify(newBrickPosition));
             var newBrickID = Entities.addEntity({
                 name: "brick",
@@ -362,9 +385,7 @@
                 collisionless: true
             });
 
-            setBrickAsLast(lastBrickID, false);
-            setBrickAsLast(newBrickID, true);
-
+            setBrickIndex(newBrickID, getBrickIndex(lastBrickID) + 1);
             return newBrickID;
         } else if (canStartNewRow) {
             print("... starting new row");
@@ -380,29 +401,27 @@
                 collisionless: true
             });
 
-            setBrickAsLast(lastBrickID, false);
-            setBrickAsLast(uprowNewBrickID, true);
-            setBrickAsRowFirst(uprowNewBrickID, true);
-
+            setBrickIndex(uprowNewBrickID, getBrickIndex(lastBrickID) + 1);
             return uprowNewBrickID;
         }
         print("... brick doesn't fit");
         return null;
     }
 
-    function addBrick(params) {
+    function addBrick(params, force) {
         var lastBrickID = findLastBrick();
         if (!lastBrickID) {
             print("...addFirstBrick");
             addFirstBrick(params);
         } else {
             print("...addFollowingBrick after " + lastBrickID);
-            addFollowingBrick(lastBrickID, params, true);
+            addFollowingBrick(lastBrickID, params, true, force);
         }
     }
 
     function addBrickRow(params) {
         var maxBricksPerRow = params["max-bricks-per-row"];
+        var placedAny = false;
 
         for (var i = 0; i < maxBricksPerRow - 1; i++) {
             var lastBrickID = findLastBrick();
@@ -413,25 +432,40 @@
 
             var newBrickID = addFollowingBrick(lastBrickID, params, false);
             if (!newBrickID) {
-                break;
+                if (!placedAny) {
+                    newBrickID = addFollowingBrick(lastBrickID, params, true);
+                    if (newBrickID) {
+                        placedAny = true;
+                    }
+                } else {
+                    break;
+                }
+            } else {
+                placedAny = true;
             }
         }
     }
 
     function resetBricks(params) {
         var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+        var firstBrickID = findFirstBrick();
         for (var i = 0; i < allEntities.length; i++) {
             var entityID = allEntities[i];
+            if (entityID == firstBrickID) {
+                continue;
+            }
             var props = Entities.getEntityProperties(entityID, ["name"]);
             if (props.name == "brick") {
-                var brickData = getEntityCustomData("brick", entityID, {});
-                if (!brickData.first) {
-                    Entities.deleteEntity(entityID);
-                } else {
-                    setBrickAsLast(entityID, true);
-                    setBrickAsRowFirst(entityID, true);
-                }
+                Entities.deleteEntity(entityID);
             }
+        }
+    }
+
+    function undoOneBrick(params) {
+        var firstBrickID = findFirstBrick();
+        var lastBrickID = findLastBrick();
+        if (firstBrickID != lastBrickID) {
+            Entities.deleteEntity(lastBrickID);
         }
     }
 
@@ -457,11 +491,19 @@
 
                 if (event["brick-walls-command"] == "add-brick") {
                     print("add brick");
-                    addBrick(params);
+                    addBrick(params, false);
+                }
+                if (event["brick-walls-command"] == "force-add-brick") {
+                    print("add brick");
+                    addBrick(params, true);
                 }
                 if (event["brick-walls-command"] == "add-brick-row") {
                     print("add brick row");
                     addBrickRow(params);
+                }
+                if (event["brick-walls-command"] == "undo-one-brick") {
+                    print("undo one brick");
+                    undoOneBrick(params);
                 }
                 if (event["brick-walls-command"] == "reset-bricks") {
                     print("reset bricks");
