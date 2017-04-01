@@ -4,7 +4,7 @@
 
 all:
 
-upload: brick-walls.js
+upload: brick-walls.js brick-walls.html
 	mkdir -p brick-walls
 	cp $^ brick-walls/
 	rsync -avP brick-walls/ headache.hungry.com:public_html/hifi/brick-walls/

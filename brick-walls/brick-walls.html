@@ -1,0 +1,23 @@
+<html>
+  <head>
+    <title>Brick Wall Builder</title>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#add-brick-button").click(function() {
+                EventBridge.emitWebEvent(JSON.stringify({ "brick-walls-command": "add-brick" }));
+            });
+            $("#reset-bricks-button").click(function() {
+                EventBridge.emitWebEvent(JSON.stringify({ "brick-walls-command": "reset-bricks" }));
+            });
+        });
+    </script>
+</head>
+  <body>
+
+    <input type="button" id="add-brick-button" value="Add Brick"><br>
+    <input type="button" id="reset-bricks-button" value="Reset"><br>
+
+  </body>
+</html>

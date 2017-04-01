@@ -7,6 +7,7 @@
 
     Script.include("/~/system/libraries/utils.js");
 
+    var BRICK_WALLS_URL = "http://headache.hungry.com/~seth/hifi/brick-walls/brick-walls.html";
     var BRICKS_RANGE = 20;
     var brickSize = { x: 0.2, y: 0.2, z: 0.4 };
     var DEG_TO_RAD = Math.PI / 180.0;
@@ -47,11 +48,15 @@
     }
 
     function setBrickAsFirst(entityID, value) {
-        setEntityCustomData("brick", entityID, { first: value });
+        var brickData = getEntityCustomData("brick", entityID, {});
+        brickData.first = value;
+        setEntityCustomData("brick", entityID, brickData);
     }
 
     function setBrickAsLast(entityID, value) {
-        setEntityCustomData("brick", entityID, { last: value });
+        var brickData = getEntityCustomData("brick", entityID, {});
+        brickData.last = value;
+        setEntityCustomData("brick", entityID, brickData);
     }
 
     function addFirstBrick() {
@@ -139,7 +144,6 @@
         };
     }
 
-
     function addFollowingBrick(lastBrickID) {
         var lastBrickProps = Entities.getEntityProperties(lastBrickID, ["position", "rotation", "dimensions"]);
 
@@ -203,16 +207,16 @@
 
             rayPickResult = Entities.findRayIntersection(pickRay, true);
 
-            Entities.addEntity({
-                name: "brick debug",
-                type: "Sphere",
-                color: { blue: 0, green: 255, red: 0 },
-                dimensions: {x: 0.05, y: 0.05, z: 0.05},
-                position: pickRay.origin,
-                dynamic: false,
-                collisionless: true,
-                lifetime: 60
-            });
+            // Entities.addEntity({
+            //     name: "brick debug",
+            //     type: "Sphere",
+            //     color: { blue: 0, green: 255, red: 0 },
+            //     dimensions: {x: 0.05, y: 0.05, z: 0.05},
+            //     position: pickRay.origin,
+            //     dynamic: false,
+            //     collisionless: true,
+            //     lifetime: 60
+            // });
 
             if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
                 if (hole == "high") {
@@ -229,16 +233,16 @@
             }
         }
 
-        Entities.addEntity({
-            name: "brick debug",
-            type: "Sphere",
-            color: { blue: 128, green: 0, red: 0 },
-            dimensions: {x: 0.05, y: 0.05, z: 0.05},
-            position: newBrickClosePosition,
-            dynamic: false,
-            collisionless: true,
-            lifetime: 60
-        });
+        // Entities.addEntity({
+        //     name: "brick debug",
+        //     type: "Sphere",
+        //     color: { blue: 128, green: 0, red: 0 },
+        //     dimensions: {x: 0.05, y: 0.05, z: 0.05},
+        //     position: newBrickClosePosition,
+        //     dynamic: false,
+        //     collisionless: true,
+        //     lifetime: 60
+        // });
 
         var newBrickID = Entities.addEntity({
             name: "brick",
@@ -257,12 +261,59 @@
         return newBrickID;
     }
 
-    function onClicked() {
+    function addBrick() {
         var lastBrickID = findLastBrick();
         if (!lastBrickID) {
             addFirstBrick();
         } else {
             addFollowingBrick(lastBrickID);
+        }
+    }
+
+    function resetBricks() {
+        var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+        for (var i = 0; i < allEntities.length; i++) {
+            var entityID = allEntities[i];
+            var props = Entities.getEntityProperties(entityID, ["name"]);
+            if (props.name == "brick") {
+                var brickData = getEntityCustomData("brick", entityID, {});
+                if (!brickData.first) {
+                    Entities.deleteEntity(entityID);
+                } else {
+                    setBrickAsLast(entityID, true);
+                }
+            }
+        }
+    }
+
+    function onClicked() {
+        tablet.gotoWebScreen(BRICK_WALLS_URL);
+    }
+
+    function onWebEventReceived(eventString) {
+        print("received web event: " + JSON.stringify(eventString));
+        var event;
+        if (typeof eventString === "string") {
+            try {
+                event = JSON.parse(eventString);
+            } catch(e) {
+                return;
+            }
+
+            if (event["brick-walls-command"]) {
+                if (event["brick-walls-command"] == "add-brick") {
+                    print("add brick");
+                    addBrick();
+                }
+                if (event["brick-walls-command"] == "reset-bricks") {
+                    print("reset bricks");
+                    resetBricks();
+                }
+            } else {
+                print("no brick-walls-command");
+            }
+        } else {
+            print("not string: " + typeof eventString);
         }
     }
 
@@ -272,5 +323,7 @@
     }
 
     button.clicked.connect(onClicked);
+    tablet.webEventReceived.connect(onWebEventReceived);
+
     Script.scriptEnding.connect(cleanup);
 }()); // END LOCAL_SCOPE
