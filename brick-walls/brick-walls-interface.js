@@ -20,7 +20,7 @@ function addCommandParameters(params) {
     params["brick-height"] = $("#brick-height").val();
     params["brick-length"] = $("#brick-length").val();
     params["max-bricks-per-row"] = $("#max-bricks-per-row").val();
-    params["gap"] = $("#gap").val();
+    params.gap = $("#gap").val();
     return params;
 }
 
@@ -39,6 +39,9 @@ $(document).ready(function() {
     });
     $("#undo-one-brick").click(function() {
         EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "undo-one-brick" })));
+    });
+    $("#bake-brick-wall").click(function() {
+        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "bake-brick-wall" })));
     });
 
     var brickWidth = getParameterByName('brick-width');

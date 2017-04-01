@@ -1,7 +1,7 @@
 
 "use strict";
 
-/* global Entities, Script, Tablet, MyAvatar, getEntityCustomData, setEntityCustomData, Vec3, Quat, Xform */
+/* global Entities, Script, Tablet, MyAvatar, getEntityCustomData, setEntityCustomData, Vec3, Quat, Xform, Model, Assets */
 
 (function() { // BEGIN LOCAL_SCOPE
 
@@ -169,11 +169,12 @@
         return true;
     }
 
-    function computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickDimensions, offsetAngle) {
+    function computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickDimensions, offsetAngle) {
 
-        var brickLength = lastBrickDimensions.z;
-        var brickWidth = lastBrickDimensions.x;
-        var brickHeight = lastBrickDimensions.y;
+        var lastBrickLength = lastBrickDimensions.z;
+        var brickLength = params["brick-length"];
+        var brickWidth = params["brick-width"];
+        var brickHeight = params["brick-height"];
 
         var lastBrickEulers = Vec3.multiply(Quat.safeEulerAngles(lastBrickRotation), DEG_TO_RAD);
         var baseAngle = lastBrickEulers.y;
@@ -191,7 +192,7 @@
                                              Vec3.multiplyQbyV(lastBrickRotation,
                                                                { x: brickWidth / 2.0,
                                                                  y: 0,
-                                                                 z: brickLength / 2.0 + gap }));
+                                                                 z: lastBrickLength / 2.0 + params.gap }));
             newBrickPosition = Vec3.sum(newBrickClosePosition,
                                         Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / -2.0,
                                                                               y: 0,
@@ -206,7 +207,7 @@
                                              Vec3.multiplyQbyV(lastBrickRotation,
                                                                { x: brickWidth / -2.0,
                                                                  y: 0,
-                                                                 z: brickLength / 2.0 + gap }));
+                                                                 z: lastBrickLength / 2.0 + params.gap }));
             newBrickPosition = Vec3.sum(newBrickClosePosition,
                                         Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / 2.0,
                                                                               y: 0,
@@ -218,8 +219,6 @@
                                                                            z: brickLength / 2.0 }));
 
         }
-
-        print("HERE newBrickPosition = " + JSON.stringify(newBrickPosition));
 
         var pickRay = {
             origin: pickRayOrigin,
@@ -255,10 +254,8 @@
         var newBrickRotation;
         var newBrickClosePosition;
 
-        var gap = params.gap;
-
         // check the high limit
-        var newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, highAngle);
+        var newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, highAngle);
         var pickRay = newBrickData.pickRay;
         var rayPickResult = findRayIntersection(pickRay, !force);
         if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
@@ -266,7 +263,7 @@
         }
 
         // check the low limit
-        newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, lowAngle);
+        newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, lowAngle);
         pickRay = newBrickData.pickRay;
         rayPickResult = findRayIntersection(pickRay, !force);
         if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
@@ -297,7 +294,7 @@
             for (var angle = -90 * DEG_TO_RAD;
                  angle < 90 * DEG_TO_RAD;
                  angle += 5 * DEG_TO_RAD) {
-                newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, angle);
+                newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, angle);
                 pickRay = newBrickData.pickRay;
                 rayPickResult = findRayIntersection(pickRay, !force);
                 if (rayPickResult.intersects && rayPickResult.distance < brickHeight) {
@@ -317,7 +314,7 @@
 
         while (true) {
             var middleAngle = (highAngle + lowAngle) / 2.0;
-            newBrickData = computeNewBrick(gap, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, middleAngle);
+            newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, middleAngle);
             pickRay = newBrickData.pickRay;
             newBrickPosition = newBrickData.newBrickPosition;
             newBrickRotation = newBrickData.newBrickRotation;
@@ -454,8 +451,17 @@
             if (entityID == firstBrickID) {
                 continue;
             }
-            var props = Entities.getEntityProperties(entityID, ["name"]);
-            if (props.name == "brick") {
+            if (isBrick(entityID)) {
+                Entities.deleteEntity(entityID);
+            }
+        }
+    }
+
+    function clearBricks(params) {
+        var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+        for (var i = 0; i < allEntities.length; i++) {
+            var entityID = allEntities[i];
+            if (isBrick(entityID)) {
                 Entities.deleteEntity(entityID);
             }
         }
@@ -468,6 +474,189 @@
             Entities.deleteEntity(lastBrickID);
         }
     }
+
+    function brickToMesh(entityID) {
+        var props = Entities.getEntityProperties(entityID, ["position", "rotation", "dimensions"]);
+        var trans = new Xform(props.rotation, props.position);
+
+        var hw = props.dimensions.x / 2.0;
+        var hh = props.dimensions.y / 2.0;
+        var hl = props.dimensions.z / 2.0;
+        var vertices = [{ x: -hw, y: -hh, z: hl }, // 3
+                        { x: -hw, y: -hh, z: -hl }, // 4
+                        { x: hw, y: -hh, z: -hl }, // 1
+
+                        { x: hw, y: -hh, z: -hl }, // 1
+                        { x: hw, y: -hh, z: hl }, // 2
+                        { x: -hw, y: -hh, z: hl }, // 3
+
+                        { x: hw, y: hh, z: hl }, // 6
+                        { x: -hw, y: hh, z: hl }, // 7
+                        { x: -hw, y: -hh, z: hl }, // 3
+
+                        { x: hw, y: hh, z: -hl }, // 5
+                        { x: hw, y: hh, z: hl }, // 6
+                        { x: hw, y: -hh, z: hl }, // 2
+
+                        { x: hw, y: hh, z: -hl }, // 5
+                        { x: hw, y: -hh, z: hl }, // 2
+                        { x: hw, y: -hh, z: -hl }, // 1
+
+                        { x: -hw, y: hh, z: hl }, // 7
+                        { x: -hw, y: -hh, z: -hl }, // 4
+                        { x: -hw, y: -hh, z: hl }, // 3
+
+                        { x: -hw, y: -hh, z: -hl }, // 4
+                        { x: -hw, y: hh, z: hl }, // 7
+                        { x: -hw, y: hh, z: -hl }, // 8
+
+                        { x: -hw, y: -hh, z: -hl }, // 4
+                        { x: -hw, y: hh, z: -hl }, // 8
+                        { x: hw, y: -hh, z: -hl }, // 1
+
+                        { x: hw, y: -hh, z: hl }, // 2
+                        { x: hw, y: hh, z: hl }, // 6
+                        { x: -hw, y: -hh, z: hl }, // 3
+
+                        { x: -hw, y: hh, z: -hl }, // 8
+                        { x: hw, y: hh, z: -hl }, // 5
+                        { x: hw, y: -hh, z: -hl }, // 1
+
+                        { x: -hw, y: hh, z: -hl }, // 8
+                        { x: -hw, y: hh, z: hl }, // 7
+                        { x: hw, y: hh, z: -hl }, // 5
+
+                        { x: -hw, y: hh, z: hl }, // 7
+                        { x: hw, y: hh, z: hl }, // 6
+                        { x: hw, y: hh, z: -hl } // 5
+                       ].map(function(inModelFramePoint) {
+                           return trans.xformPoint(inModelFramePoint);
+                       });
+
+        var normals = [ { x: 0, y: -1, z: 0 },
+                        { x: 0, y: -1, z: 0 },
+                        { x: 0, y: -1, z: 0 },
+                        { x: 0, y: -1, z: 0 },
+                        { x: 0, y: -1, z: 0 },
+                        { x: 0, y: -1, z: 0 },
+                        { x: -0, y: 0, z: 1 },
+                        { x: -0, y: 0, z: 1 },
+                        { x: -0, y: 0, z: 1 },
+                        { x: 1, y: 0, z: 0 },
+                        { x: 1, y: 0, z: 0 },
+                        { x: 1, y: 0, z: 0 },
+                        { x: 1, y: 0, z: 0 },
+                        { x: 1, y: 0, z: 0 },
+                        { x: 1, y: 0, z: 0 },
+                        { x: -1, y: 0, z: 0 },
+                        { x: -1, y: 0, z: 0 },
+                        { x: -1, y: 0, z: 0 },
+                        { x: -1, y: 0, z: 0 },
+                        { x: -1, y: 0, z: 0 },
+                        { x: -1, y: 0, z: 0 },
+                        { x: 0, y: 0, z: -1 },
+                        { x: 0, y: 0, z: -1 },
+                        { x: 0, y: 0, z: -1 },
+                        { x: 0, y: -0, z: 1 },
+                        { x: 0, y: -0, z: 1 },
+                        { x: 0, y: -0, z: 1 },
+                        { x: 0, y: 0, z: -1 },
+                        { x: 0, y: 0, z: -1 },
+                        { x: 0, y: 0, z: -1 },
+                        { x: 0, y: 1, z: 0 },
+                        { x: 0, y: 1, z: 0 },
+                        { x: 0, y: 1, z: 0 },
+                        { x: 0, y: 1, z: 0 },
+                        { x: 0, y: 1, z: 0 },
+                        { x: 0, y: 1, z: 0 }
+                      ].map(function(inModelFrameNormal) {
+                          return trans.xformVector(inModelFrameNormal);
+                      });
+
+        var faces = [{ vertices: [0, 1, 2] },
+                     { vertices: [3, 4, 5] },
+                     { vertices: [6, 7, 8] },
+                     { vertices: [9, 10, 11] },
+                     { vertices: [12, 13, 14] },
+                     { vertices: [15, 16, 17] },
+                     { vertices: [18, 19, 20] },
+                     { vertices: [21, 22, 23] },
+                     { vertices: [24, 25, 26] },
+                     { vertices: [27, 28, 29] },
+                     { vertices: [30, 31, 32] },
+                     { vertices: [33, 34, 35] }];
+
+        return {
+            mesh: Model.newMesh(vertices, normals, faces),
+            vertices: vertices
+        };
+    }
+
+    function keepMin(low, v) {
+        if (!low.x || v.x < low.x) {
+            low.x = v.x;
+        }
+        if (!low.y || v.y < low.y) {
+            low.y = v.y;
+        }
+        if (!low.z || v.z < low.z) {
+            low.z = v.z;
+        }
+    }
+
+    function keepMax(high, v) {
+        if (!high.x || v.x > high.x) {
+            high.x = v.x;
+        }
+        if (!high.y || v.y > high.y) {
+            high.y = v.y;
+        }
+        if (!high.z || v.z > high.z) {
+            high.z = v.z;
+        }
+    }
+
+    function bricksToOBJ(params) {
+        var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+        var meshes = [];
+
+        var low = { x: false, y: false, z: false };
+        var high = { x: false, y: false, z: false };
+        var foreachVertexFunction = function (vertex) {
+            keepMin(low, vertex);
+            keepMax(high, vertex);
+        };
+
+        for (var i = 0; i < allEntities.length; i++) {
+            var entityID = allEntities[i];
+            if (!isBrick(entityID)) {
+                continue;
+            }
+            var brickToMeshResult = brickToMesh(entityID);
+            meshes.push(brickToMeshResult.mesh);
+            brickToMeshResult.vertices.forEach(foreachVertexFunction);
+        }
+        var objData = Model.meshToOBJ(meshes);
+        var nth = Math.floor((Math.random() * 1000) + 1);
+        var fileName = "/brick-walls-" + nth + ".obj";
+        var position = Vec3.multiply(Vec3.sum(low, high), 0.5);
+
+        clearBricks(params);
+
+        Assets.uploadData(objData, function(url, hash) {
+            Assets.setMapping(fileName, hash, function() {
+                Entities.addEntity({
+                    type: "Model",
+                    modelURL: "atp:" + fileName,
+                    position: Vec3.sum(position, { x: 0, y: 0, z: 0 }),
+                    name: "brick-wall",
+                    dynamic: false,
+                    collisionless: true
+                });
+            });
+        });
+    }
+
 
     function onWebEventReceived(eventString) {
         // print("received web event: " + JSON.stringify(eventString));
@@ -500,6 +689,10 @@
                 if (event["brick-walls-command"] == "add-brick-row") {
                     print("add brick row");
                     addBrickRow(params);
+                }
+                if (event["brick-walls-command"] == "bake-brick-wall") {
+                    print("bake brick wall");
+                    bricksToOBJ(params);
                 }
                 if (event["brick-walls-command"] == "undo-one-brick") {
                     print("undo one brick");
