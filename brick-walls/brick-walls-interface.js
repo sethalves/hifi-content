@@ -1,9 +1,16 @@
 "use strict";
 /* globals $, EventBridge */
 
-var parameterNames = ["brick-width", "brick-height", "brick-length", "max-bricks-per-row", "gap"];
+var parameters = {
+    "brick-width":"float",
+    "brick-height":"float",
+    "brick-length":"float",
+    "max-bricks-per-row":"integer",
+    "gap":"float"
+};
 
-function getParameterByName(name, url) {
+
+function getQueryArgByName(name, url) {
     if (!url) {
         url = window.location.href;
     }
@@ -16,27 +23,21 @@ function getParameterByName(name, url) {
 }
 
 
-function getParameterType(parameterName) {
-    if (parameterName == "max-bricks-per-row") {
-        return "integer";
-    }
-    return "float";
-}
-
-
 function addCommandParameters(params) {
     // copy from html elements into an associative-array which will get passed (as JSON) through the EventBridge
-    parameterNames.forEach(function(parameterName) {
-        var parameterType = getParameterType(parameterName);
-        var strVal = $("#" + parameterName).val();
-        if (parameterType == "integer") {
-            params[parameterName] = parseInt(strVal);
-        } else if (parameterType == "float") {
-            params[parameterName] = parseFloat(strVal);
-        } else {
-            params[parameterName] = strVal;
+    for (var parameterName in parameters) {
+        if (parameters.hasOwnProperty(parameterName)) {
+            var parameterType = parameters[parameterName];
+            var strVal = $("#" + parameterName).val();
+            if (parameterType == "integer") {
+                params[parameterName] = parseInt(strVal);
+            } else if (parameterType == "float") {
+                params[parameterName] = parseFloat(strVal);
+            } else {
+                params[parameterName] = strVal;
+            }
         }
-    });
+    }
     return params;
 }
 
@@ -50,16 +51,18 @@ $(document).ready(function() {
     });
 
     // copy parameters from query-args into elements
-    parameterNames.forEach(function(parameterName) {
-        var val = getParameterByName(parameterName);
-        if (val) {
-            var parameterType = getParameterType(parameterName);
-            if (parameterType == "integer") {
-                val = parseInt(val);
-            } else if (parameterType == "float") {
-                val = parseFloat(val);
+    for (var parameterName in parameters) {
+        if (parameters.hasOwnProperty(parameterName)) {
+            var val = getQueryArgByName(parameterName);
+            if (val) {
+                var parameterType = parameters[parameterName];
+                if (parameterType == "integer") {
+                    val = parseInt(val);
+                } else if (parameterType == "float") {
+                    val = parseFloat(val);
+                }
+                $("#" + parameterName).val(val.toString());
             }
-            $("#" + parameterName).val(val.toString());
         }
-    });
+    }
 });

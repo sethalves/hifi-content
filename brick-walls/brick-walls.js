@@ -224,12 +224,17 @@
                                      Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / 2.0,
                                                                            y: brickHeight / 2.0 - 0.05,
                                                                            z: brickLength / 2.0 }));
-        } else {
+        } else if (hole == "low") {
             pickRayOrigin = Vec3.sum(newBrickPosition,
                                      Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / -2.0,
                                                                            y: brickHeight / 2.0 - 0.05,
                                                                            z: brickLength / 2.0 }));
 
+        } else {
+            pickRayOrigin = Vec3.sum(newBrickPosition,
+                                     Vec3.multiplyQbyV(newBrickRotation, { x: 0.0,
+                                                                           y: brickHeight / 2.0 - 0.05,
+                                                                           z: brickLength / 2.0 }));
         }
 
         var pickRay = {
@@ -305,7 +310,8 @@
         }
         if (hole == "both") {
             // probably tracking the row below this... check the middle
-            for (var angle = -90 * DEG_TO_RAD;
+            var angle;
+            for (angle = -90 * DEG_TO_RAD;
                  angle < 90 * DEG_TO_RAD;
                  angle += 5 * DEG_TO_RAD) {
                 newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
@@ -314,15 +320,41 @@
                 rayPickResult = findRayIntersection(pickRay, !force);
                 if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                     middleIntersects = true;
-                    if (angle < 0) {
-                        highAngle = angle;
-                        lowAngle = -90 * DEG_TO_RAD;
-                        hole = "low";
-                    } else {
-                        lowAngle = angle;
-                        highAngle = 90 * DEG_TO_RAD;
-                        hole = "high";
-                    }
+                    // if (angle < 0) {
+                    //     highAngle = angle;
+                    //     lowAngle = -90 * DEG_TO_RAD;
+                    //     hole = "low";
+                    // } else {
+                    //     lowAngle = angle;
+                    //     highAngle = 90 * DEG_TO_RAD;
+                    //     hole = "low";
+                    // }
+                    hole = "low";
+                    lowAngle = angle - 10 * DEG_TO_RAD;
+                    // highAngle = angle + 45 * DEG_TO_RAD;
+                }
+            }
+            for (angle = 90 * DEG_TO_RAD;
+                 angle > -90 * DEG_TO_RAD;
+                 angle -= 5 * DEG_TO_RAD) {
+                newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
+                                               lastBrickProps.dimensions, angle, "high");
+                pickRay = newBrickData.pickRay;
+                rayPickResult = findRayIntersection(pickRay, !force);
+                if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
+                    middleIntersects = true;
+                    // if (angle < 0) {
+                    //     highAngle = angle;
+                    //     lowAngle = -90 * DEG_TO_RAD;
+                    //     hole = "low";
+                    // } else {
+                    //     lowAngle = angle;
+                    //     highAngle = 90 * DEG_TO_RAD;
+                    //     hole = "low";
+                    // }
+                    hole = "high";
+                    highAngle = angle + 10 * DEG_TO_RAD;
+                    // highAngle = angle + 45 * DEG_TO_RAD;
                 }
             }
             if (!force && !middleIntersects) {
@@ -469,6 +501,20 @@
             print("...addFollowingBrick after " + lastBrickID);
             return addFollowingBrick(lastBrickID, params, true, force);
         }
+    }
+
+    function addHalfBrick(params, force) {
+        params["brick-length"] /= 2.0;
+        addBrick(params, force);
+        params["brick-length"] *= 2.0;
+    }
+
+    function forceAddBrick(params) {
+        addBrick(params, true);
+    }
+
+    function forceAddHalfBrick(params) {
+        addHalfBrick(params, true);
     }
 
     function addBrickRow(params) {
@@ -758,46 +804,23 @@
             }
 
             if (event["brick-walls-command"]) {
-                // converts strings to floats
-                var params = {
-                    "brick-width": parseFloat(event["brick-width"]),
-                    "brick-height": parseFloat(event["brick-height"]),
-                    "brick-length": parseFloat(event["brick-length"]),
-                    "max-bricks-per-row": parseFloat(event["max-bricks-per-row"]),
-                    "gap": parseFloat(event.gap)
+                var commandToFunctionMap = {
+                    "add-brick": addBrick,
+                    "add-half-brick": addHalfBrick,
+                    "force-add-brick": forceAddBrick,
+                    "force-add-half-brick": forceAddHalfBrick,
+                    "add-brick-row": addBrickRow,
+                    "bake-brick-wall": bricksToOBJ,
+                    "undo-one-brick": undoOneBrick,
+                    "reset-bricks": resetBricks,
+                    "reverse-wall-direction": reverseWallDirection,
+                    "reverse-wall-direction-half": reverseWallDirection
                 };
 
-                if (event["brick-walls-command"] == "add-brick") {
-                    addBrick(params, false);
-                }
-                if (event["brick-walls-command"] == "add-half-brick") {
-                    params["brick-length"] /= 2.0;
-                    addBrick(params, false);
-                }
-                if (event["brick-walls-command"] == "force-add-brick") {
-                    addBrick(params, true);
-                }
-                if (event["brick-walls-command"] == "force-add-half-brick") {
-                    params["brick-length"] /= 2.0;
-                    addBrick(params, true);
-                }
-                if (event["brick-walls-command"] == "add-brick-row") {
-                    addBrickRow(params);
-                }
-                if (event["brick-walls-command"] == "bake-brick-wall") {
-                    bricksToOBJ(params);
-                }
-                if (event["brick-walls-command"] == "undo-one-brick") {
-                    undoOneBrick(params);
-                }
-                if (event["brick-walls-command"] == "reset-bricks") {
-                    resetBricks(params);
-                }
-                if (event["brick-walls-command"] == "reverse-wall-direction") {
-                    reverseWallDirection(params, false);
-                }
-                if (event["brick-walls-command"] == "reverse-wall-direction-half") {
-                    reverseWallDirection(params,  true);
+                var cmd = event["brick-walls-command"];
+                if (commandToFunctionMap.hasOwnProperty(cmd)) {
+                    var func = commandToFunctionMap[cmd];
+                    func(event);
                 }
             }
         }
@@ -821,11 +844,11 @@
                 }
             }
             tablet.gotoWebScreen(BRICK_WALLS_URL +
-                                 "?brick-width=" + defaultBrickSize.x +
-                                 "&brick-height=" + defaultBrickSize.y +
-                                 "&brick-length=" + defaultBrickSize.z +
-                                 "&max-bricks-per-row=" + DEFAULT_BRICKS_PER_ROW +
-                                 "&gap=" + DEFAULT_GAP
+                                 "?brick-width=" + defaultBrickSize.x.toFixed(3).toString() +
+                                 "&brick-height=" + defaultBrickSize.y.toFixed(3).toString() +
+                                 "&brick-length=" + defaultBrickSize.z.toFixed(3).toString() +
+                                 "&max-bricks-per-row=" + DEFAULT_BRICKS_PER_ROW.toString() +
+                                 "&gap=" + DEFAULT_GAP.toFixed(3).toString()
                                 );
             onBricksScreen = true;
         }
