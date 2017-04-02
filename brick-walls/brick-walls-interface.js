@@ -1,6 +1,7 @@
-
 "use strict";
 /* globals $, EventBridge */
+
+var parameterNames = ["brick-width", "brick-height", "brick-length", "max-bricks-per-row", "gap"];
 
 function getParameterByName(name, url) {
     if (!url) {
@@ -15,56 +16,50 @@ function getParameterByName(name, url) {
 }
 
 
+function getParameterType(parameterName) {
+    if (parameterName == "max-bricks-per-row") {
+        return "integer";
+    }
+    return "float";
+}
+
+
 function addCommandParameters(params) {
-    params["brick-width"] = $("#brick-width").val();
-    params["brick-height"] = $("#brick-height").val();
-    params["brick-length"] = $("#brick-length").val();
-    params["max-bricks-per-row"] = $("#max-bricks-per-row").val();
-    params.gap = $("#gap").val();
+    // copy from html elements into an associative-array which will get passed (as JSON) through the EventBridge
+    parameterNames.forEach(function(parameterName) {
+        var parameterType = getParameterType(parameterName);
+        var strVal = $("#" + parameterName).val();
+        if (parameterType == "integer") {
+            params[parameterName] = parseInt(strVal);
+        } else if (parameterType == "float") {
+            params[parameterName] = parseFloat(strVal);
+        } else {
+            params[parameterName] = strVal;
+        }
+    });
     return params;
 }
 
+
 $(document).ready(function() {
-    $("#add-brick-button").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-brick" })));
-    });
-    $("#add-half-brick-button").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-half-brick" })));
-    });
-    $("#force-add-brick-button").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "force-add-brick" })));
-    });
-    $("#force-add-half-brick-button").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "force-add-half-brick" })));
-    });
-    $("#add-brick-row-button").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "add-brick-row" })));
-    });
-    $("#reset-bricks-button").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "reset-bricks" })));
-    });
-    $("#undo-one-brick").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "undo-one-brick" })));
-    });
-    $("#bake-brick-wall").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "bake-brick-wall" })));
-    });
-    $("#reverse-wall-direction").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "reverse-wall-direction" })));
-    });
-    $("#reverse-wall-direction-half").click(function() {
-        EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": "reverse-wall-direction-half" })));
+    // hook all buttons to EventBridge
+    $(":button").each(function(index) {
+        $(this).click(function() {
+            EventBridge.emitWebEvent(JSON.stringify(addCommandParameters({ "brick-walls-command": this.id })));
+        });
     });
 
-    var brickWidth = getParameterByName('brick-width');
-    var brickHeight = getParameterByName('brick-height');
-    var brickLength = getParameterByName('brick-length');
-    var maxBricksPerRow = getParameterByName('max-bricks-per-row');
-    var gap = getParameterByName('gap');
-
-    $("#brick-width").val(brickWidth);
-    $("#brick-height").val(brickHeight);
-    $("#brick-length").val(brickLength);
-    $("#max-bricks-per-row").val(maxBricksPerRow);
-    $("#gap").val(gap);
+    // copy parameters from query-args into elements
+    parameterNames.forEach(function(parameterName) {
+        var val = getParameterByName(parameterName);
+        if (val) {
+            var parameterType = getParameterType(parameterName);
+            if (parameterType == "integer") {
+                val = parseInt(val);
+            } else if (parameterType == "float") {
+                val = parseFloat(val);
+            }
+            $("#" + parameterName).val(val.toString());
+        }
+    });
 });
