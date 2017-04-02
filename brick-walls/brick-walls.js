@@ -28,22 +28,34 @@
         sortOrder: 15
     });
 
+    var getEntityNameCache = {};
     function getEntityName(entityID) {
-        var props = Entities.getEntityProperties(entityID, ["name"]);
-        return props.name;
+        if (!getEntityNameCache.hasOwnProperty(entityID)) {
+            getEntityNameCache[entityID] = Entities.getEntityProperties(entityID, ["name"]).name;
+        }
+        return getEntityNameCache[entityID];
     }
 
+    var getBrickIndexCache = {};
     function setBrickIndex(entityID, index) {
+        getBrickIndexCache[entityID] = index;
         setEntityCustomData("brick", entityID, { index: index });
     }
 
     function getBrickIndex(entityID) {
-        var brickData = getEntityCustomData("brick", entityID, DEFAULT_BRICK_DATA);
-        return brickData.index;
+        if (!getBrickIndexCache.hasOwnProperty(entityID)) {
+            var brickData = getEntityCustomData("brick", entityID, DEFAULT_BRICK_DATA);
+            getBrickIndexCache[entityID] = brickData.index;
+        }
+        return getBrickIndexCache[entityID];
     }
 
+    var isBrickCache = {};
     function isBrick(entityID) {
-        return getEntityName(entityID) == "brick";
+        if (!isBrickCache.hasOwnProperty(entityID)) {
+            isBrickCache[entityID] = (getEntityName(entityID) == "brick");
+        }
+        return isBrickCache[entityID];
     }
 
     function findFirstBrick() {
