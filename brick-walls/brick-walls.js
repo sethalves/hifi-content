@@ -10,7 +10,7 @@
     Script.include("/~/system/libraries/Xform.js");
 
     var DEG_TO_RAD = Math.PI / 180.0;
-    var RAD_TO_DEG = 180.0 / Math.PI;
+    // var RAD_TO_DEG = 180.0 / Math.PI;
 
     // var BRICK_WALLS_URL = "http://headache.hungry.com/~seth/hifi/brick-walls/brick-walls.html";
     var BRICK_WALLS_URL = Script.resolvePath("brick-walls.html");
@@ -19,7 +19,7 @@
     var DEFAULT_BRICK_SIZE = { x: 0.2, y: 0.2, z: 0.4 };
     var DEFAULT_BRICKS_PER_ROW = 30;
     var DEFAULT_GAP = 0.03;
-    var DEFAULT_BRICK_DATA = { index: 0 };
+    var DEFAULT_BRICK_DATA = { index: 0, gap: 0.02 };
 
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     var button = tablet.addButton({
@@ -39,7 +39,9 @@
     var getBrickIndexCache = {};
     function setBrickIndex(entityID, index) {
         getBrickIndexCache[entityID] = index;
-        setEntityCustomData("brick", entityID, { index: index });
+        var brickData = getEntityCustomData("brick", entityID, DEFAULT_BRICK_DATA);
+        brickData.index = index;
+        setEntityCustomData("brick", entityID, brickData);
     }
 
     function getBrickIndex(entityID) {
@@ -48,6 +50,25 @@
             getBrickIndexCache[entityID] = brickData.index;
         }
         return getBrickIndexCache[entityID];
+    }
+
+    function setBrickNotes(entityID, gap) {
+        var brickData = getEntityCustomData("brick", entityID, DEFAULT_BRICK_DATA);
+        var notes = brickData.notes;
+        if (!notes) {
+            notes = {};
+        }
+        notes.gap = gap;
+        brickData.notes = notes;
+        setEntityCustomData("brick", entityID, brickData);
+    }
+
+    function getBrickNotes(entityID) {
+        var brickData = getEntityCustomData("brick", entityID, DEFAULT_BRICK_DATA);
+        if (brickData) {
+            return brickData.notes;
+        }
+        return null;
     }
 
     var isBrickCache = {};
@@ -114,6 +135,7 @@
         });
 
         setBrickIndex(newBrickID, 0);
+        setBrickNotes(newBrickID, params.gap);
         return newBrickID;
     }
 
@@ -179,8 +201,6 @@
             //     lifetime: 60
             // });
 
-
-            print(JSON.stringify(rayPickResult));
             if (rayPickResult.intersects && rayPickResult.distance < brickLength + 0.01) {
                 return false;
             }
@@ -263,6 +283,7 @@
         };
     }
 
+    var firstInRowIDs = [];
     function addFollowingBrick(lastBrickID, params, canStartNewRow, force) {
         var lastBrickProps = Entities.getEntityProperties(lastBrickID, ["position", "rotation", "dimensions"]);
 
@@ -320,53 +341,35 @@
             lowAngle = 0.0;
             hole = "neither";
         }
+
         if (hole == "both") {
+            var searchStep = 10 * DEG_TO_RAD;
             // probably tracking the row below this... check the middle
             var angle;
             for (angle = -90 * DEG_TO_RAD;
                  angle < 90 * DEG_TO_RAD;
-                 angle += 5 * DEG_TO_RAD) {
+                 angle += searchStep) {
                 newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
                                                lastBrickProps.dimensions, angle, "low");
                 pickRay = newBrickData.pickRay;
                 rayPickResult = findRayIntersection(pickRay, !force);
                 if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                     middleIntersects = true;
-                    // if (angle < 0) {
-                    //     highAngle = angle;
-                    //     lowAngle = -90 * DEG_TO_RAD;
-                    //     hole = "low";
-                    // } else {
-                    //     lowAngle = angle;
-                    //     highAngle = 90 * DEG_TO_RAD;
-                    //     hole = "low";
-                    // }
                     hole = "low";
-                    lowAngle = angle - 10 * DEG_TO_RAD;
-                    // highAngle = angle + 45 * DEG_TO_RAD;
+                    lowAngle = angle - searchStep;
                 }
             }
             for (angle = 90 * DEG_TO_RAD;
                  angle > -90 * DEG_TO_RAD;
-                 angle -= 5 * DEG_TO_RAD) {
+                 angle -= searchStep) {
                 newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
                                                lastBrickProps.dimensions, angle, "high");
                 pickRay = newBrickData.pickRay;
                 rayPickResult = findRayIntersection(pickRay, !force);
                 if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                     middleIntersects = true;
-                    // if (angle < 0) {
-                    //     highAngle = angle;
-                    //     lowAngle = -90 * DEG_TO_RAD;
-                    //     hole = "low";
-                    // } else {
-                    //     lowAngle = angle;
-                    //     highAngle = 90 * DEG_TO_RAD;
-                    //     hole = "low";
-                    // }
                     hole = "high";
-                    highAngle = angle + 10 * DEG_TO_RAD;
-                    // highAngle = angle + 45 * DEG_TO_RAD;
+                    highAngle = angle + searchStep;
                 }
             }
             if (!force && !middleIntersects) {
@@ -425,12 +428,12 @@
             // });
 
 
-            print("searching," +
-                  " low=" + (lowAngle * RAD_TO_DEG) +
-                  " middle=" + (middleAngle * RAD_TO_DEG) +
-                  " high=" + (highAngle * RAD_TO_DEG) +
-                  " hole=" + hole +
-                  " hit=" + (rayPickResult.intersects && rayPickResult.distance <= brickHeight));
+            // print("searching," +
+            //       " low=" + (lowAngle * RAD_TO_DEG) +
+            //       " middle=" + (middleAngle * RAD_TO_DEG) +
+            //       " high=" + (highAngle * RAD_TO_DEG) +
+            //       " hole=" + hole +
+            //       " hit=" + (rayPickResult.intersects && rayPickResult.distance <= brickHeight));
 
             if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                 if (hole == "high") {
@@ -469,7 +472,6 @@
         };
 
         if (force || brickFits(newBrickPosition, newBrickRotation, brickDimensions)) {
-            print("... brick fits -- " + JSON.stringify(newBrickPosition));
             var newBrickID = Entities.addEntity({
                 name: "brick",
                 type: "Box",
@@ -482,9 +484,9 @@
             });
 
             setBrickIndex(newBrickID, getBrickIndex(lastBrickID) + 1);
+            setBrickNotes(newBrickID, params.gap);
             return newBrickID;
         } else if (canStartNewRow) {
-            print("... starting new row");
             var trans = new Xform(newBrickRotation, newBrickPosition);
             var uprowNewBrickID = Entities.addEntity({
                 name: "brick",
@@ -498,19 +500,18 @@
             });
 
             setBrickIndex(uprowNewBrickID, getBrickIndex(lastBrickID) + 1);
+            setBrickNotes(uprowNewBrickID, params.gap);
+            firstInRowIDs.push(getBrickIndex(uprowNewBrickID));
             return uprowNewBrickID;
         }
-        print("... brick doesn't fit");
         return null;
     }
 
     function addBrick(params, force) {
         var lastBrickID = findLastBrick();
         if (!lastBrickID) {
-            print("...addFirstBrick");
             return addFirstBrick(params);
         } else {
-            print("...addFollowingBrick after " + lastBrickID);
             return addFollowingBrick(lastBrickID, params, true, force);
         }
     }
@@ -545,12 +546,18 @@
                 if (!placedAny) {
                     newBrickID = addFollowingBrick(lastBrickID, params, true);
                     if (newBrickID) {
+                        if (!placedAny) {
+                            firstInRowIDs.push(getBrickIndex(newBrickID));
+                        }
                         placedAny = true;
                     }
                 } else {
                     break;
                 }
             } else {
+                if (!placedAny) {
+                    firstInRowIDs.push(getBrickIndex(newBrickID));
+                }
                 placedAny = true;
             }
         }
@@ -588,6 +595,7 @@
         });
 
         setBrickIndex(newBrickID, getBrickIndex(lastBrickID) + 1);
+        setBrickNotes(newBrickID, params.gap);
     }
 
     function resetBricks(params) {
@@ -619,6 +627,23 @@
         var lastBrickID = findLastBrick();
         if (firstBrickID != lastBrickID) {
             Entities.deleteEntity(lastBrickID);
+        }
+    }
+
+    function undoRow(params) {
+        print("undoRow -- firstInRowIDs = " + JSON.stringify(firstInRowIDs));
+        if (firstInRowIDs.length > 0) {
+            var firstBrickID = findFirstBrick();
+            var allEntities = Entities.findEntities(MyAvatar.position, BRICKS_RANGE);
+            var rowStart = firstInRowIDs.pop();
+            for (var i = 0; i < allEntities.length; i++) {
+                var entityID = allEntities[i];
+                if (isBrick(entityID) &&
+                    entityID != firstBrickID &&
+                    getBrickIndex(entityID) >= rowStart) {
+                    Entities.deleteEntity(entityID);
+                }
+            }
         }
     }
 
@@ -824,6 +849,7 @@
                     "add-brick-row": addBrickRow,
                     "bake-brick-wall": bricksToOBJ,
                     "undo-one-brick": undoOneBrick,
+                    "undo-row": undoRow,
                     "reset-bricks": resetBricks,
                     "reverse-wall-direction": reverseWallDirection,
                     "reverse-wall-direction-half": reverseWallDirection
@@ -849,18 +875,28 @@
 
             var firstBrickID = findFirstBrick();
             var defaultBrickSize = DEFAULT_BRICK_SIZE;
+            var defaultGap = DEFAULT_GAP;
             if (firstBrickID) {
                 var props = Entities.getEntityProperties(firstBrickID, ["dimensions"]);
                 if (props && props.dimensions) {
                     defaultBrickSize = props.dimensions;
                 }
             }
+
+            var lastBrickID = findLastBrick();
+            if (lastBrickID) {
+                var notes = getBrickNotes(lastBrickID);
+                if (notes) {
+                    defaultGap = notes.gap;
+                }
+            }
+
             tablet.gotoWebScreen(BRICK_WALLS_URL +
                                  "?brick-width=" + defaultBrickSize.x.toFixed(3).toString() +
                                  "&brick-height=" + defaultBrickSize.y.toFixed(3).toString() +
                                  "&brick-length=" + defaultBrickSize.z.toFixed(3).toString() +
                                  "&max-bricks-per-row=" + DEFAULT_BRICKS_PER_ROW.toString() +
-                                 "&gap=" + DEFAULT_GAP.toFixed(3).toString()
+                                 "&gap=" + defaultGap.toFixed(3).toString()
                                 );
             onBricksScreen = true;
         }
