@@ -1,7 +1,8 @@
 
 "use strict";
 
-/* global Entities, Script, Tablet, MyAvatar, getEntityCustomData, setEntityCustomData, Vec3, Quat, Xform, Model, Assets */
+/* global Entities, Script, Tablet, MyAvatar, getEntityCustomData, setEntityCustomData, Vec3, Quat, Xform, Model, Assets,
+   Overlays*/
 
 (function() { // BEGIN LOCAL_SCOPE
 
@@ -9,6 +10,7 @@
     Script.include("/~/system/libraries/Xform.js");
 
     var DEG_TO_RAD = Math.PI / 180.0;
+    var RAD_TO_DEG = 180.0 / Math.PI;
 
     // var BRICK_WALLS_URL = "http://headache.hungry.com/~seth/hifi/brick-walls/brick-walls.html";
     var BRICK_WALLS_URL = Script.resolvePath("brick-walls.html");
@@ -107,6 +109,10 @@
         var toIgnore = [];
         while (true) {
             var rayPickResult = Entities.findRayIntersection(pickRay, true, [], toIgnore);
+            if (rayPickResult.intersects && getEntityName(rayPickResult.entityID) == "brick debug") {
+                toIgnore.push(rayPickResult.entityID);
+                continue;
+            }
             if (includeNonBricks) {
                 return rayPickResult;
             }
@@ -170,8 +176,9 @@
         return true;
     }
 
-    function computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickDimensions, offsetAngle) {
+    function computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickDimensions, offsetAngle, hole) {
 
+        var lastBrickWidth = lastBrickDimensions.x;
         var lastBrickLength = lastBrickDimensions.z;
         var brickLength = params["brick-length"];
         var brickWidth = params["brick-width"];
@@ -184,36 +191,40 @@
         newBrickRotation = Quat.fromPitchYawRollRadians(0, newBrickYAngle, 0);
 
         var pickRayOrigin;
-        var newBrickClosePosition;
+        var newBrickCorner;
         var newBrickPosition;
         var newBrickRotation;
 
         if (offsetAngle >= 0.0) {
-            newBrickClosePosition = Vec3.sum(lastBrickPosition,
+            newBrickCorner = Vec3.sum(lastBrickPosition,
                                              Vec3.multiplyQbyV(lastBrickRotation,
-                                                               { x: brickWidth / 2.0,
+                                                               { x: lastBrickWidth / 2.0,
                                                                  y: 0,
                                                                  z: lastBrickLength / 2.0 + params.gap }));
-            newBrickPosition = Vec3.sum(newBrickClosePosition,
+            newBrickPosition = Vec3.sum(newBrickCorner,
                                         Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / -2.0,
                                                                               y: 0,
                                                                               z: brickLength / 2.0 }));
 
+        } else {
+            newBrickCorner = Vec3.sum(lastBrickPosition,
+                                             Vec3.multiplyQbyV(lastBrickRotation,
+                                                               { x: lastBrickWidth / -2.0,
+                                                                 y: 0,
+                                                                 z: lastBrickLength / 2.0 + params.gap }));
+            newBrickPosition = Vec3.sum(newBrickCorner,
+                                        Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / 2.0,
+                                                                              y: 0,
+                                                                              z: brickLength / 2.0 }));
+
+        }
+
+        if (hole == "high") {
             pickRayOrigin = Vec3.sum(newBrickPosition,
                                      Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / 2.0,
                                                                            y: brickHeight / 2.0 - 0.05,
                                                                            z: brickLength / 2.0 }));
         } else {
-            newBrickClosePosition = Vec3.sum(lastBrickPosition,
-                                             Vec3.multiplyQbyV(lastBrickRotation,
-                                                               { x: brickWidth / -2.0,
-                                                                 y: 0,
-                                                                 z: lastBrickLength / 2.0 + params.gap }));
-            newBrickPosition = Vec3.sum(newBrickClosePosition,
-                                        Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / 2.0,
-                                                                              y: 0,
-                                                                              z: brickLength / 2.0 }));
-
             pickRayOrigin = Vec3.sum(newBrickPosition,
                                      Vec3.multiplyQbyV(newBrickRotation, { x: brickWidth / -2.0,
                                                                            y: brickHeight / 2.0 - 0.05,
@@ -231,7 +242,7 @@
             pickRay: pickRay,
             newBrickPosition: newBrickPosition,
             newBrickRotation: newBrickRotation,
-            newBrickClosePosition: newBrickClosePosition
+            newBrickCorner: newBrickCorner
         };
     }
 
@@ -253,10 +264,11 @@
 
         var newBrickPosition;
         var newBrickRotation;
-        var newBrickClosePosition;
+        var newBrickCorner;
 
         // check the high limit
-        var newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, highAngle);
+        var newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
+                                           lastBrickProps.dimensions, highAngle, "high");
         var pickRay = newBrickData.pickRay;
         var rayPickResult = findRayIntersection(pickRay, !force);
         if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
@@ -264,7 +276,8 @@
         }
 
         // check the low limit
-        newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, lowAngle);
+        newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
+                                       lastBrickProps.dimensions, lowAngle, "low");
         pickRay = newBrickData.pickRay;
         rayPickResult = findRayIntersection(pickRay, !force);
         if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
@@ -273,7 +286,7 @@
 
         var hole = "";
         if (!lowIntersects && !highIntersects) {
-            // holes on both sides, go straight
+            // holes on both sides, check the middle (below)
             highAngle = 0.0;
             lowAngle = 0.0;
             hole = "both";
@@ -295,7 +308,8 @@
             for (var angle = -90 * DEG_TO_RAD;
                  angle < 90 * DEG_TO_RAD;
                  angle += 5 * DEG_TO_RAD) {
-                newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, angle);
+                newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
+                                               lastBrickProps.dimensions, angle, "low");
                 pickRay = newBrickData.pickRay;
                 rayPickResult = findRayIntersection(pickRay, !force);
                 if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
@@ -317,26 +331,62 @@
             }
         }
 
+        // var nth = 0;
+        // print("--- searching...");
+
         while (true) {
             var middleAngle = (highAngle + lowAngle) / 2.0;
-            newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation, lastBrickProps.dimensions, middleAngle);
+
+            newBrickData = computeNewBrick(params, lastBrickPosition, lastBrickRotation,
+                                           lastBrickProps.dimensions, middleAngle, hole);
             pickRay = newBrickData.pickRay;
             newBrickPosition = newBrickData.newBrickPosition;
             newBrickRotation = newBrickData.newBrickRotation;
-            newBrickClosePosition = newBrickData.newBrickClosePosition;
+            newBrickCorner = newBrickData.newBrickCorner;
 
             rayPickResult = findRayIntersection(pickRay, !force);
 
             // Entities.addEntity({
             //     name: "brick debug",
             //     type: "Sphere",
-            //     color: { blue: 0, green: 255, red: 0 },
+            //     color: { blue: 0, green: (255 / 10) * (nth), red: (255 / 10) * (10 - nth) },
             //     dimensions: {x: 0.05, y: 0.05, z: 0.05},
             //     position: pickRay.origin,
             //     dynamic: false,
             //     collisionless: true,
-            //     lifetime: 60
+            //     lifetime: 90
             // });
+            // Entities.addEntity({
+            //     name: "brick debug",
+            //     type: "Sphere",
+            //     color: { blue: 0, green: (255 / 10) * (nth), red: (255 / 10) * (10 - nth) },
+            //     dimensions: {x: 0.05, y: 0.05, z: 0.05},
+            //     position: pickRay.origin,
+            //     dynamic: false,
+            //     collisionless: true,
+            //     lifetime: 90
+            // });
+            // nth += 1;
+            // Overlays.addOverlay("line3d", {
+            //     color: {
+            //         red: 200,
+            //         green: 200,
+            //         blue: 200
+            //     },
+            //     alpha: 1,
+            //     visible: true,
+            //     lineWidth: 2,
+            //     start: pickRay.origin,
+            //     end: Vec3.sum(pickRay.origin, Vec3.multiply(pickRay.direction, pickRay.length))
+            // });
+
+
+            print("searching," +
+                  " low=" + (lowAngle * RAD_TO_DEG) +
+                  " middle=" + (middleAngle * RAD_TO_DEG) +
+                  " high=" + (highAngle * RAD_TO_DEG) +
+                  " hole=" + hole +
+                  " hit=" + (rayPickResult.intersects && rayPickResult.distance <= brickHeight));
 
             if (rayPickResult.intersects && rayPickResult.distance <= brickHeight) {
                 if (hole == "high") {
@@ -362,7 +412,7 @@
         //     type: "Sphere",
         //     color: { blue: 128, green: 0, red: 0 },
         //     dimensions: {x: 0.05, y: 0.05, z: 0.05},
-        //     position: newBrickClosePosition,
+        //     position: newBrickCorner,
         //     dynamic: false,
         //     collisionless: true,
         //     lifetime: 60
