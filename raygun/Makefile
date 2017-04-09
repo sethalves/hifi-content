@@ -2,8 +2,11 @@
 #
 #
 
+WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+# WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+
 %.obj: %.stl
-	wavefront-obj-tool -n $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -n $^ -o $@
 
 all: raygun.obj
 
@@ -13,7 +16,7 @@ raygun-body.stl: raygun.scad
 	openscad -D body=1 -o $@ $^
 
 raygun-body.obj: raygun-body.stl
-	wavefront-obj-tool -n $^ -o $@ -S body_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n $^ -o $@ -S body_mtl
 
 # --
 
@@ -21,12 +24,12 @@ raygun-shiney.stl: raygun.scad
 	openscad -D shiney=1 -o $@ $^
 
 raygun-shiney.obj: raygun-shiney.stl
-	wavefront-obj-tool -n $^ -o $@ -S shiney_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n $^ -o $@ -S shiney_mtl
 
 # --
 
 raygun.obj: raygun-body.obj raygun-shiney.obj
-	wavefront-obj-tool -n -L raygun.mtl -c $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -n -L raygun.mtl -c $^ -o $@
 
 
 upload: raygun.obj raygun.mtl raygun.js
