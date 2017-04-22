@@ -11,9 +11,7 @@
             this.previousBrushPositionSet = false;
         },
         function() { // continue
-            var brushProps = Entities.getEntityProperties(this.brush, ["position", "rotation",
-                                                                       "dimensions", "registrationPoint", "userData"]);
-            // var editSphereRadius = 0.035;
+            var brushProps = Entities.getEntityProperties(this.brush, ["position", "dimensions", "userData"]);
             var editSphereRadius = brushProps.dimensions.x / 2.0;
             this.color = JSON.parse(brushProps.userData).color;
 
@@ -34,7 +32,7 @@
 
     brush.slices = 10;
     brush.voxelSize = 16;
-    brush.showPolyVoxes = true;
+    brush.showPolyVoxes = false;
     brush.propsCache = {};
     brush.previousBrushPosition = null;
     brush.previousBrushPositionSet = false;
@@ -153,8 +151,9 @@
             if (possiblePolyVoxID in this.propsCache) {
                 props = this.propsCache[possiblePolyVoxID];
             } else {
-                props = Entities.getEntityProperties(possiblePolyVoxID, ['name', 'localPosition', 'userData']);
-                if (props.name != "voxel paint") {
+                props = Entities.getEntityProperties(possiblePolyVoxID, ['name', 'position', 'localPosition',
+                                                                         'userData', 'dimensions']);
+                if (props.name != "voxel paint" && props.name.substring(0, 25) != "voxel paint color bucket ") {
                     continue;
                 }
                 this.propsCache[possiblePolyVoxID] = props;
