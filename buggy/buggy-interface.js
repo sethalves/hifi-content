@@ -4,7 +4,9 @@
 var parameters = {
     "buggy-width":"float",
     "buggy-height":"float",
-    "buggy-length":"float"
+    "buggy-length":"float",
+    "speed":"float",
+    "impulse":"float"
 };
 
 

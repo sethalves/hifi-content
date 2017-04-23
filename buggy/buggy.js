@@ -8,7 +8,7 @@
 
     var BUGGY_UI_URL = Script.resolvePath("buggy.html");
     var DEG_TO_RAD = Math.PI / 180.0;
-    var DEFAULT_BUGGY_SIZE = { x: 1, y: 0.2, z: 1.4 };
+    var DEFAULT_BUGGY_SIZE = { x: 2, y: 0.25, z: 2.8 };
 
     var lifetime = 7200;
 
@@ -142,11 +142,6 @@
             tag: "wheel 3"
         });
         Entities.editEntity(carBodyID, { gravity: { x: 0, y: -6, z: 0 } });
-
-        // Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: -0.2, maxImpulse: 1.5 });
-        // Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: -0.2, maxImpulse: 1.5 });
-        // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: -0.2, maxImpulse: 1.5 });
-        // Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: -0.2, maxImpulse: 1.5 });
     }
 
     function deleteBuggy(event) {
@@ -164,6 +159,44 @@
         wheel3ID = null;
     }
 
+    function buggyForward(event) {
+        print("FORWARD");
+        if (!carBodyID) {
+            return;
+        }
+        var speed = event.speed;
+        var impulse = event.impulse;
+        Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
+        Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
+        // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: speed, maxImpulse: impulse });
+        // Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: speed, maxImpulse: impulse });
+    }
+
+    function buggyStop(event) {
+        print("STOP");
+        if (!carBodyID) {
+            return;
+        }
+        var impulse = event.impulse;
+        Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
+        Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
+        // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
+        // Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
+    }
+
+    function buggyBackward(event) {
+        print("BACK");
+        if (!carBodyID) {
+            return;
+        }
+        var speed = event.speed;
+        var impulse = event.impulse;
+        Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: -speed, maxImpulse: impulse });
+        Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: -speed, maxImpulse: impulse });
+        // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: -speed, maxImpulse: impulse });
+        // Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: -speed, maxImpulse: impulse });
+    }
+
     function onWebEventReceived(eventString) {
         print("received web event: " + JSON.stringify(eventString));
         if (typeof eventString === "string") {
@@ -178,6 +211,9 @@
                 var commandToFunctionMap = {
                     "new-buggy": newBuggy,
                     "delete-buggy": deleteBuggy,
+                    "forward": buggyForward,
+                    "stop": buggyStop,
+                    "backward": buggyBackward,
                 };
 
                 var cmd = event["buggy-command"];
@@ -199,11 +235,15 @@
             shouldActivateButton = true;
 
             var defaultBuggySize = DEFAULT_BUGGY_SIZE;
+            var defaultBuggySpeed = 0.2;
+            var defaultBuggyImpulse = 2.0;
 
             tablet.gotoWebScreen(BUGGY_UI_URL +
                                  "?buggy-width=" + defaultBuggySize.x.toFixed(3).toString() +
                                  "&buggy-height=" + defaultBuggySize.y.toFixed(3).toString() +
-                                 "&buggy-length=" + defaultBuggySize.z.toFixed(3).toString()
+                                 "&buggy-length=" + defaultBuggySize.z.toFixed(3).toString() +
+                                 "&speed=" + defaultBuggySpeed.toFixed(3).toString() +
+                                 "&impulse=" + defaultBuggyImpulse.toFixed(3).toString()
                                 );
             onBuggyScreen = true;
         }
