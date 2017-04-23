@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Entities, Script, Tablet, MyAvatar, Vec3 */
+/* global Entities, Script, Tablet, MyAvatar, Vec3, Messages */
 
 (function() { // BEGIN LOCAL_SCOPE
     Script.include("/~/system/libraries/utils.js");
@@ -11,6 +11,8 @@
     var DEFAULT_BUGGY_SIZE = { x: 2, y: 0.25, z: 2.8 };
 
     var lifetime = 7200;
+    var speed = 0.0;
+    var impulse = 4.0;
 
     var carBodyID = null;
     var wheel0ID = null;
@@ -21,6 +23,7 @@
     var wheel1Constraint = null;
     var wheel2Constraint = null;
     var wheel3Constraint = null;
+    var steeringLeverID = null;
 
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     var button = tablet.addButton({
@@ -31,6 +34,9 @@
 
 
     function newBuggy(params) {
+        speed = params.speed;
+        impulse = params.impulse;
+
         var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -4}));
         var bodyDimensions = {
             x: params['buggy-width'],
@@ -42,6 +48,11 @@
         var wheel1Offset = { x: -bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: bodyDimensions.z / 2 };
         var wheel2Offset = { x: bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: -bodyDimensions.z / 2 };
         var wheel3Offset = { x: -bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: -bodyDimensions.z / 2 };
+
+        var steeringLeverLength = 1.3;
+        var steeringLeverOffset = { x: 0,
+                                    y: steeringLeverLength / 2.0 + bodyDimensions.y / 2.0 + 0.1,
+                                    z: 0.1 };
 
         carBodyID = Entities.addEntity({
             name: "hinge test car body",
@@ -108,6 +119,20 @@
             friction: 5.0,
             userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
         });
+        steeringLeverID = Entities.addEntity({
+            name: "buggy steering lever",
+            type: "Box",
+            color: { blue: 40, green: 200, red: 20 },
+            dimensions: { x: 0.02, y: steeringLeverLength, z: 0.02 },
+            position: Vec3.sum(pos, steeringLeverOffset),
+            dynamic: true,
+            collisionless: false,
+            gravity: { x: 0, y: 0, z: 0 },
+            lifetime: lifetime,
+            script: Script.resolvePath("steeringLever.js"),
+            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        });
+
 
         wheel0Constraint = Entities.addAction("hinge", wheel0ID, {
             pivot: { x: 0, y: 0, z: 0 },
@@ -141,6 +166,16 @@
             otherAxis: { x: 1, y: 0, z: 0 },
             tag: "wheel 3"
         });
+        wheel3Constraint = Entities.addAction("hinge", steeringLeverID, {
+            pivot: { x: 0, y: steeringLeverLength / -2.0, z: 0 },
+            axis: { x: 0, y: 0, z: 1 },
+            otherEntityID: carBodyID,
+            otherPivot: Vec3.sum(steeringLeverOffset, { x: 0, y: -steeringLeverLength / 2.0, z: 0 }),
+            otherAxis: { x: 0, y: 0, z: 1 },
+            tag: "wheel 3",
+            softness: 0.0
+        });
+
         Entities.editEntity(carBodyID, { gravity: { x: 0, y: -6, z: 0 } });
     }
 
@@ -151,12 +186,14 @@
             Entities.deleteEntity(wheel1ID);
             Entities.deleteEntity(wheel2ID);
             Entities.deleteEntity(wheel3ID);
+            Entities.deleteEntity(steeringLeverID);
         }
         carBodyID = null;
         wheel0ID = null;
         wheel1ID = null;
         wheel2ID = null;
         wheel3ID = null;
+        steeringLeverID = null;
     }
 
     function buggyForward(event) {
@@ -164,8 +201,8 @@
         if (!carBodyID) {
             return;
         }
-        var speed = event.speed;
-        var impulse = event.impulse;
+        speed = event.speed;
+        impulse = event.impulse;
         Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
         Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
         // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: speed, maxImpulse: impulse });
@@ -177,7 +214,7 @@
         if (!carBodyID) {
             return;
         }
-        var impulse = event.impulse;
+        impulse = event.impulse;
         Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
         Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
         // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: 0.0, maxImpulse: impulse });
@@ -189,8 +226,8 @@
         if (!carBodyID) {
             return;
         }
-        var speed = event.speed;
-        var impulse = event.impulse;
+        speed = event.speed;
+        impulse = event.impulse;
         Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: -speed, maxImpulse: impulse });
         Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: -speed, maxImpulse: impulse });
         // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: -speed, maxImpulse: impulse });
@@ -235,8 +272,8 @@
             shouldActivateButton = true;
 
             var defaultBuggySize = DEFAULT_BUGGY_SIZE;
-            var defaultBuggySpeed = 0.2;
-            var defaultBuggyImpulse = 2.0;
+            var defaultBuggySpeed = 4.0;
+            var defaultBuggyImpulse = 4.0;
 
             tablet.gotoWebScreen(BUGGY_UI_URL +
                                  "?buggy-width=" + defaultBuggySize.x.toFixed(3).toString() +
@@ -267,5 +304,22 @@
     tablet.webEventReceived.connect(onWebEventReceived);
     tablet.screenChanged.connect(onScreenChanged);
     Script.scriptEnding.connect(cleanup);
+
+    Messages.subscribe('buggy');
+    Messages.messageReceived.connect(function(channel, message, sender) {
+        print("got message: " + message);
+        if (sender === MyAvatar.sessionUUID) {
+            if (channel === 'buggy') {
+                var data = JSON.parse(message);
+                var speed = data.speed;
+                var direction = data.direction;
+                Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                // Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: speed, maxImpulse: impulse });
+
+            }
+        }
+    });
 
 }()); // END LOCAL_SCOPE

@@ -4,7 +4,7 @@
 
 all:
 
-upload: buggy.js buggy.html buggy-interface.js
+upload: buggy.js buggy.html buggy-interface.js steeringLever.js
 	mkdir -p buggy
 	cp $^ buggy/
 	rsync --delete -avP buggy/ headache.hungry.com:public_html/hifi/buggy/
