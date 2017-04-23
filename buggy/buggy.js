@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Entities, Script, Tablet, MyAvatar, Vec3, Messages */
+/* global Entities, Script, Tablet, MyAvatar, Quat, Vec3, Messages */
 
 (function() { // BEGIN LOCAL_SCOPE
     Script.include("/~/system/libraries/utils.js");
@@ -19,11 +19,12 @@
     var wheel1ID = null;
     var wheel2ID = null;
     var wheel3ID = null;
+    var steeringLeverID = null;
     var wheel0Constraint = null;
     var wheel1Constraint = null;
     var wheel2Constraint = null;
     var wheel3Constraint = null;
-    var steeringLeverID = null;
+    var steeringLeverConstraint = null;
 
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     var button = tablet.addButton({
@@ -166,13 +167,13 @@
             otherAxis: { x: 1, y: 0, z: 0 },
             tag: "wheel 3"
         });
-        wheel3Constraint = Entities.addAction("hinge", steeringLeverID, {
+        steeringLeverConstraint = Entities.addAction("hinge", steeringLeverID, {
             pivot: { x: 0, y: steeringLeverLength / -2.0, z: 0 },
             axis: { x: 0, y: 0, z: 1 },
             otherEntityID: carBodyID,
             otherPivot: Vec3.sum(steeringLeverOffset, { x: 0, y: -steeringLeverLength / 2.0, z: 0 }),
             otherAxis: { x: 0, y: 0, z: 1 },
-            tag: "wheel 3",
+            tag: "steering lever",
             softness: 0.0
         });
 
@@ -307,17 +308,28 @@
 
     Messages.subscribe('buggy');
     Messages.messageReceived.connect(function(channel, message, sender) {
-        print("got message: " + message);
+        // print("got message: " + message);
         if (sender === MyAvatar.sessionUUID) {
             if (channel === 'buggy') {
                 var data = JSON.parse(message);
                 var speed = data.speed;
-                var direction = data.direction;
-                Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
-                Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
-                // Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: speed, maxImpulse: impulse });
-                // Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                var direction = data.direction; // left is about -2, right is about 2
+                var directionQ = Quat.fromVec3Radians({ x: 0, y: direction, z: 0 });
+                var axis = Vec3.multiplyQbyV(directionQ, { x: 1, y: 0, z: 0 });
+                // print("direction = " + direction);
+                // Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                // Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
 
+                Entities.updateAction(wheel0ID, wheel0Constraint, {
+                    motorVelocity: speed,
+                    maxImpulse: impulse,
+                    axis: axis
+                });
+                Entities.updateAction(wheel1ID, wheel1Constraint, {
+                    motorVelocity: speed,
+                    maxImpulse: impulse,
+                    axis: axis
+                });
             }
         }
     });
