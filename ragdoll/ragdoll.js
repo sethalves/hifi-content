@@ -301,7 +301,7 @@ var rightShinID = Entities.addEntity({
 });
 
 Entities.addAction("hinge", rightShinID, {
-    pivot: { x: 0, y: 0, z: shinLength / 2 + kneeGap / 2 },
+    pivot: { x: 0, y: shinLength / 2 + kneeGap / 2, z: 0 },
     axis: { x: 0, y: 0, z: 1 },
     otherEntityID: rightLegID,
     otherPivot: { x: 0, y: -legLength / 2 - kneeGap / 2, z: 0 },
@@ -333,7 +333,7 @@ var leftShinID = Entities.addEntity({
 });
 
 Entities.addAction("hinge", leftShinID, {
-    pivot: { x: 0, y: 0, z: shinLength / 2 + kneeGap / 2 },
+    pivot: { x: 0, y: shinLength / 2 + kneeGap / 2, z: 0 },
     axis: { x: 0, y: 0, z: 1 },
     otherEntityID: leftLegID,
     otherPivot: { x: 0, y: -legLength / 2 - kneeGap / 2, z: 0 },
