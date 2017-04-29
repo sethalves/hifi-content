@@ -2,9 +2,9 @@
 /* global Vec3, MyAvatar, Entities */
 
 
-var scale = 1.0;
+var scale = 1.6;
 var lifetime = 120;
-var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -2}));
+var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 1.0, z: -2}));
 
 var neckLength = scale * 0.05;
 var shoulderGap = scale * 0.06;
@@ -70,31 +70,19 @@ var noseID = Entities.addEntity({
     type: "Box",
     color: { blue: 128, green: 100, red: 100 },
     dimensions: { x: headSize / 5, y: headSize / 5, z: headSize / 5 },
-    localPosition: { x: headSize / 2 + headSize / 5, y: 0, z: 0 },
+    localPosition: { x: headSize / 2 + headSize / 10, y: 0, z: 0 },
     dynamic: false,
     collisionless: true,
     lifetime: lifetime,
     parentID: headID,
-    userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+    userData: "{ \"grabbableKey\": { \"grabbable\": false } }"
 });
 
-// Entities.addAction("cone-twist", bodyID, {
-//     pivot: { x: 0, y: bodyHeight / 2, z: 0 },
-//     axis: { x: 0, y: 1, z: 0 },
-//     otherEntityID: headID,
-//     otherPivot: { x: 0, y: -headSize / 2 - neckLength, z: 0 },
-//     otherAxis: { x: 0, y: 1, z: 0 },
-//     swingSpan1: Math.PI / 4,
-//     swingSpan2: Math.PI / 4,
-//     twistSpan: Math.PI / 2,
-//     tag: "ragdoll neck joint"
-// });
-
 Entities.addAction("cone-twist", headID, {
-    pivot: { x: 0, y: -headSize / 2 - neckLength, z: 0 },
+    pivot: { x: 0, y: -headSize / 2 - neckLength / 2, z: 0 },
     axis: { x: 0, y: 1, z: 0 },
     otherEntityID: bodyID,
-    otherPivot: { x: 0, y: bodyHeight / 2, z: 0 },
+    otherPivot: { x: 0, y: bodyHeight / 2 + neckLength / 2, z: 0 },
     otherAxis: { x: 0, y: 1, z: 0 },
     swingSpan1: Math.PI / 4,
     swingSpan2: Math.PI / 4,
@@ -111,7 +99,10 @@ var rightUpperArmID = Entities.addEntity({
     type: "Box",
     color: { blue: 128, green: 100, red: 20 },
     dimensions: { x: upperArmThickness, y: upperArmThickness, z: upperArmLength },
-    position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 - upperArmThickness / 2, z: bodyWidth + shoulderGap }),
+    position: Vec3.sum(pos, { x: 0,
+                              y: bodyHeight / 2 - upperArmThickness / 2,
+                              z: bodyWidth / 2 + shoulderGap + upperArmLength / 2
+                            }),
     dynamic: true,
     collisionless: false,
     gravity: { x: 0, y: 0, z: 0 },
@@ -120,10 +111,10 @@ var rightUpperArmID = Entities.addEntity({
 });
 
 Entities.addAction("cone-twist", bodyID, {
-    pivot: { x: 0, y: bodyHeight / 2, z: bodyWidth / 2 },
+    pivot: { x: 0, y: bodyHeight / 2 - upperArmThickness / 2, z: bodyWidth / 2 + shoulderGap / 2 },
     axis: { x: 0, y: 0, z: 1 },
     otherEntityID: rightUpperArmID,
-    otherPivot: { x: 0, y: 0, z: -upperArmLength / 2 - shoulderGap },
+    otherPivot: { x: 0, y: 0, z: -upperArmLength / 2 - shoulderGap / 2 },
     otherAxis: { x: 0, y: 0, z: 1 },
     swingSpan1: Math.PI / 2,
     swingSpan2: Math.PI / 2,
@@ -140,7 +131,10 @@ var leftUpperArmID = Entities.addEntity({
     type: "Box",
     color: { blue: 128, green: 100, red: 20 },
     dimensions: { x: upperArmThickness, y: upperArmThickness, z: upperArmLength },
-    position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 - upperArmThickness / 2, z: -bodyWidth - shoulderGap }),
+    position: Vec3.sum(pos, { x: 0,
+                              y: bodyHeight / 2 - upperArmThickness / 2,
+                              z: -bodyWidth / 2 - shoulderGap - upperArmLength / 2
+                            }),
     dynamic: true,
     collisionless: false,
     gravity: { x: 0, y: 0, z: 0 },
@@ -149,10 +143,10 @@ var leftUpperArmID = Entities.addEntity({
 });
 
 Entities.addAction("cone-twist", bodyID, {
-    pivot: { x: 0, y: bodyHeight / 2, z: -bodyWidth / 2 },
+    pivot: { x: 0, y: bodyHeight / 2 - upperArmThickness / 2, z: -bodyWidth / 2 - shoulderGap / 2 },
     axis: { x: 0, y: 0, z: -1 },
     otherEntityID: leftUpperArmID,
-    otherPivot: { x: 0, y: 0, z: upperArmLength / 2 + shoulderGap },
+    otherPivot: { x: 0, y: 0, z: upperArmLength / 2 + shoulderGap / 2 },
     otherAxis: { x: 0, y: 0, z: -1 },
     swingSpan1: Math.PI / 2,
     swingSpan2: Math.PI / 2,
@@ -171,7 +165,7 @@ var rightLowerArmID = Entities.addEntity({
     dimensions: { x: lowerArmThickness, y: lowerArmThickness, z: lowerArmLength },
     position: Vec3.sum(pos, { x: 0,
                               y: bodyHeight / 2 - upperArmThickness / 2,
-                              z: bodyWidth / 2 + shoulderGap + upperArmLength / 2 + elbowGap + lowerArmLength / 2
+                              z: bodyWidth / 2 + shoulderGap + upperArmLength + elbowGap + lowerArmLength / 2
                             }),
     dynamic: true,
     collisionless: false,
@@ -202,7 +196,7 @@ var leftLowerArmID = Entities.addEntity({
     dimensions: { x: lowerArmThickness, y: lowerArmThickness, z: lowerArmLength },
     position: Vec3.sum(pos, { x: 0,
                               y: bodyHeight / 2 - upperArmThickness / 2,
-                              z: -bodyWidth / 2 - shoulderGap - upperArmLength / 2 - elbowGap + lowerArmLength / 2
+                              z: -bodyWidth / 2 - shoulderGap - upperArmLength - elbowGap - lowerArmLength / 2
                             }),
     dynamic: true,
     collisionless: false,
@@ -231,7 +225,7 @@ var rightLegID = Entities.addEntity({
     type: "Box",
     color: { blue: 128, green: 100, red: 20 },
     dimensions: { x: legThickness, y: legLength, z: legThickness },
-    position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 - hipGap - legLength / 2, z: bodyWidth / 2 - legThickness / 2 }),
+    position: Vec3.sum(pos, { x: 0, y: -bodyHeight / 2 - hipGap - legLength / 2, z: bodyWidth / 2 - legThickness / 2 }),
     dynamic: true,
     collisionless: false,
     gravity: { x: 0, y: 0, z: 0 },
@@ -260,7 +254,7 @@ var leftLegID = Entities.addEntity({
     type: "Box",
     color: { blue: 128, green: 100, red: 20 },
     dimensions: { x: legThickness, y: legLength, z: legThickness },
-    position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 - hipGap - legLength / 2, z: -bodyWidth / 2 + legThickness / 2 }),
+    position: Vec3.sum(pos, { x: 0, y: -bodyHeight / 2 - hipGap - legLength / 2, z: -bodyWidth / 2 + legThickness / 2 }),
     dynamic: true,
     collisionless: false,
     gravity: { x: 0, y: 0, z: 0 },
@@ -290,7 +284,7 @@ var rightShinID = Entities.addEntity({
     color: { blue: 128, green: 100, red: 20 },
     dimensions: { x: shinThickness, y: shinLength, z: shinThickness },
     position: Vec3.sum(pos, { x: 0,
-                              y: bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength / 2,
+                              y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength / 2,
                               z: bodyWidth / 2 - legThickness / 2
                             }),
     dynamic: true,
@@ -308,7 +302,7 @@ Entities.addAction("hinge", rightShinID, {
     otherAxis: { x: 0, y: 0, z: 1 },
     low: 0,
     high: Math.PI / 2,
-    tag: "ragdoll right elbow joint"
+    tag: "ragdoll right knee joint"
 });
 
 
@@ -322,7 +316,7 @@ var leftShinID = Entities.addEntity({
     color: { blue: 128, green: 100, red: 20 },
     dimensions: { x: shinThickness, y: shinLength, z: shinThickness },
     position: Vec3.sum(pos, { x: 0,
-                              y: bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength / 2,
+                              y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength / 2,
                               z: -bodyWidth / 2 + legThickness / 2
                             }),
     dynamic: true,
@@ -340,5 +334,5 @@ Entities.addAction("hinge", leftShinID, {
     otherAxis: { x: 0, y: 0, z: 1 },
     low: 0,
     high: Math.PI / 2,
-    tag: "ragdoll left elbow joint"
+    tag: "ragdoll left knee joint"
 });
