@@ -306,8 +306,8 @@ Entities.addAction("hinge", rightShinID, {
     otherEntityID: rightLegID,
     otherPivot: { x: 0, y: -legLength / 2 - kneeGap / 2, z: 0 },
     otherAxis: { x: 0, y: 0, z: 1 },
-    low: -Math.PI / 2,
-    high: 0,
+    low: 0,
+    high: Math.PI / 2,
     tag: "ragdoll right elbow joint"
 });
 
@@ -338,7 +338,7 @@ Entities.addAction("hinge", leftShinID, {
     otherEntityID: leftLegID,
     otherPivot: { x: 0, y: -legLength / 2 - kneeGap / 2, z: 0 },
     otherAxis: { x: 0, y: 0, z: 1 },
-    low: -Math.PI / 2,
-    high: 0,
+    low: 0,
+    high: Math.PI / 2,
     tag: "ragdoll left elbow joint"
 });
