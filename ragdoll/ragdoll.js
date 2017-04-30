@@ -7,10 +7,13 @@ var lifetime = 120;
 var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 1.0, z: -2}));
 
 var neckLength = scale * 0.05;
-var shoulderGap = scale * 0.06;
+var shoulderGap = scale * 0.1;
 var elbowGap = scale * 0.06;
 var hipGap = scale * 0.07;
 var kneeGap = scale * 0.08;
+var ankleGap = scale * 0.06;
+var ankleMin = 0;
+var ankleMax = Math.PI / 4;
 
 var headSize = scale * 0.2;
 
@@ -29,6 +32,10 @@ var legThickness = scale * 0.08;
 
 var shinLength = scale * 0.2;
 var shinThickness = scale * 0.06;
+
+var footLength = scale * 0.2;
+var footThickness = scale * 0.02;
+var footWidth = scale * 0.08;
 
 
 //
@@ -60,7 +67,7 @@ var headID = Entities.addEntity({
     position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 + headSize / 2 + neckLength, z:0 }),
     dynamic: true,
     collisionless: false,
-    gravity: { x: 0, y: 0, z: 0 },
+    gravity: { x: 0, y: 0.5, z: 0 },
     lifetime: lifetime,
     userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
 });
@@ -169,7 +176,7 @@ var rightLowerArmID = Entities.addEntity({
                             }),
     dynamic: true,
     collisionless: false,
-    gravity: { x: 0, y: 0, z: 0 },
+    gravity: { x: 0, y: -1, z: 0 },
     lifetime: lifetime,
     userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
 });
@@ -200,7 +207,7 @@ var leftLowerArmID = Entities.addEntity({
                             }),
     dynamic: true,
     collisionless: false,
-    gravity: { x: 0, y: 0, z: 0 },
+    gravity: { x: 0, y: -1, z: 0 },
     lifetime: lifetime,
     userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
 });
@@ -289,7 +296,7 @@ var rightShinID = Entities.addEntity({
                             }),
     dynamic: true,
     collisionless: false,
-    gravity: { x: 0, y: 0, z: 0 },
+    gravity: { x: 0, y: -2, z: 0 },
     lifetime: lifetime,
     userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
 });
@@ -321,7 +328,7 @@ var leftShinID = Entities.addEntity({
                             }),
     dynamic: true,
     collisionless: false,
-    gravity: { x: 0, y: 0, z: 0 },
+    gravity: { x: 0, y: -2, z: 0 },
     lifetime: lifetime,
     userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
 });
@@ -335,4 +342,66 @@ Entities.addAction("hinge", leftShinID, {
     low: 0,
     high: Math.PI / 2,
     tag: "ragdoll left knee joint"
+});
+
+//
+// right foot
+//
+
+var rightFootID = Entities.addEntity({
+    name: "ragdoll right foot",
+    type: "Box",
+    color: { blue: 128, green: 100, red: 200 },
+    dimensions: { x: footLength, y: footThickness, z: footWidth },
+    position: Vec3.sum(pos, { x: -shinThickness / 2 + footLength / 2,
+                              y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength - ankleGap - footThickness / 2,
+                              z: bodyWidth / 2 - legThickness / 2
+                            }),
+    dynamic: true,
+    collisionless: false,
+    gravity: { x: 0, y: -5, z: 0 },
+    lifetime: lifetime,
+    userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+});
+
+Entities.addAction("hinge", rightFootID, {
+    pivot: { x: -footLength / 2 + shinThickness / 2, y: ankleGap / 2, z: 0 },
+    axis: { x: 0, y: 0, z: 1 },
+    otherEntityID: rightShinID,
+    otherPivot: { x: 0, y: -shinLength / 2 - ankleGap / 2, z: 0 },
+    otherAxis: { x: 0, y: 0, z: 1 },
+    low: ankleMin,
+    high: ankleMax,
+    tag: "ragdoll right ankle joint"
+});
+
+//
+// left foot
+//
+
+var leftFootID = Entities.addEntity({
+    name: "ragdoll left foot",
+    type: "Box",
+    color: { blue: 128, green: 100, red: 200 },
+    dimensions: { x: footLength, y: footThickness, z: footWidth },
+    position: Vec3.sum(pos, { x: -shinThickness / 2 + footLength / 2,
+                              y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength - ankleGap - footThickness / 2,
+                              z: bodyWidth / 2 - legThickness / 2
+                            }),
+    dynamic: true,
+    collisionless: false,
+    gravity: { x: 0, y: -5, z: 0 },
+    lifetime: lifetime,
+    userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+});
+
+Entities.addAction("hinge", leftFootID, {
+    pivot: { x: -footLength / 2 + shinThickness / 2, y: ankleGap / 2, z: 0 },
+    axis: { x: 0, y: 0, z: 1 },
+    otherEntityID: leftShinID,
+    otherPivot: { x: 0, y: -shinLength / 2 - ankleGap / 2, z: 0 },
+    otherAxis: { x: 0, y: 0, z: 1 },
+    low: ankleMin,
+    high: ankleMax,
+    tag: "ragdoll left ankle joint"
 });
