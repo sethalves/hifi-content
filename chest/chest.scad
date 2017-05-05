@@ -4,9 +4,7 @@ height = 0.5;
 wall_thickness = 0.05;
 
 output_box = 0;
-output_box_edges = 0;
 output_lid = 0;
-output_lid_edges = 0;
 
 output_box_hull = 0;
 n = 0;
@@ -58,10 +56,33 @@ module chest_box_hull(n) {
     }
 }
 
+module chest_lid() {
+    intersection() {
+        difference() {
+            translate([0, height, 0]) {
+                rotate([0, 0, 90]) {
+                    cylinder(h=width, d=depth, center=true, $fn=10);
+                }
+            }
+            translate([0, height, 0]) {
+                rotate([0, 0, 90]) {
+                    cylinder(h=width - (wall_thickness * 2), d=(depth - (wall_thickness * 2)), center=true, $fn=10);
+                }
+            }
+        }
+        translate([0, height * 1.5, 0]) {
+            cube([width*2, height, depth*2], true);
+        };
+    }
+}
+
 
 if (output_box) {
     chest_box();
 }
 if (output_box_hull) {
     chest_box_hull(n);
+}
+if (output_lid) {
+    chest_lid();
 }
