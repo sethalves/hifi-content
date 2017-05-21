@@ -1,5 +1,5 @@
 
-// settings
+// settings -- these should match what's in build-table.js
 
 width = 2.5;
 height = 0.95;
