@@ -71,8 +71,8 @@ terrain-caves.obj:
 terrain-caves-water-tight.obj: terrain-caves.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -s 64 -o $@
 
-terrain-caves-reduced.obj: terrain-caves-water-tight.obj mc-edge-collapse.mlx
-	meshlabserver -i $< -o $@ -s mc-edge-collapse.mlx # -om vc vn
+terrain-caves-reduced.obj: terrain-caves-water-tight.obj terrain-caves.mlx
+	meshlabserver -i $< -o $@ -s terrain-caves.mlx # -om vc vn
 
 terrain-caves.scad: terrain-caves-reduced.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -o $@
@@ -80,6 +80,11 @@ terrain-caves.scad: terrain-caves-reduced.obj
 terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
 	openscad -o $@ $<
 
+# terrain-with-caves-reduced.obj: terrain-with-caves.stl terrain-with-caves.mlx
+# 	meshlabserver -i $< -o $@ -s terrain-with-caves.mlx # -om vc vn
+
+
+###
 
 terrain-texture.ppm: points lines
 	./voronoi-terrain-gauche.scm --texture \
