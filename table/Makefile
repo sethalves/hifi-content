@@ -17,10 +17,10 @@ drawer-hull-parts/%.stl: table.scad
 	mkdir -p drawer-hull-parts
 	openscad -D output_drawer_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
 
-TARGETS=table.obj # table-hull.obj table-drawer.obj table-drawer-hull.obj table.mtl
+TARGETS=table.obj table-hull.obj # table-drawer.obj table-drawer-hull.obj table.mtl
 
 
-TABLE_HULL_PARTS=$(foreach nth,0 1 2 3 4,table-hull-parts/${nth}.obj)
+TABLE_HULL_PARTS=$(foreach nth,0 1 2 3 4 5 6 7 8 9,table-hull-parts/${nth}.obj)
 DRAWER_HULL_PARTS=$(foreach nth,0 1 2 3 4 5 6,drawer-hull-parts/${nth}.obj)
 
 
