@@ -17,11 +17,11 @@ drawer-hull-parts/%.stl: table.scad
 	mkdir -p drawer-hull-parts
 	openscad -D output_drawer_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
 
-TARGETS=table.obj table-hull.obj # table-drawer.obj table-drawer-hull.obj table.mtl
+TARGETS=table.obj table-hull.obj table-drawer.obj table-drawer-hull.obj table.mtl
 
 
 TABLE_HULL_PARTS=$(foreach nth,0 1 2 3 4 5 6 7 8 9,table-hull-parts/${nth}.obj)
-DRAWER_HULL_PARTS=$(foreach nth,0 1 2 3 4 5 6,drawer-hull-parts/${nth}.obj)
+DRAWER_HULL_PARTS=$(foreach nth,0 1 2 3 4,drawer-hull-parts/${nth}.obj)
 
 
 all: ${TARGETS}
@@ -41,7 +41,7 @@ table.obj: table.stl
 #
 
 table-drawer.stl: table.scad
-	openscad -D output_drawer=1 -o $@ $^
+	openscad -D output_drawer_visual=1 -o $@ $^
 
 table-drawer.obj: table-drawer.stl
 	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S table_wood_mtl
@@ -75,3 +75,4 @@ clean:
 	rm -f table-drawer.stl table-drawer.obj table-drawer-hull.obj
 	rm -rf table-hull-parts
 	rm -rf drawer-hull-parts
+	rm -rf table
