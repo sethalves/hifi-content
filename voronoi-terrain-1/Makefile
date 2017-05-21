@@ -5,9 +5,10 @@
 #
 #
 
-# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
-WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+# WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 ATP_GET=/home/seth/src/hifi/build/tools/atp-get/atp-get
+VHACD=/home/seth/src/hifi/build/tools/vhacd-util/vhacd-util
 
 VORONOI=../../voronoi/voronoi
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
@@ -53,12 +54,6 @@ terrain.obj: lines points
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
 			lines points > $@
 
-# terrain.scad: lines points
-# 	./voronoi-terrain-gauche.scm --scad \
-# 			--output-x-size $(OUTPUT_WIDTH) --output-y-size $(OUTPUT_HEIGHT) --output-z-size $(OUTPUT_DEPTH) \
-# 			--input-width $(WIDTH) --input-height $(HEIGHT) \
-# 			lines points > $@
-
 terrain-reduced.obj: terrain.obj
 	meshlabserver -i $< -o $@ -s terrain.mlx # -om vc vn
 
@@ -80,9 +75,8 @@ terrain-caves.scad: terrain-caves-reduced.obj
 terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
 	openscad -o $@ $<
 
-# terrain-with-caves-reduced.obj: terrain-with-caves.stl terrain-with-caves.mlx
-# 	meshlabserver -i $< -o $@ -s terrain-with-caves.mlx # -om vc vn
-
+terrain-with-caves-reduced.obj: terrain-with-caves.stl terrain-with-caves.mlx
+	meshlabserver -i $< -o $@ -s terrain-with-caves.mlx # -om vc vn
 
 ###
 
@@ -97,14 +91,14 @@ terrain-texture.png: terrain-texture.ppm
 
 
 
-terrain-underground-textured.obj: terrain-with-caves.stl
+terrain-underground-textured.obj: terrain-with-caves-reduced.obj
 	$(WAVEFRONT_OBJ_TOOL) -n $< -o $@ -L terrain.mtl -S dirt_mtl
 
 terrain-underground-floor-textured.obj: terrain-underground-textured.obj
 	$(WAVEFRONT_OBJ_TOOL) -n -U $< -o $@ -L terrain.mtl -S cave_floor_mtl -m 0.2
 
 terrain-textured.obj: terrain-underground-floor-textured.obj terrain-texture.png
-	$(WAVEFRONT_OBJ_TOOL) -n -T -M $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n -c -T -M $(OUTPUT_WIDTH) $(OUTPUT_DEPTH) $< -o $@ -L terrain.mtl -S terrain_mtl
 
 
 
@@ -112,11 +106,9 @@ terrain-lines.png: terrain-lines.pnm
 	pnmtopng $^ > $@
 
 
-# terrain-sans-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad
-# 	openscad -o $@ -D include_caves=0 $<
+terrain-hull.obj: terrain-textured.obj
+	$(VHACD) -f -i $^ -o $@
 
-# terrain-sans-caves.obj: terrain-sans-caves.stl
-# 	$(WAVEFRONT_OBJ_TOOL) -n $< -o $@
 
 upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg # terrain-sans-caves.obj
 	mkdir -p voronoi-terrain
@@ -136,9 +128,9 @@ clean:
 	rm -f terrain-lines.png terrain-lines.pnm
 	rm -f terrain-caves.obj terrain-caves-water-tight.obj terrain-caves.scad
 	rm -f terrain-caves-reduced.obj
-	rm -f terrain-caves-water-tight-reduced.obj
 	rm -f terrain-sans-caves.obj
 	rm -f terrain-sans-caves.stl
+	rm -f terrain.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
