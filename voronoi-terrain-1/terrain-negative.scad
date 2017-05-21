@@ -1,5 +1,7 @@
+
 union() {
-    translate([310, -75, 170]) {
+    translate([298, -80.132698059082031, 164.12950134277344]) { // negative of position of terrain model in-world
+    //     translate([310, -85, 170]) {
         include <terrain-caves.scad>
     }
     translate([0, -8, 100]) {

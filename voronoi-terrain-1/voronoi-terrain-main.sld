@@ -691,7 +691,7 @@
     (define (main-program)
       (define (usage why)
         (cerr why "\n")
-        (cerr "voronoi-terrain [arguments] lines-input-file points-input-file")
+        (cerr "voronoi-terrain [arguments] lines-input-file points-input-file\n")
         (cerr "    --obj                      output an obj file\n")
         (cerr "    --pnm                      output a pnm file\n")
         (cerr "    --scad                     output an openscad file\n")
