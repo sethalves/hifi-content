@@ -11,25 +11,21 @@
     var edge_size = 0.07;
     var gap = 0.01;
 
-    var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -2}));
-    var lifetime = 600;
+    var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -3}));
+    var lifetime = 60;
 
-
+    // derived...
     var table_surface_y = (height / 2) - (table_surface_height / 2);
-
     var drawer_hole_width = (width / 2) - (edge_size * 1.5);
     var drawer_hole_height = table_surface_height - (edge_size * 2);
     var drawer_hole_depth = depth - edge_size;
-
     var left_drawer_center_x = (-edge_size / 2) - (drawer_hole_width / 2);
     var right_drawer_center_x = (edge_size / 2) + (drawer_hole_width / 2);
     var drawer_center_y = table_surface_y;
     var drawer_center_z = (depth / 2) - (drawer_hole_depth / 2);
-
     var drawer_width = drawer_hole_width - (gap * 2);
     var drawer_height = drawer_hole_height - (gap * 2);
     var drawer_depth = depth - edge_size - gap;
-
 
     var tableID = Entities.addEntity({
         name: "table with drawers",
@@ -41,12 +37,13 @@
         position: pos,
         dynamic: true,
         collisionless: false,
-        gravity: { x: 0, y: 0, z: 0 },
+        gravity: { x: 0, y: -1, z: 0 },
         lifetime: lifetime,
         userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
     });
 
-    var leftDrawerPos = Vec3.sum(pos, { x: left_drawer_center_x, y: drawer_center_y, z: drawer_center_z });
+    var leftDrawerOffset = { x: left_drawer_center_x, y: drawer_center_y, z: drawer_center_z + 2 };
+    var leftDrawerPos = Vec3.sum(pos, leftDrawerOffset);
     var leftDrawerID = Entities.addEntity({
         name: "table left drawer",
         type: "Model",
@@ -62,7 +59,8 @@
         userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
     });
 
-    var rightDrawerPos = Vec3.sum(pos, { x: right_drawer_center_x, y: drawer_center_y, z: drawer_center_z });
+    var rightDrawerOffset = { x: right_drawer_center_x, y: drawer_center_y, z: drawer_center_z + 2 };
+    var rightDrawerPos = Vec3.sum(pos, rightDrawerOffset);
     var rightDrawerID = Entities.addEntity({
         name: "table right drawer",
         type: "Model",
@@ -70,7 +68,7 @@
         shapeType: "compound",
         compoundShapeURL: Script.resolvePath("table-drawer-hull.obj"),
         dimensions: { x: drawer_width, y: drawer_height, z: drawer_depth },
-        position: Vec3.sum(pos, { x: right_drawer_center_x, y: drawer_center_y, z: drawer_center_z }),
+        position: rightDrawerPos,
         dynamic: true,
         collisionless: false,
         gravity: { x: 0, y: 0, z: 0 },
@@ -79,24 +77,30 @@
     });
 
     Entities.addAction("slider", leftDrawerID, {
+        tag: "left drawer slider",
         point: { x: 0, y: 0, z: 0 },
         axis: { x: 0, y: 0, z: 1 },
         otherEntityID: tableID,
-        otherPoint: leftDrawerPos,
+        otherPoint: leftDrawerOffset,
         otherAxis: { x: 0, y: 0, z: 1 },
-        linearLow: 0,
-        linearHigh: 0.6,
-        tag: "left drawer slider"
+        angularLow: 0,
+        angularHigh: 0,
+        linearLow: -1,
+        linearHigh: 2.0
     });
 
     Entities.addAction("slider", rightDrawerID, {
+        tag: "right drawer slider",
         point: { x: 0, y: 0, z: 0 },
         axis: { x: 0, y: 0, z: 1 },
         otherEntityID: tableID,
-        otherPoint: rightDrawerPos,
+        otherPoint: rightDrawerOffset,
         otherAxis: { x: 0, y: 0, z: 1 },
-        linearLow: 0,
-        linearHigh: 0.6,
-        tag: "right drawer slider"
+        angularLow: 0,
+        angularHigh: 0,
+        linearLow: -1,
+        linearHigh: 2.0
     });
+
+
 }()); // END LOCAL_SCOPE
