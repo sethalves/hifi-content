@@ -12,7 +12,7 @@
     var gap = 0.01;
 
     var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -3}));
-    var lifetime = 60;
+    var lifetime = 600;
 
     // derived...
     var table_surface_y = (height / 2) - (table_surface_height / 2);
@@ -42,7 +42,7 @@
         userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
     });
 
-    var leftDrawerOffset = { x: left_drawer_center_x, y: drawer_center_y, z: drawer_center_z + 2 };
+    var leftDrawerOffset = { x: left_drawer_center_x, y: drawer_center_y, z: drawer_center_z };
     var leftDrawerPos = Vec3.sum(pos, leftDrawerOffset);
     var leftDrawerID = Entities.addEntity({
         name: "table left drawer",
@@ -59,7 +59,7 @@
         userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
     });
 
-    var rightDrawerOffset = { x: right_drawer_center_x, y: drawer_center_y, z: drawer_center_z + 2 };
+    var rightDrawerOffset = { x: right_drawer_center_x, y: drawer_center_y, z: drawer_center_z };
     var rightDrawerPos = Vec3.sum(pos, rightDrawerOffset);
     var rightDrawerID = Entities.addEntity({
         name: "table right drawer",
@@ -77,30 +77,43 @@
     });
 
     Entities.addAction("slider", leftDrawerID, {
-        tag: "left drawer slider",
         point: { x: 0, y: 0, z: 0 },
-        axis: { x: 0, y: 0, z: 1 },
+        axis: { x: 0, y: 0, z: -1 },
         otherEntityID: tableID,
         otherPoint: leftDrawerOffset,
-        otherAxis: { x: 0, y: 0, z: 1 },
+        otherAxis: { x: 0, y: 0, z: -1 },
         angularLow: 0,
         angularHigh: 0,
-        linearLow: -1,
-        linearHigh: 2.0
+        linearLow: 0,
+        linearHigh: drawer_hole_depth,
+        tag: "left drawer slider"
+    });
+
+    Entities.addAction("tractor", leftDrawerID, {
+        targetPosition: leftDrawerOffset,
+        linearTimeScale: 1.0,
+        otherID: tableID,
+        tag: "left drawer spring"
     });
 
     Entities.addAction("slider", rightDrawerID, {
-        tag: "right drawer slider",
         point: { x: 0, y: 0, z: 0 },
-        axis: { x: 0, y: 0, z: 1 },
+        axis: { x: 0, y: 0, z: -1 },
         otherEntityID: tableID,
         otherPoint: rightDrawerOffset,
-        otherAxis: { x: 0, y: 0, z: 1 },
+        otherAxis: { x: 0, y: 0, z: -1 },
         angularLow: 0,
         angularHigh: 0,
-        linearLow: -1,
-        linearHigh: 2.0
+        linearLow: 0,
+        linearHigh: drawer_hole_depth,
+        tag: "right drawer slider"
     });
 
+    Entities.addAction("tractor", rightDrawerID, {
+        targetPosition: rightDrawerOffset,
+        linearTimeScale: 1.0,
+        otherID: tableID,
+        tag: "right drawer spring"
+    });
 
 }()); // END LOCAL_SCOPE
