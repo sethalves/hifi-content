@@ -1,0 +1,94 @@
+-*- org -*-
+
+* ...
+
+Dimensions: 4, 1.2598, 4
+
+dimensions: (#(1024 322.515 1024))
+
+
+function findEntityIDByName(entityName) {
+    var nearbyEntities = Entities.findEntities(MyAvatar.position, 8);
+    for (var i = 0; i < nearbyEntities.length; i++) {
+        var nearbyID = nearbyEntities[i];
+        var nearbyName = Entities.getEntityProperties(nearbyID, ["name"]).name;
+        if (nearbyName == entityName) {
+            return nearbyID;
+        }
+    }
+    return null;
+};
+
+var aetherID = findEntityIDByName("voxel paint aether");
+Entities.addEntity({
+    name: "terrain model",
+    type: "Model",
+    modelURL: "http://headache.hungry.com/~seth/hifi/voronoi-terrain-1/terrain-sans-caves.obj",
+    localPosition: { x: 0, y: 0, z: 0 },
+    localRotation: { x: 0, y: 0, z: 0, w: 1 },
+    dimensions: { x: 1024 / 64, y: 322.515 / 64, z: 1024 / 64 },
+    collisionless: true,
+    parentID: aetherID
+});
+
+
+Entities.addEntity({
+    name: "terrain model platform",
+    type: "Box",
+    localPosition: { x: 0, y: -1.5, z: 0 },
+    localRotation: { x: 0, y: 0, z: 0, w: 1 },
+    dimensions: { x: 8, y: 1, z: 8 },
+    collisionless: false,
+    parentID: aetherID
+});
+
+* mesh cleanup
+
+https://www.shapeways.com/tutorials/polygon_reduction_with_meshlab
+
+Clustering decimation
+
+marching cubes apss -- crash
+
+quadric collapse edge decimation -- crash
+
+mc edge collapse -- twice, this works.  first one cuts down on triangles, second one smoothes it out
+
+
+
+Step 2 (create a mlx file containing the operations you want to apply)
+- open meshlab
+- import a mesh
+- apply your filter(s)
+- now under 'Filters' menu you have 'Show current filter script'
+- clic on "SaveScript" at the bottom and save your mlx file (not in the obj folder !)
+- you can close meshlab (no need to save the scene)
+
+
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Quadric Edge Collapse Decimation">
+  <Param type="RichInt" value="11136" name="TargetFaceNum"/>
+  <Param type="RichFloat" value="0" name="TargetPerc"/>
+  <Param type="RichFloat" value="0.3" name="QualityThr"/>
+  <Param type="RichBool" value="false" name="PreserveBoundary"/>
+  <Param type="RichFloat" value="1" name="BoundaryWeight"/>
+  <Param type="RichBool" value="false" name="PreserveNormal"/>
+  <Param type="RichBool" value="false" name="PreserveTopology"/>
+  <Param type="RichBool" value="true" name="OptimalPlacement"/>
+  <Param type="RichBool" value="false" name="PlanarQuadric"/>
+  <Param type="RichBool" value="false" name="QualityWeight"/>
+  <Param type="RichBool" value="true" name="AutoClean"/>
+  <Param type="RichBool" value="false" name="Selected"/>
+ </filter>
+</FilterScript>
+
+
+
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Simplfication: MC Edge Collapse"/>
+</FilterScript>
+
+terrain-caves-reduced.obj: terrain-caves-water-tight.obj mc-edge-collapse.mlx
+	meshlabserver -i $< -o $@ -s mc-edge-collapse.mlx # -om vc vn
