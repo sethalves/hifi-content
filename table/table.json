@@ -1,0 +1,126 @@
+{
+    "Entities": [
+        {
+            "actionData": "AAAAAQAAANQbWHoJW3zbfkoSnoEztaWW7WwAAQAAAAAAAAAAAAAAJABsAGUAZgB0ACAAZAByAGEAdwBlAHIAIABzAGwAaQBkAGUAcgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC/8AAAAAAAACZ+3iAXvEH2ixfrVaVT01e/43Cj4AAAAD/TMzNAAAAAP6HrhSAAAAAAAAAAAAAAAAAAAAAAAAAAv/AAAAAAAAAAAAAAAAAAAD/two9gAAAAAAAAAAAAAAAAAAAAAAAAABtYeglbfNt+ShKegTO1pZbtbAABAAAAAAAAAAAAAAAkAGwAZQBmAHQAIABkAHIAYQB3AGUAcgAgAHMAbABpAGQAZQByAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL/wAAAAAAAAJn7eIBe8QfaLF+tVpVPTV7/jcKPgAAAAP9MzM0AAAAA/oeuFIAAAAAAAAAAAAAAAAAAAAAAAAAC/8AAAAAAAAAAAAAAAAAAAP+3Cj2AAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "compoundShapeURL": "http://headache.hungry.com/~seth/hifi/table/table-drawer-hull.obj",
+            "created": "2017-05-22T00:50:10Z",
+            "dimensions": {
+                "x": 1.125,
+                "y": 0.18999999761581421,
+                "z": 0.92000001668930054
+            },
+            "dynamic": 1,
+            "id": "{dc02200e-9e73-4e55-b8cb-cf97771337c7}",
+            "lastEdited": 1495414882448017,
+            "lastEditedBy": "{da4ebf05-35be-4aa7-8993-543d18584669}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/table/table-drawer.obj",
+            "name": "table left drawer",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 0,
+                "y": 0.300079345703125,
+                "z": 0
+            },
+            "queryAACube": {
+                "scale": 1.4656484127044678,
+                "x": -0.73282420635223389,
+                "y": -0.43274486064910889,
+                "z": -0.73282420635223389
+            },
+            "rotation": {
+                "w": 0.998687744140625,
+                "x": -1.52587890625e-05,
+                "y": -0.05082780122756958,
+                "z": -7.62939453125e-05
+            },
+            "shapeType": "compound",
+            "type": "Model",
+            "userData": "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        },
+        {
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "compoundShapeURL": "http://headache.hungry.com/~seth/hifi/table/table-hull.obj",
+            "created": "2017-05-22T00:50:10Z",
+            "dimensions": {
+                "x": 2.5,
+                "y": 0.94999998807907104,
+                "z": 1
+            },
+            "dynamic": 1,
+            "gravity": {
+                "x": 0,
+                "y": -1,
+                "z": 0
+            },
+            "id": "{267ede20-17bc-41f6-8b17-eb55a553d357}",
+            "lastEdited": 1495414882448145,
+            "lastEditedBy": "{da4ebf05-35be-4aa7-8993-543d18584669}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/table/table.obj",
+            "name": "table with drawers",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 0.60788726806640625,
+                "y": 0,
+                "z": 0.02671051025390625
+            },
+            "queryAACube": {
+                "scale": 2.8552582263946533,
+                "x": -0.81974184513092041,
+                "y": -1.4276291131973267,
+                "z": -1.4009186029434204
+            },
+            "rotation": {
+                "w": 0.998687744140625,
+                "x": -1.52587890625e-05,
+                "y": -0.05082780122756958,
+                "z": -7.62939453125e-05
+            },
+            "shapeType": "compound",
+            "type": "Model",
+            "userData": "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        },
+        {
+            "actionData": "AAAAAQAAANYbWFN20AdCeERnkqjFAx9pJNcAAQAAAAAAAAAAAAAAJgByAGkAZwBoAHQAIABkAHIAYQB3AGUAcgAgAHMAbABpAGQAZQByAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL/wAAAAAAAAJn7eIBe8QfaLF+tVpVPTVz/jcKPgAAAAP9MzM0AAAAA/oeuFIAAAAAAAAAAAAAAAAAAAAAAAAAC/8AAAAAAAAAAAAAAAAAAAP+3Cj2AAAAAAAAAAAAAAAAAAAAAAAAAAU3bQB0J4RGeSqMUDH2kk1wABAAAAAAAAAAAAAAAmAHIAaQBnAGgAdAAgAGQAcgBhAHcAZQByACAAcwBsAGkAZABlAHIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv/AAAAAAAAAmft4gF7xB9osX61WlU9NXP+Nwo+AAAAA/0zMzQAAAAD+h64UgAAAAAAAAAAAAAAAAAAAAAAAAAL/wAAAAAAAAAAAAAAAAAAA/7cKPYAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "compoundShapeURL": "http://headache.hungry.com/~seth/hifi/table/table-drawer-hull.obj",
+            "created": "2017-05-22T00:50:10Z",
+            "dimensions": {
+                "x": 1.125,
+                "y": 0.18999999761581421,
+                "z": 0.92000001668930054
+            },
+            "dynamic": 1,
+            "id": "{4b68b224-0bd4-485d-b2f8-2086291d9864}",
+            "lastEdited": 1495414882447883,
+            "lastEditedBy": "{da4ebf05-35be-4aa7-8993-543d18584669}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/table/table-drawer.obj",
+            "name": "table right drawer",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 1.2074127197265625,
+                "y": 0.29992294311523438,
+                "z": 0.13623046875
+            },
+            "queryAACube": {
+                "scale": 1.4656484127044678,
+                "x": 0.47458851337432861,
+                "y": -0.43290126323699951,
+                "z": -0.59659373760223389
+            },
+            "rotation": {
+                "w": 0.998687744140625,
+                "x": -1.52587890625e-05,
+                "y": -0.05082780122756958,
+                "z": -7.62939453125e-05
+            },
+            "shapeType": "compound",
+            "type": "Model",
+            "userData": "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        }
+    ],
+    "Version": 70
+}

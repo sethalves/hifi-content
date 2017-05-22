@@ -12,7 +12,7 @@
     var gap = 0.01;
 
     var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -3}));
-    var lifetime = 600;
+    var lifetime = -1;
 
     // derived...
     var table_surface_y = (height / 2) - (table_surface_height / 2);
@@ -89,12 +89,12 @@
         tag: "left drawer slider"
     });
 
-    Entities.addAction("tractor", leftDrawerID, {
-        targetPosition: leftDrawerOffset,
-        linearTimeScale: 1.0,
-        otherID: tableID,
-        tag: "left drawer spring"
-    });
+    // Entities.addAction("tractor", leftDrawerID, {
+    //     targetPosition: leftDrawerOffset,
+    //     linearTimeScale: 1.0,
+    //     otherID: tableID,
+    //     tag: "left drawer spring"
+    // });
 
     Entities.addAction("slider", rightDrawerID, {
         point: { x: 0, y: 0, z: 0 },
@@ -109,11 +109,11 @@
         tag: "right drawer slider"
     });
 
-    Entities.addAction("tractor", rightDrawerID, {
-        targetPosition: rightDrawerOffset,
-        linearTimeScale: 1.0,
-        otherID: tableID,
-        tag: "right drawer spring"
-    });
+    // Entities.addAction("tractor", rightDrawerID, {
+    //     targetPosition: rightDrawerOffset,
+    //     linearTimeScale: 1.0,
+    //     otherID: tableID,
+    //     tag: "right drawer spring"
+    // });
 
 }()); // END LOCAL_SCOPE
