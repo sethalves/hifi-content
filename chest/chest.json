@@ -1,0 +1,135 @@
+{
+    "Entities": [
+        {
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "created": "2017-05-11T14:03:06Z",
+            "dimensions": {
+                "x": 0.26420560479164124,
+                "y": 0.26420560479164124,
+                "z": 0.26420560479164124
+            },
+            "dynamic": 1,
+            "gravity": {
+                "x": 0,
+                "y": -9,
+                "z": 0
+            },
+            "id": "{a0c736a9-0b85-4ba7-8423-1147ddf9a151}",
+            "lastEdited": 1495388982661752,
+            "lastEditedBy": "{b62f6e49-210a-42a4-b37f-2e421c59aa85}",
+            "marketplaceID": "6632b2ee-8a52-4545-a4fa-a59477b039f5",
+            "modelURL": "http://hifi-content.s3.amazonaws.com/Examples%20Content/production/marblecollection/Plus.fbx",
+            "name": "Balls & Marbles - Switzerland",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0.063232421875
+            },
+            "queryAACube": {
+                "scale": 0.45761752128601074,
+                "x": -0.22880876064300537,
+                "y": -0.22880876064300537,
+                "z": -0.16557633876800537
+            },
+            "restitution": 0.99000000953674316,
+            "rotation": {
+                "w": -0.48769360780715942,
+                "x": 0.70702672004699707,
+                "y": -0.10280001163482666,
+                "z": 0.50170135498046875
+            },
+            "shapeType": "sphere",
+            "type": "Model",
+            "userData": "{}"
+        },
+        {
+            "actionData": "AAAAAQAAALYTiM0+09DzkU6xnNFpP/sbmJMAAgAAAAAAAAAAP9AgxKAAAAC/0AAAAAAAAD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOFhRLG4AUYdmeZHGGLmRUIAAAAAAAAAAL/AAAAAAAAAv9AAAAAAAAA/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAADAGSH7YAAAAEAZIftgAAAAAAAAAAAAAAAAAAAWAGMAaABlAHMAdAAgAGgAaQBuAGcAZQAAAH4LuEC/ie+fXU0bs8DLlN2Nf8gAAbYvbkkhCkKks38uQhxZqoU/44tOgAAAAL/HiWggAAAAv7JjHYAAAAC/1r+moAAAAL+4pJjAAAAAv+beEcAAAAC/4wgu4AAAAD+5mZmgAAAAAAAACABsAGUAZgB0AAVP+ROryk7/////AAE=",
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "compoundShapeURL": "http://headache.hungry.com/~seth/hifi/chest/chest-box-hull.obj",
+            "created": "2017-05-20T18:43:34Z",
+            "dimensions": {
+                "x": 1,
+                "y": 0.5,
+                "z": 0.5
+            },
+            "dynamic": 1,
+            "gravity": {
+                "x": 0,
+                "y": -1,
+                "z": 0
+            },
+            "id": "{8632732d-03da-4f36-b100-ae1934042f22}",
+            "lastEdited": 1495306093362835,
+            "lastEditedBy": "{b62f6e49-210a-42a4-b37f-2e421c59aa85}",
+            "locked": 1,
+            "modelURL": "http://headache.hungry.com/~seth/hifi/chest/chest-box.obj",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 0.14955902099609375,
+                "y": 0.067891776561737061,
+                "z": 2.288818359375e-05
+            },
+            "queryAACube": {
+                "scale": 1.2247449159622192,
+                "x": -0.46281343698501587,
+                "y": -0.54448068141937256,
+                "z": -0.61234956979751587
+            },
+            "rotation": {
+                "w": -0.29750514030456543,
+                "x": 1.52587890625e-05,
+                "y": 0.9547111988067627,
+                "z": -1.52587890625e-05
+            },
+            "shapeType": "compound",
+            "type": "Model",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true,\"kinematic\":false}}"
+        },
+        {
+            "clientOnly": 0,
+            "collisionsWillMove": 1,
+            "compoundShapeURL": "http://headache.hungry.com/~seth/hifi/chest/chest-lid-hull.obj",
+            "created": "2017-05-20T18:45:45Z",
+            "dimensions": {
+                "x": 1,
+                "y": 0.23776298761367798,
+                "z": 0.5
+            },
+            "dynamic": 1,
+            "gravity": {
+                "x": 0,
+                "y": -5,
+                "z": 0
+            },
+            "id": "{e16144b1-b801-461d-99e6-471862e64542}",
+            "lastEdited": 1495388982661663,
+            "lastEditedBy": "{f591295e-6e8a-4997-be60-0128c0051ae2}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/chest/chest-lid.obj",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 0.14955902099609375,
+                "y": 0.44494903087615967,
+                "z": 0
+            },
+            "queryAACube": {
+                "scale": 1.1430360078811646,
+                "x": -0.42195898294448853,
+                "y": -0.12656897306442261,
+                "z": -0.57151800394058228
+            },
+            "rotation": {
+                "w": -0.29753565788269043,
+                "x": 1.52587890625e-05,
+                "y": 0.9547111988067627,
+                "z": -1.52587890625e-05
+            },
+            "shapeType": "compound",
+            "type": "Model",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true,\"kinematic\":false}}"
+        }
+    ],
+    "Version": 70
+}

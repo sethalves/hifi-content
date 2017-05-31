@@ -1,0 +1,20 @@
+var width = 1;
+var depth = 0.5;
+var height = 0.5;
+var chestBoxID = "{8632732d-03da-4f36-b100-ae1934042f22}";
+var chestLidID = "{e16144b1-b801-461d-99e6-471862e64542}";
+
+
+Entities.getActionIDs(chestBoxID).forEach(function(actionID) {
+    Entities.deleteAction(chestBoxID, actionID);
+});
+
+
+var hingeID = Entities.addAction("hinge", chestBoxID, {
+    pivot: { x: 0, y: height/2 + 0.002, z: -depth/2 },
+    axis: { x: 1, y: 0, z: 0 },
+    otherEntityID: chestLidID,
+    otherPivot: { x: 0, y: -depth / 4, z: -depth/2 },
+    otherAxis: { x: 1, y: 0, z: 0 },
+    tag: "chest hinge"
+});
