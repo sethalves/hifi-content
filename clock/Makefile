@@ -8,6 +8,8 @@ CLOCK_FACE_TEXTURE_HEIGHT=0.9
 INNER_RADIUS=0.45
 HALF_DEPTH=0.04
 
+LIBS='(foldling command-line)' '(seth obj-model)' '(seth scad-model)' '(srfi 27)'
+
 
 all: clock.obj
 
@@ -26,11 +28,33 @@ clock-offset.obj: clock-untextured.obj
 clock.obj: clock-offset.obj
 	wavefront-obj-tool -n -c $^ -o $@ -t -$(INNER_RADIUS) $(HALF_DEPTH) -$(INNER_RADIUS)
 
+hour-hand.obj: make-clock-hand-gauche.scm make-clock-hand.sld
+	./$< > $@ --length 0.5
+
+minute-hand.obj: ./make-clock-hand-gauche.scm make-clock-hand.sld
+	./$< > $@ --length 0.8
+
 upload: clock.obj clock.mtl clock-face.png
 	mkdir -p clock
 	cp $^ clock/
 	rsync --delete -avP clock/ headache.hungry.com:public_html/hifi/clock/
 
+libs:
+	snow2 install $(LIBS)
+
+link-libs: very-clean
+	snow2 -s \
+		-p 'http://foldling.org/snow2/index.scm' \
+		-p '../../snow2-packages/seth' \
+		-p '../../snow2-packages/snow' \
+		-p '../../seth-snow2-misc' \
+		install $(LIBS)
+
+
 clean:
 	rm -f *~ clock.stl clock-untextured.obj clock-offset.obj clock.obj
+	rm -f hour-hand.obj minute-hand.obj
 	rm -rf clock
+
+very-clean: clean
+	rm -rf seth foldling srfi snow

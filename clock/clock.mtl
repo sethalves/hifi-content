@@ -14,3 +14,10 @@ Kd 0.65 0.65 0.65
 d 1.0
 illum 2
 Ns 0.0
+
+newmtl clock_hand_mtl
+Ka 0.95 0.95 0.95
+Kd 0.95 0.95 0.95
+d 1.0
+illum 2
+Ns 0.0
