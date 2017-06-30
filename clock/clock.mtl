@@ -1,0 +1,16 @@
+newmtl clock_face_mtl
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+Ns 0.0
+d 1.0
+illum 2
+map_Ka clock-face.png
+map_Kd clock-face.png
+
+newmtl clock_body_mtl
+Ka 0.65 0.65 0.65
+Kd 0.65 0.65 0.65
+d 1.0
+illum 2
+Ns 0.0
