@@ -11,7 +11,7 @@ HALF_DEPTH=0.04
 LIBS='(foldling command-line)' '(seth obj-model)' '(seth scad-model)' '(srfi 27)'
 
 
-all: clock.obj
+all: clock.obj hour-hand.obj minute-hand.obj
 
 
 clock.stl: clock.scad
@@ -34,7 +34,7 @@ hour-hand.obj: make-clock-hand-gauche.scm make-clock-hand.sld
 minute-hand.obj: ./make-clock-hand-gauche.scm make-clock-hand.sld
 	./$< > $@ --length 0.8
 
-upload: clock.obj clock.mtl clock-face.png
+upload: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute-hand.obj
 	mkdir -p clock
 	cp $^ clock/
 	rsync --delete -avP clock/ headache.hungry.com:public_html/hifi/clock/
