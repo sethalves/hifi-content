@@ -20,7 +20,7 @@
              (p2 (vector 0 hand-depth 0))
              (p3 (vector 0 0 hand-length)))
         (mesh-append-triangle! model mesh clock-hand-material (list p0 p1 p2))
-        (mesh-append-triangle! model mesh clock-hand-material (list p1 p2 p2))
+        (mesh-append-triangle! model mesh clock-hand-material (list p1 p3 p2))
         (mesh-append-triangle! model mesh clock-hand-material (list p0 p2 p3))
         (mesh-append-triangle! model mesh clock-hand-material (list p0 p3 p1))))
 
