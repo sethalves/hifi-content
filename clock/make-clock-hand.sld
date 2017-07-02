@@ -59,9 +59,9 @@
               (set! extra-arguments (cdr arg)))))
          args)
 
-        (if (not hand-base-width) (set! hand-base-width 0.02))
-        (if (not hand-length) (set! hand-length 0.08))
-        (if (not hand-depth) (set! hand-depth 0.02))
+        (if (not hand-base-width) (set! hand-base-width 0.025))
+        (if (not hand-length) (set! hand-length 0.4))
+        (if (not hand-depth) (set! hand-depth 0.015))
 
         (cond ((= (length extra-arguments) 0)
                (set! output-filename "-"))

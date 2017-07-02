@@ -29,12 +29,12 @@ clock.obj: clock-offset.obj
 	wavefront-obj-tool -n -c $^ -o $@ -t -$(INNER_RADIUS) $(HALF_DEPTH) -$(INNER_RADIUS)
 
 hour-hand.obj: make-clock-hand-gauche.scm make-clock-hand.sld
-	./$< > $@ --length 0.5
+	./$< > $@ --length 0.25
 
-minute-hand.obj: ./make-clock-hand-gauche.scm make-clock-hand.sld
-	./$< > $@ --length 0.8
+minute-hand.obj: make-clock-hand-gauche.scm make-clock-hand.sld
+	./$< > $@ --length 0.4
 
-upload: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute-hand.obj
+upload: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute-hand.obj clock.js
 	mkdir -p clock
 	cp $^ clock/
 	rsync --delete -avP clock/ headache.hungry.com:public_html/hifi/clock/
