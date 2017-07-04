@@ -90,12 +90,23 @@ clean:
 			50s-rocket-door-collision-hull.obj 50s-rocket-door.obj
 	rm -f 50s-rocket.obj.tmp.obj 50s-rocket.stl
 	rm -f 50s-rocket-door.obj.tmp.obj 50s-rocket-door.stl
+	rm -rf 50s-rocket
+
+# upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js \
+# 		50s-rocket.obj 50s-rocket-door.obj  \
+# 		50s-rocket-collision-hull.obj 50s-rocket-door-collision-hull.obj \
+# 		50s-rocket.mtl \
+# 		make-50s-rocket-es.js
+# 	scp $^ headache:public_html/hifi/
+
+# 50s-rocket.png
+
 
 upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js \
 		50s-rocket.obj 50s-rocket-door.obj  \
 		50s-rocket-collision-hull.obj 50s-rocket-door-collision-hull.obj \
 		50s-rocket.mtl \
 		make-50s-rocket-es.js
-	scp $^ headache:public_html/hifi/
-
-# 50s-rocket.png
+	mkdir -p 50s-rocket
+	cp $^ 50s-rocket/
+	rsync --delete -avP 50s-rocket/ headache.hungry.com:public_html/hifi/50s-rocket/

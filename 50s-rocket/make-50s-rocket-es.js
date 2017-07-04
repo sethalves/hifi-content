@@ -1,12 +1,14 @@
-//
-//
-//
+"use strict";
+
+/* global Script, Entities, MyAvatar, Quat, SoundCache */
+
+
 
 
 (function() {
     var _this;
     Script.include("/~/system/libraries/utils.js");
-    RocketSwitch = function() {
+    var RocketSwitch = function() {
         _this = this;
         this.switchSound = SoundCache.getSound("https://hifi-public.s3.amazonaws.com/sounds/Switches%20and%20sliders/lamp_switch_2.wav");
     };
@@ -15,7 +17,7 @@
 
         findRocket: function(center) {
            var nearbyEntities = Entities.findEntities(center, 100);
-            for (i = 0; i < nearbyEntities.length; i++) {
+            for (var i = 0; i < nearbyEntities.length; i++) {
                 var nearbyID = nearbyEntities[i];
                 var nearbyName = Entities.getEntityProperties(nearbyID, ['name']).name;
                 if (nearbyName == '50s rocket') {
@@ -29,14 +31,14 @@
             this.rocketID = Entities.addEntity({
                 name: '50s rocket',
                 type: 'Model',
-                modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket.obj',
+                modelURL: Script.resolvePath('50s-rocket.obj'),
+                compoundShapeURL: Script.resolvePath('50s-rocket-collision-hull.obj'),
                 dimensions: { x: 17.1244, y: 32.75, z: 15.4726 }, // copied out of edit.js
-                compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
                 shapeType: "compound",
                 collisionsWillMove: false,
                 position: center,
                 rotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
-                script: 'http://headache.hungry.com/~seth/hifi/50s-rocket.js',
+                script: Script.resolvePath('50s-rocket.js'),
                 dynamic: true,
                 gravity: { x: 0, y: -1.0, z: 0 },
                 velocity: { x: 0, y: -0.5, z: 0 }, // to make it fall
@@ -48,18 +50,26 @@
                 //                      z: 0.5 },
 
                 userData: JSON.stringify({
-                    "grabbableKey":{"grabbable":false}, "soundKey":{"url":"http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav","volume":0.4,"loop":true,"playbackGap":0,"playbackGapRange":0}
-                }),
+                    "grabbableKey": {"grabbable": false},
+                    "soundKey": {
+                        "url": "http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav",
+                        "volume": 0.4,
+                        "loop": true,
+                        "playbackGap": 0,
+                        "playbackGapRange": 0
+                    }
+                })
             });
 
             // see 50s-rocket.js -- Some of these values are copied out of edit.js after this.maintainDoor has been run.
-            var doorZDimension = 1.2840; // baseRocketRadius[2] - (baseRocketRadius[0] - rocketWallThickness);
+            // var doorZDimension = 1.2840; // baseRocketRadius[2] - (baseRocketRadius[0] - rocketWallThickness);
             var registrationPointZ = 0.0769; // rocketWallThickness / doorZDimension
             this.doorID = Entities.addEntity({
                 name: '50s rocket door',
                 type: 'Model',
-                modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj',
-                compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj',
+                modelURL: Script.resolvePath('50s-rocket-door.obj'),
+                compoundShapeURL: Script.resolvePath('50s-rocket-door-collision-hull.obj'),
+                dimensions: { x: 1.5643, y: 6, z: 1.2840 }, // copied out of edit.js
                 shapeType: "compound",
                 dynamic: false,
                 gravity: { x: 0, y: 0, z: 0 },
@@ -67,7 +77,8 @@
                 parentID: this.rocketID,
                 parentJointIndex: -1,
                 collidesWith: "static,dynamic,kinematic,myAvatar,otherAvatar",
-                script: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.js',
+                // collidesWith: "",
+                script: Script.resolvePath('50s-rocket-door.js'),
                 registrationPoint:  { x: 0.5, y: 0.0, z: registrationPointZ },
                 localPosition: { x: 0.58713, y: 0.000, z: 3.707 },
                 localRoation: { x: 0, y: 0.07845909893512726, z: 0, w: 0.9969173073768616 },

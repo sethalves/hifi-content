@@ -51,8 +51,9 @@ function makeRocket() {
     this.rocketID = Entities.addEntity({
         name: '50s rocket',
         type: 'Model',
-        modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket.obj',
-        compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-collision-hull.obj',
+        modelURL: Script.resolvePath('50s-rocket.obj'),
+        compoundShapeURL: Script.resolvePath('50s-rocket-collision-hull.obj'),
+        dimensions: { x: 17.1244, y: 32.75, z: 15.4726 }, // copied out of edit.js
         collisionsWillMove: false,
         position: center,
         rotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
@@ -67,18 +68,26 @@ function makeRocket() {
         //                      y: 0.0049751, // model height is 20.1, this is (/ 0.1 20.1)
         //                      z: 0.5 },
 
-
         userData: JSON.stringify({
-            "grabbableKey":{"grabbable":false}, "soundKey":{"url":"http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav","volume":0.4,"loop":true,"playbackGap":0,"playbackGapRange":0}
-        }),
+            "grabbableKey": {"grabbable": false},
+            "soundKey": {
+                "url": "http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav",
+                "volume": 0.4,
+                "loop": true,
+                "playbackGap": 0,
+                "playbackGapRange": 0
+            }
+        })
     });
 
     // see 50s-rocket.js -- Some of these values are copied out of edit.js after this.maintainDoor has been run.
     this.doorID = Entities.addEntity({
         name: '50s rocket door',
         type: 'Model',
-        modelURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door.obj',
-        compoundShapeURL: 'http://headache.hungry.com/~seth/hifi/50s-rocket-door-collision-hull.obj',
+        modelURL: Script.resolvePath('50s-rocket-door.obj'),
+        compoundShapeURL: Script.resolvePath('50s-rocket-door-collision-hull.obj'),
+        dimensions: { x: 1.5643, y: 6, z: 1.2840 }, // copied out of edit.js
+        shapeType: "compound",
         dynamic: false,
         gravity: { x: 0, y: 0, z: 0 },
         angularDamping: { x: 0.0, y: 0.0, z: 0.0 },

@@ -244,6 +244,7 @@
 
             return {
                 collidesWith: collidesWith,
+                dimensions: { x: 1.5643, y: 6, z: 1.2840 }, // copied out of edit.js
                 registrationPoint: { x: 0.5, y: 0.0, z: (this.rocketWallThickness / doorZDimension) },
                 localPosition: Vec3.multiply(Vec3.sum(p0, p1), 0.5),
                 localRotation: rampRotation
