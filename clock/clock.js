@@ -15,13 +15,11 @@
 
     Script.setInterval(function () {
         var today = new Date();
-        var hours = today.getHours();
-        var minutes = today.getMinutes();
-        // var seconds = today.getSeconds();
+        var hours = today.getUTCHours();
+        var minutes = today.getUTCMinutes();
 
-        print("UPDATING HANDS: " + hours + ", " + minutes);
-        print("minuteHandID=" + self.minuteHandID);
-        print("hourHandID=" + self.hourHandID);
+        print("UPDATING HANDS: " + hours + ", " + minutes +
+              ", minuteHandID=" + self.minuteHandID + ", hourHandID=" + self.hourHandID);
 
         Entities.editEntity(self.hourHandID, {
             localRotation: Quat.fromPitchYawRollRadians(0, 2 * Math.PI * hours / 12, 0),

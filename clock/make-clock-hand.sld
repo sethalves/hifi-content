@@ -81,7 +81,7 @@
 
           (make-clock-hand model mesh hand-base-width hand-length hand-depth)
 
-          (write-obj-model model output-handle)
+          (write-scad-file (list (model->scad-polyhedron model)) output-handle)
 
           (if (not (equal? output-filename "-"))
               (close-output-port output-handle)))))

@@ -28,11 +28,23 @@ clock-offset.obj: clock-untextured.obj
 clock.obj: clock-offset.obj
 	wavefront-obj-tool -n -c $^ -o $@ -t -$(INNER_RADIUS) $(HALF_DEPTH) -$(INNER_RADIUS)
 
-hour-hand.obj: make-clock-hand-gauche.scm make-clock-hand.sld
-	./$< > $@ --length 0.25
+hour-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
+	./$< --length 0.25 > $@
 
-minute-hand.obj: make-clock-hand-gauche.scm make-clock-hand.sld
-	./$< > $@ --length 0.4
+hour-hand.stl: hour-hand.scad
+	openscad -o $@ $^
+
+hour-hand.obj: hour-hand.stl
+	wavefront-obj-tool -n -c $^ -o $@
+
+minute-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
+	./$< --length 0.4 > $@
+
+minute-hand.stl: minute-hand.scad
+	openscad -o $@ $^
+
+minute-hand.obj: minute-hand.stl
+	wavefront-obj-tool -n -c $^ -o $@
 
 upload: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute-hand.obj clock.js
 	mkdir -p clock
@@ -53,7 +65,8 @@ link-libs: very-clean
 
 clean:
 	rm -f *~ clock.stl clock-untextured.obj clock-offset.obj clock.obj
-	rm -f hour-hand.obj minute-hand.obj
+	rm -f hour-hand.scad hour-hand.stl hour-hand.obj
+	rm -f minute-hand.scad minute-hand.stl minute-hand.obj
 	rm -rf clock
 
 very-clean: clean

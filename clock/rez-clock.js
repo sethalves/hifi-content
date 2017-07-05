@@ -51,7 +51,7 @@
             minuteHandID: minuteHandID,
             hourHandID: hourHandID
         }),
-        serverScripts: Script.resolvePath("clock.js?v=8")
+        serverScripts: Script.resolvePath("clock.js?v=9")
     });
 
 }()); // END LOCAL_SCOPE
