@@ -7,12 +7,30 @@
     var avRot = MyAvatar.orientation;
     var avRotEulers = Quat.safeEulerAngles(avRot);
 
+    var clockModelURL;
+    var hourHandModelURL;
+    var minuteHandModelURL;
+    var clockServerScriptURL;
+
+    var useATP = true;
+
+    if (useATP) {
+        clockModelURL = 'atp:/clock/clock.obj';
+        hourHandModelURL = 'atp:/clock/hour-hand.obj';
+        minuteHandModelURL = 'atp:/clock/minute-hand.obj';
+        clockServerScriptURL = 'atp:/clock/clock.js';
+    } else {
+        clockModelURL = Script.resolvePath('clock.obj');
+        hourHandModelURL = Script.resolvePath('hour-hand.obj');
+        minuteHandModelURL = Script.resolvePath('minute-hand.obj');
+        clockServerScriptURL = Script.resolvePath("clock.js");
+    }
+
     var clockID = Entities.addEntity({
         name: 'clock',
         type: 'Model',
-        modelURL: Script.resolvePath('clock.obj'),
+        modelURL: clockModelURL,
         position: Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 0.2, z: -4 })),
-        // rotation: Quat.fromVec3Degrees({ x: 90, y: -avRotEulers.y, z: 0 }),
         rotation: Quat.multiply(Quat.fromVec3Degrees({ x: 0, y: avRotEulers.y, z: 0 }),
                                 Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 })),
         userData: JSON.stringify({
@@ -24,14 +42,13 @@
                 "playbackGap": 0,
                 "playbackGapRange": 0
             }
-        }),
-        // lifetime: 300
+        })
     });
 
     var hourHandID = Entities.addEntity({
         name: 'clock hour hand',
         type: 'Model',
-        modelURL: Script.resolvePath('hour-hand.obj'),
+        modelURL: hourHandModelURL,
         registrationPoint: { x: 0.5, y: 0.0, z: 0.0 },
         localPosition: { x: 0, y: -0.1, z: 0 },
         parentID: clockID
@@ -40,7 +57,7 @@
     var minuteHandID = Entities.addEntity({
         name: 'clock minute hand',
         type: 'Model',
-        modelURL: Script.resolvePath('minute-hand.obj'),
+        modelURL: minuteHandModelURL,
         registrationPoint: { x: 0.5, y: 0.0, z: 0.0 },
         localPosition: { x: 0, y: -0.1, z: 0 },
         parentID: clockID
@@ -51,7 +68,7 @@
             minuteHandID: minuteHandID,
             hourHandID: hourHandID
         }),
-        serverScripts: Script.resolvePath("clock.js?v=9")
+        serverScripts: clockServerScriptURL
     });
 
 }()); // END LOCAL_SCOPE

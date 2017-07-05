@@ -22,7 +22,7 @@
               ", minuteHandID=" + self.minuteHandID + ", hourHandID=" + self.hourHandID);
 
         Entities.editEntity(self.hourHandID, {
-            localRotation: Quat.fromPitchYawRollRadians(0, 2 * Math.PI * hours / 12, 0),
+            localRotation: Quat.fromPitchYawRollRadians(0, 2 * Math.PI * (hours + minutes / 60) / 12, 0),
         });
         Entities.editEntity(self.minuteHandID, {
             localRotation: Quat.fromPitchYawRollRadians(0, 2 * Math.PI * minutes / 60, 0),
