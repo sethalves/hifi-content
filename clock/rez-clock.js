@@ -12,17 +12,17 @@
     var minuteHandModelURL;
     var clockServerScriptURL;
 
-    var useATP = true;
+    var useATP = false;
 
     if (useATP) {
-        clockModelURL = 'atp:/clock/clock.obj';
-        hourHandModelURL = 'atp:/clock/hour-hand.obj';
-        minuteHandModelURL = 'atp:/clock/minute-hand.obj';
+        clockModelURL = 'atp:/clock/clock.obj.gz';
+        hourHandModelURL = 'atp:/clock/hour-hand.obj.gz';
+        minuteHandModelURL = 'atp:/clock/minute-hand.obj.gz';
         clockServerScriptURL = 'atp:/clock/clock.js';
     } else {
-        clockModelURL = Script.resolvePath('clock.obj');
-        hourHandModelURL = Script.resolvePath('hour-hand.obj');
-        minuteHandModelURL = Script.resolvePath('minute-hand.obj');
+        clockModelURL = Script.resolvePath('clock.obj.gz');
+        hourHandModelURL = Script.resolvePath('hour-hand.obj.gz');
+        minuteHandModelURL = Script.resolvePath('minute-hand.obj.gz');
         clockServerScriptURL = Script.resolvePath("clock.js");
     }
 

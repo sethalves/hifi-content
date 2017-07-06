@@ -41,6 +41,8 @@ hour-hand.stl: hour-hand.scad
 hour-hand.obj: hour-hand.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
 
+# $(WAVEFRONT_OBJ_TOOL) --hull -n -c $^ -o $@
+
 minute-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
 	./$< --length 0.4 > $@
 
@@ -55,6 +57,8 @@ clock-face-blank.png:
 
 clock-face.png: clock-face-blank.png
 	convert -pointsize 40 -fill black \
+		-draw 'text 320,94 "1"' \
+		-draw 'text 386,160 "2"' \
 		-draw 'text 410,250 "3"' \
 		-draw 'text 386,340 "4"' \
 		-draw 'text 320,406 "5"' \
@@ -65,16 +69,22 @@ clock-face.png: clock-face-blank.png
 		-draw 'text 54,160 "10"' \
 		-draw 'text 120,94 "11"' \
 		-draw 'text 210,70 "12"' \
-		-draw 'text 320,94 "1"' \
-		-draw 'text 386,160 "2"' \
 		$< $@
 
-upload: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute-hand.obj clock.js
-	mkdir -p clock
-	cp $^ clock/
-	rsync --delete -avP clock/ headache.hungry.com:public_html/hifi/clock/
+clock.obj.gz: clock.obj
+	rm -f clock.obj.gz
+	gzip -9 $<
 
-upload-atp: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute-hand.obj clock.js
+hour-hand.obj.gz: hour-hand.obj
+	rm -f hour-hand.obj.gz
+	gzip -9 $<
+
+minute-hand.obj.gz: minute-hand.obj
+	rm -f minute-hand.obj.gz
+	gzip -9 $<
+
+
+upload-atp: clock.obj.gz clock.mtl clock-face.png rez-clock.js hour-hand.obj.gz minute-hand.obj.gz clock.js
 	- $(ATP_CLIENT) -T clock.obj atp://eschatology/clock/clock.obj
 	- $(ATP_CLIENT) -T clock.mtl atp://eschatology/clock/clock.mtl
 	- $(ATP_CLIENT) -T clock-face.png atp://eschatology/clock/clock-face.png
@@ -82,6 +92,12 @@ upload-atp: clock.obj clock.mtl clock-face.png rez-clock.js hour-hand.obj minute
 	- $(ATP_CLIENT) -T hour-hand.obj atp://eschatology/clock/hour-hand.obj
 	- $(ATP_CLIENT) -T minute-hand.obj atp://eschatology/clock/minute-hand.obj
 	- $(ATP_CLIENT) -T clock.js atp://eschatology/clock/clock.js
+
+upload: clock.obj.gz clock.mtl clock-face.png rez-clock.js hour-hand.obj.gz minute-hand.obj.gz clock.js
+	mkdir -p clock
+	cp $^ clock/
+	rsync --delete -avP clock/ headache.hungry.com:public_html/hifi/clock/
+
 
 libs:
 	snow2 install $(LIBS)
@@ -97,6 +113,7 @@ link-libs: very-clean
 
 clean:
 	rm -f *~ clock.stl clock-untextured.obj clock-offset.obj clock.obj
+	rm -f clock.obj.gz hour-hand.obj.gz minute-hand.obj.gz
 	rm -f hour-hand.scad hour-hand.stl hour-hand.obj
 	rm -f minute-hand.scad minute-hand.stl minute-hand.obj
 	rm -rf clock
