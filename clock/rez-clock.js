@@ -12,7 +12,7 @@
     var minuteHandModelURL;
     var clockServerScriptURL;
 
-    var useATP = false;
+    var useATP = true;
 
     if (useATP) {
         clockModelURL = 'atp:/clock/clock.obj.gz';
