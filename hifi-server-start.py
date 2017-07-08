@@ -26,7 +26,7 @@ def sig_handler(signum, frame):
 signal.signal(signal.SIGINT, sig_handler)
 
 def spawn(cmd, log):
-    print("lanching %s" % cmd)
+    print("  %s" % cmd)
     args = shlex.split(cmd)
     return subprocess.Popen(args, stdout=log, stderr=log)
 
