@@ -1,0 +1,117 @@
+* Building a Clock for High Fidelity
+
+A clock for High Fidelity has several parts: A model for the body of
+the clock (including a texture for the face), a model for each
+hand, a server-side script to update the hands, and a client-side
+script to rez the clock.  I'll walk through each part and explain
+what was done; the result is in the [[https://github.com/sethalves/hifi-content/tree/master/clock][clock source]].  The actual
+commands used for the recipe can be seen by running make on
+the [[https://github.com/sethalves/hifi-content/blob/master/clock/Makefile][Makefile]].
+
+** Body
+
+OpenSCAD has a cylinder primative (see [[http://www.openscad.org/cheatsheet/][cheatsheet]]), and one of the parameters is [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#.24fa.2C_.24fs_and_.24fn][how many segments]]
+will make up the circles at the ends.  This allows an easy way to create some dodecagons:
+
+#+BEGIN_SRC
+cylinder(h=0.08, r1=0.5, r2=0.5, center=true, $fn=12);
+#+END_SRC
+
+We want the face of the clock to face upward (positive-y in High Fidelity), so the scad file has
+
+#+BEGIN_SRC
+rotate([-90, 0, 0]) { ... }
+#+END_SRC
+
+We also want the face of the clock to be in positive x and z space, because
+that's what ~wavefront-obj-tool~ expects when it maps a texture onto a model.  The face is put into position with
+
+#+BEGIN_SRC
+translate([0.45, 0, 0.45]) { ... }
+#+END_SRC
+
+In the ~Makefile~ is a rule to process the ~clock.scad~ file and export ~clock.stl~.  High Fidelity doesn't
+support [[https://en.wikipedia.org/wiki/STL_(file_format)][STL model files]], but it's easy to convert from STL to [[https://en.wikipedia.org/wiki/Wavefront_.obj_file][OBJ]] with ~wavefront-obj-tool~.
+
+Next, we create the texture we'll map onto the face of the clock.  We create a blank (white) png image
+with ~pbmmake~ from [[http://netpbm.sourceforge.net/][Netpbm]]:
+
+#+BEGIN_SRC
+pbmmake -white 480 480 | pnmtopng > clock-face-blank.png
+#+END_SRC
+
+and then use ~convert~ from [[https://www.imagemagick.org/script/convert.php][ImageMagick]] to draw numbers onto the image.
+
+#+BEGIN_SRC
+convert -pointsize 40 -fill black
+  -draw 'text 320,94 "1"'
+  -draw 'text 386,160 "2"'
+  ...
+  -draw 'text 210,70 "12"'
+#+END_SRC
+
+To apply the face texture to the clock's model, we use:
+
+#+BEGIN_SRC
+wavefront-obj-tool clock-untextured.obj -o clock-offset.obj
+	-U -M 0.9 0.9
+	-L clock.mtl -S clock_face_mtl
+#+END_SRC
+
+This reads in ~clock-untextured.obj~ and maps a texture from the top
+down onto the model.  ~-M 0.9 0.9~ means that the texture should be
+stretched to cover a square in the xz plane from (0, 0) to (0.9, 0.9).
+This is the bounding size in model space of the clock face, as seen
+from above.  The ~-U~ argument means that only upward-facing (normal
+has positive y) faces should have their material set.  OBJ files have
+their [[https://en.wikipedia.org/wiki/Wavefront_.obj_file#Referencing_materials][material specifications]] in separate files.  These material files are
+usually found next-to (in the same directory as) the OBJ files
+that refer to them.  The ~-L clock.mtl -S clock_face_mtl~ arguments
+set the name of the material file and the name of the material.  If you've
+run the Makefile, you can see the resulting model with meshlab
+
+#+BEGIN_SRC
+meshlab clock.obj
+#+END_SRC
+
+Meshlab has many options under the ~Render~ menu which can be enabled
+to check that the model is consistent and water-tight.  It can also
+show the model-space axis so that we can be sure the model is oriented
+as we expect.
+
+** Hands
+
+For the hands of the clock, we turn to OpenSCAD again.  In the repository
+are two files: ~hour-hand.scad~ and ~minute-hand.scad~.  Each contains
+a single OpenSCAD [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron][polyhedron]] statement.  They produce stretched tetrahedrons
+of different lengths, and these will serve as the hands of the clock.  Like
+the clock body, they are both processed into STL and then OBJ files (though
+they receive no texture).  Again, Meshlab can be used to examine the
+intermediate and final model files.
+
+** Script
+
+High Fidelity can run javascript programs in a [[https://wiki.highfidelity.com/wiki/Script_Types_Overview][variety]] of places:
+  - Interface can load a script from a url: This script will be
+    running on the client, and wont necessarily be running in the
+    clients of other avatars.
+  - Interface can run an entity script: [[https://wiki.highfidelity.com/wiki/Entity][Entities]] have a [[https://wiki.highfidelity.com/wiki/EntityItemProperties][property]]
+    called ~script~ which can be the url of a script. Any Interface
+    that is told about this entity will download and run the script.
+    Every client who is present will have its own copy of that script
+    running, independently.
+  - Scripted Agent: A domain can run an assignment-client (server)
+    which act like a headless version of Interface. This usually
+    causes an avatar to appear in-world, and the AC can run a script
+    much like Interface can.
+  - Server Script: In addition to their ~script~ property, Entities
+    have a ~serverScripts~ property which will cause an
+    assignment-client to run the script, even without any agents
+    (Interface or Agent ACs) present.  Only one copy of such a script
+    will be running, regardless of how many avatars visit the area.
+
+This clock uses a server [[https://github.com/sethalves/hifi-content/blob/master/clock/clock.js][script]] to update the hands, about once per minute.  The server script
+should contain a single function object.  ~preload~ is the first thing to be called,
+and will have, as an argument, the [[https://en.wikipedia.org/wiki/Universally_unique_identifier][UUID]] of the entity whose ~serverScripts~ property caused
+this script to be run.
+
