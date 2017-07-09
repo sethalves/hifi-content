@@ -113,10 +113,11 @@ link-libs: very-clean
 clean:
 	rm -f *~ clock.stl clock-untextured.obj clock-offset.obj clock.obj
 	rm -f clock.obj.gz hour-hand.obj.gz minute-hand.obj.gz
-	rm -f hour-hand.scad hour-hand.stl hour-hand.obj
-	rm -f minute-hand.scad minute-hand.stl minute-hand.obj
+	rm -f hour-hand.stl hour-hand.obj
+	rm -f minute-hand.stl minute-hand.obj
 	rm -rf clock
 	rm -f clock-face-blank.png clock-face.png
+	rm -f clock.md clock.html
 
 very-clean: clean
 	rm -rf seth foldling srfi snow
