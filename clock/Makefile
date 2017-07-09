@@ -25,8 +25,8 @@ clock-untextured.obj: clock.stl
 	$(WAVEFRONT_OBJ_TOOL) -n $^ -o $@ -L clock.mtl -S clock_body_mtl
 
 clock-offset.obj: clock-untextured.obj
-	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ \
-		-T -M $(CLOCK_FACE_TEXTURE_WIDTH) $(CLOCK_FACE_TEXTURE_HEIGHT) \
+	$(WAVEFRONT_OBJ_TOOL) $^ -o $@ \
+		-U -M $(CLOCK_FACE_TEXTURE_WIDTH) $(CLOCK_FACE_TEXTURE_HEIGHT) \
 		-L clock.mtl -S clock_face_mtl
 
 clock.obj: clock-offset.obj
@@ -84,11 +84,10 @@ minute-hand.obj.gz: minute-hand.obj
 	gzip -9 $<
 
 
-upload-atp: clock.obj.gz clock.mtl clock-face.png rez-clock.js hour-hand.obj.gz minute-hand.obj.gz clock.js
+upload-atp: clock.obj.gz clock.mtl clock-face.png hour-hand.obj.gz minute-hand.obj.gz clock.js
 	- $(ATP_CLIENT) -T clock.obj.gz atp://eschatology/clock/clock.obj.gz
 	- $(ATP_CLIENT) -T clock.mtl atp://eschatology/clock/clock.mtl
 	- $(ATP_CLIENT) -T clock-face.png atp://eschatology/clock/clock-face.png
-	- $(ATP_CLIENT) -T rez-clock.js atp://eschatology/clock/rez-clock.js
 	- $(ATP_CLIENT) -T hour-hand.obj.gz atp://eschatology/clock/hour-hand.obj.gz
 	- $(ATP_CLIENT) -T minute-hand.obj.gz atp://eschatology/clock/minute-hand.obj.gz
 	- $(ATP_CLIENT) -T clock.js atp://eschatology/clock/clock.js

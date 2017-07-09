@@ -32,7 +32,7 @@
         modelURL: clockModelURL,
         position: Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 0.2, z: -4 })),
         rotation: Quat.multiply(Quat.fromVec3Degrees({ x: 0, y: avRotEulers.y, z: 0 }),
-                                Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 })),
+                                Quat.fromVec3Degrees({ x: 90, y: 0, z: 0 })),
         userData: JSON.stringify({
             "grabbableKey": { "grabbable": true },
             "soundKey": {
@@ -50,7 +50,8 @@
         type: 'Model',
         modelURL: hourHandModelURL,
         registrationPoint: { x: 0.5, y: 0.0, z: 0.0 },
-        localPosition: { x: 0, y: -0.1, z: 0 },
+        localPosition: { x: 0, y: 0.1, z: 0 },
+        localRotation: Quat.fromPitchYawRollRadians(0, Math.PI, 0),
         parentID: clockID
     });
 
@@ -59,7 +60,8 @@
         type: 'Model',
         modelURL: minuteHandModelURL,
         registrationPoint: { x: 0.5, y: 0.0, z: 0.0 },
-        localPosition: { x: 0, y: -0.1, z: 0 },
+        localPosition: { x: 0, y: 0.1, z: 0 },
+        localRotation: Quat.fromPitchYawRollRadians(0, Math.PI, 0),
         parentID: clockID
     });
 
