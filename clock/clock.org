@@ -66,11 +66,15 @@ stretched to cover a square in the xz plane from (0, 0) to (0.9, 0.9).
 This is the bounding size in model space of the clock face, as seen
 from above.  The ~-U~ argument means that only upward-facing (normal
 has positive y) faces should have their material set.  OBJ files have
-their [[https://en.wikipedia.org/wiki/Wavefront_.obj_file#Referencing_materials][material specifications]] in separate files.  These material files are
-usually found next-to (in the same directory as) the OBJ files
-that refer to them.  The ~-L clock.mtl -S clock_face_mtl~ arguments
-set the name of the material file and the name of the material.  If you've
-run the Makefile, you can see the resulting model with meshlab
+their [[https://en.wikipedia.org/wiki/Wavefront_.obj_file#Referencing_materials][material specifications]] in a separate file.  These material
+files are usually found next to (in the same directory as) the OBJ
+files that refer to them.  The ~-L clock.mtl -S clock_face_mtl~
+arguments set the name of the material file and the name of the
+material, respectively.  An mtl file can hold more than one material
+definition -- each has its own name.
+
+If you've run the Makefile, you can see the resulting model with
+meshlab
 
 #+BEGIN_SRC
 meshlab clock.obj
@@ -80,6 +84,11 @@ Meshlab has many options under the ~Render~ menu which can be enabled
 to check that the model is consistent and water-tight.  It can also
 show the model-space axis so it's possible to confirm that the model
 is oriented as expected.
+
+The final step in the creation of the OBJ model files is to [[https://www.gnu.org/software/gzip/manual/][gzip]] them.
+~interface~ will recognize a file that ends in ~.obj.gz~ and
+uncompress it before reading.  OBJ is a plain-text format and
+the files can be quite large for models with many triangles.
 
 ** Hands
 
@@ -149,3 +158,68 @@ the ~localRotation~ property, causing the hands to rotate relative to
 the clock body.
 
 ** Hosting
+
+To be used by a High Fidelity server, all these model and script files need to be
+available over the network.  There are 3 main places for these types of files:
+  - local filesystem of a user's computer
+  - a webserver
+  - a [[https://wiki.highfidelity.com/wiki/Asset_Server_(ATP)][High Fidelity asset-server]]
+
+A script on a user's local filesystem can be loaded by that user's
+~interface~, but wont be of any use to servers (assuming the servers
+aren't also running on the local computer) or to other users.  A
+webserver is a good option, but setting up a webserver on the greater
+internet isn't easy.  Hifi's asset-server is a good choice, because
+once a hifi domain is up and running, the asset-server is already
+configured and ready.
+
+The files need to be copied from the local build diretory to the
+asset-server.  One way is to launch ~interface~ and use the ~Asset
+Browser~ dialog to upload each of the needed files: clock.obj.gz,
+clock.mtl, clock-face.png, rez-clock.js, hour-hand.obj.gz,
+minute-hand.obj.gz, clock.js.  Notice that ~rez-clock.js~ is missing
+from this list -- client scripts can't be run from an asset-server
+(though they can be run from a web-server).  The reason is that
+the meaning of the url ~atp:/rez-clock~ is going to be different
+for different domains.
+
+Another way to upload these files is ~atp-client~, found in
+the tools directory in the [[https://github.com/highfidelity/hifi][main High Fidelity repository]].  If you
+built the software on Linux, it should be in the build directory:
+~build/tools/atp-client/atp-client~.  This tool can be used to (among
+other things) upload files to an asset-server.
+
+#+BEGIN_SRC
+./atp-client -u <<username>>:<<password>> -T clock.obj.gz atp://eschatology-dev/clock/clock.obj.gz
+#+END_SRC
+
+The clock's ~Makefile~ has a target called ~upload-atp~ which will use
+~atp-client~ to upload the files.  Before this will work, the
+~ATP_CLIENT~ near the top of the ~Makefile~ will need to be correctly
+set, and the user will need to have write-permissions for the
+asset-server.
+
+Notice this other form of ATP URL -- it includes the domain-name along
+with the path.  atp-client supports these, but ~interface~ and the
+script-server don't (yet?) allow cross-domain ATP urls, they only
+accept the shorter form.
+
+** Rezzing
+
+Finally, once the files are created and placed on the domain's
+asset-server, connect to the domain with ~interface~ and open the
+~Running Scripts~ dialog.  Use the ~from file~ button and navigate to
+and select ~rez-clock.js~ script.  If all goes well, the clock should
+appear in front of the avatar.  This script runs once and then stops.
+If it's reloaded, it will make a new clock.  Once the clock is
+created, the script can be deleted from the ~Running Scripts~ list.
+Using the local filesystem for the rez script works, because it
+just needs to be run once, by the local ~interface~.  No server
+or other user needs to run it.
+
+** Bugs
+
+As of this writing, there is a bug that will keep ~clock.js~ from
+updating the hands of the clock until the interface that rezzed the
+clock leaves the domain.  So, once the clock is rezzed, log out and
+then back in to see it work.
