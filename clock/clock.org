@@ -1,46 +1,48 @@
 * Building a Clock for High Fidelity
 
 A clock for High Fidelity has several parts: A model for the body of
-the clock (including a texture for the face), a model for each
-hand, a server-side script to update the hands, and a client-side
-script to rez the clock.  I'll walk through each part and explain
-what was done; the result is in the [[https://github.com/sethalves/hifi-content/tree/master/clock][clock source]].  The actual
-commands used for the recipe can be seen by running make on
-the [[https://github.com/sethalves/hifi-content/blob/master/clock/Makefile][Makefile]].
+the clock (including a texture for the face), a model for each hand, a
+server-side script to update the hands, and a client-side script to
+rez the clock.  I'll walk through each part and explain what was done;
+the result is in the [[https://github.com/sethalves/hifi-content/tree/master/clock][clock source]].  The actual commands used for the
+recipe can be seen by running make on the [[https://github.com/sethalves/hifi-content/blob/master/clock/Makefile][Makefile]].
 
 ** Body
 
-OpenSCAD has a cylinder primative (see [[http://www.openscad.org/cheatsheet/][cheatsheet]]), and one of the parameters is [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#.24fa.2C_.24fs_and_.24fn][how many segments]]
-will make up the circles at the ends.  This allows an easy way to create some dodecagons:
+OpenSCAD has a cylinder primative (see [[http://www.openscad.org/cheatsheet/][cheatsheet]]), and one of the
+parameters is [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#.24fa.2C_.24fs_and_.24fn][how many segments]] will make up the circles at the ends.
+This allows an easy way to create some dodecagons:
 
 #+BEGIN_SRC
 cylinder(h=0.08, r1=0.5, r2=0.5, center=true, $fn=12);
 #+END_SRC
 
-We want the face of the clock to face upward (positive-y in High Fidelity), so the scad file has
+The face of the clock should face upward (positive-y in High Fidelity), so the scad file has
 
 #+BEGIN_SRC
 rotate([-90, 0, 0]) { ... }
 #+END_SRC
 
-We also want the face of the clock to be in positive x and z space, because
-that's what ~wavefront-obj-tool~ expects when it maps a texture onto a model.  The face is put into position with
+and the face of the clock should be in positive x and z space, because
+that's what ~wavefront-obj-tool~ expects when it maps a texture onto a
+model.  The face is put into position with
 
 #+BEGIN_SRC
 translate([0.45, 0, 0.45]) { ... }
 #+END_SRC
 
-In the ~Makefile~ is a rule to process the ~clock.scad~ file and export ~clock.stl~.  High Fidelity doesn't
-support [[https://en.wikipedia.org/wiki/STL_(file_format)][STL model files]], but it's easy to convert from STL to [[https://en.wikipedia.org/wiki/Wavefront_.obj_file][OBJ]] with ~wavefront-obj-tool~.
+In the ~Makefile~ is a rule to process the ~clock.scad~ file and
+export ~clock.stl~.  High Fidelity doesn't support [[https://en.wikipedia.org/wiki/STL_(file_format)][STL model files]],
+but it's easy to convert from STL to [[https://en.wikipedia.org/wiki/Wavefront_.obj_file][OBJ]] with ~wavefront-obj-tool~.
 
-Next, we create the texture we'll map onto the face of the clock.  We create a blank (white) png image
-with ~pbmmake~ from [[http://netpbm.sourceforge.net/][Netpbm]]:
+The image for the face of the clock is made by starting with a blank
+(white) png image from ~pbmmake~ (of [[http://netpbm.sourceforge.net/][Netpbm]]):
 
 #+BEGIN_SRC
 pbmmake -white 480 480 | pnmtopng > clock-face-blank.png
 #+END_SRC
 
-and then use ~convert~ from [[https://www.imagemagick.org/script/convert.php][ImageMagick]] to draw numbers onto the image.
+and then drawing numbers in a circle with ~convert~ from [[https://www.imagemagick.org/script/convert.php][ImageMagick]].
 
 #+BEGIN_SRC
 convert -pointsize 40 -fill black
@@ -50,7 +52,7 @@ convert -pointsize 40 -fill black
   -draw 'text 210,70 "12"'
 #+END_SRC
 
-To apply the face texture to the clock's model, we use:
+The face texture is applied to the clock's model with:
 
 #+BEGIN_SRC
 wavefront-obj-tool clock-untextured.obj -o clock-offset.obj
@@ -76,12 +78,12 @@ meshlab clock.obj
 
 Meshlab has many options under the ~Render~ menu which can be enabled
 to check that the model is consistent and water-tight.  It can also
-show the model-space axis so that we can be sure the model is oriented
-as we expect.
+show the model-space axis so it's possible to confirm that the model
+is oriented as expected.
 
 ** Hands
 
-For the hands of the clock, we turn to OpenSCAD again.  In the repository
+OpenSCAD is also used for the clock hands. In the repository
 are two files: ~hour-hand.scad~ and ~minute-hand.scad~.  Each contains
 a single OpenSCAD [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Primitive_Solids#polyhedron][polyhedron]] statement.  They produce stretched tetrahedrons
 of different lengths, and these will serve as the hands of the clock.  Like
@@ -89,7 +91,7 @@ the clock body, they are both processed into STL and then OBJ files (though
 they receive no texture).  Again, Meshlab can be used to examine the
 intermediate and final model files.
 
-** Script
+** Rezzing
 
 High Fidelity can run javascript programs in a [[https://wiki.highfidelity.com/wiki/Script_Types_Overview][variety]] of places:
   - Interface can load a script from a url: This script will be
@@ -110,8 +112,40 @@ High Fidelity can run javascript programs in a [[https://wiki.highfidelity.com/w
     (Interface or Agent ACs) present.  Only one copy of such a script
     will be running, regardless of how many avatars visit the area.
 
-This clock uses a server [[https://github.com/sethalves/hifi-content/blob/master/clock/clock.js][script]] to update the hands, about once per minute.  The server script
-should contain a single function object.  ~preload~ is the first thing to be called,
-and will have, as an argument, the [[https://en.wikipedia.org/wiki/Universally_unique_identifier][UUID]] of the entity whose ~serverScripts~ property caused
-this script to be run.
 
+The clock's [[https://github.com/sethalves/hifi-content/blob/master/clock/rez-clock.js][rez script]] is the first kind.  It's run from ~interface~
+by open the ~Running Scripts~ dialog and selecting ~from url~ or ~from
+disk~.  It calls ~Entities.addEntity~ once for the clock body and once
+for each clock hand.  The hour-hand and minute-hand Entities
+/children/ of the clock body.  Rather than a world-frame ~position~
+and ~rotation~, they are given ~localPosition~ and ~localRotation~ and
+a ~parentID~ set to the ID of the clock.  This means that when the
+clock moves, the hands will go along with it.  The hands are also
+given a non-default ~registrationPoint~.  The ~registrationPoint~ is a
+vector that defines a position within the local bounding-box of the
+model.  The default is ~{ x: 0.5, y: 0.5, z: 0.5 }~, meaning the
+center of the bounding-box.  This rez script sets each
+~registrationPoint~ to ~{ x: 0.5, y: 0.0, z: 0.0 }~.  This causes the
+center of rotation for the hand entities to be down at the thick end
+of the hands.
+
+At the end of the rez script, a Server Script is added to the clock
+with ~Entities.editEntity~.  This edit also updates the clocks
+~userData~ property to encode the IDs of the clock hands.
+
+** Script
+
+The clock uses the server [[https://github.com/sethalves/hifi-content/blob/master/clock/clock.js][script]] (clock.js) to update the hands about
+once per minute.  In the script, ~preload~ is the first thing to be
+called, and will have, as an argument, the [[https://en.wikipedia.org/wiki/Universally_unique_identifier][UUID]] of the entity whose
+~serverScripts~ property caused this script to be run.  This script is
+only given the entityID of the main clock body, and needs to know the
+entityIDs of the clock hands.  It expects these IDs to be stored in
+the ~userData~ property of the clock.
+
+Once per minute it gets the current (UTC) time and does a bit of math,
+before calling ~Entities.editEntity~ on each hand.  The edits change
+the ~localRotation~ property, causing the hands to rotate relative to
+the clock body.
+
+** Hosting
