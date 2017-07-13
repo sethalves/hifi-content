@@ -6,8 +6,7 @@ don't have much skill at creating 3D Models.  Sometimes I run [[https://www.blen
 and admire its many buttons.  Despite this lack of skill, I've found
 that I can make quite a variety of things with a small set of
 programmer-friendly tools: [[https://www.gnu.org/software/make/][GNU Make]], [[http://www.meshlab.net/][Meshlab]], [[http://www.openscad.org/][OpenSCAD]],
-[[https://github.com/sethalves/wavefront-obj-tools][wavefront-obj-tool]], [[http://www.povray.org/][POV-Ray]], [[https://www.imagemagick.org/script/convert.php][convert from ImageMagick]], [[http://netpbm.sourceforge.net/][Netpbm]]
-.
+[[https://github.com/sethalves/wavefront-obj-tools][wavefront-obj-tool]], [[http://www.povray.org/][POV-Ray]], [[https://www.imagemagick.org/script/convert.php][convert from ImageMagick]], [[http://netpbm.sourceforge.net/][Netpbm]].
 
 I've started writing /lab reports/ about making content
 for High Fidelity.  They assume you're already reasonably
