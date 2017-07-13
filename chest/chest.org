@@ -1,0 +1,193 @@
+#+TITLE: A Chest with a Working Lid for High Fidelity
+
+This assumes you've already read the [[https://github.com/sethalves/hifi-content/blob/master/clock/clock.org][description of creating a clock
+for High Fidelity]].  The chest has two main parts: a box and a lid.
+They are connected with a hinge constraint.
+
+* Box
+
+OpenSCAD supports [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/The_OpenSCAD_Language#Chapter_7_--_User-Defined_Functions_and_Modules][modules]], which can be viewed as a sort of
+subroutine.  It also allows global variables to be [[https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Using_OpenSCAD_in_a_command_line_environment#Constants][set from the
+command line]].  These features, combined, allow for the box and lid
+(and their collision hulls) to be defined in the same scad file.
+
+The ~chest-box.obj~ target in the ~Makefile~ is used to create the
+visual ~OBJ~ file for the chest's box.  This target invokes OpenSCAD
+with ~-D output_box=1~:
+
+#+BEGIN_SRC
+openscad -D output_box=1 -o chest-box.stl chest.scad
+#+END_SRC
+
+which causes the ~if~ clause near the bottom of the file to be true:
+#+BEGIN_SRC
+if (output_box) {
+    chest_box();
+}
+#+END_SRC
+
+which causes the code near the top ~module chest_box() { ... }~ to be
+invoked.  This takes a ~cube~ and subtracts away a slightly smaller
+~cube~ in order to make a thick-walled box with no top.
+
+| [[./chest-box.obj.png]] |
+
+* Collision Hulls
+
+High Fidelity entities can have different sorts of collision shapes.
+Here, ~Compound~ "collision shape types" are used for the box and the
+lid.  Compound shapes are a collection of [[https://en.wikipedia.org/wiki/Convex_hull][convex shapes]] which combine
+together to define the shape that [[http://bulletphysics.org/wordpress/][Bullet Physics]] uses to determine
+collisions.  Each part of the overall shape must be convex, but that
+doesn't mean that the overall shape is convex.  If a part of the
+compound shape isn't convex, that part's convex hull gets used,
+instead.
+
+The list of faces in an OBJ file can be divided into groups (look for
+lines that start with "g").  When an OBJ file is used as a collision
+hull, High Fidelity's ~interface~ takes each sub-object to be a part
+of the bullet compound shape.  All of the convex "groups" in the OBJ
+file are combined together to make the (not necessarily convex)
+compound shape.
+
+The hull for the thick-walled box needs 5 convex shapes -- one for
+each wall and one for the floor of the box.  The OBJ file to describe
+this is made in two steps:
+  - An OBJ file is generated for each of the 5 parts.
+  - The 5 OBJ files are combined into one OBJ file, with each input file
+    in its own group (also called sub-mesh or part).
+The parts are make by the ~chest-box-hull.obj~ target in the ~Makefile~.  It runs
+commands like
+
+#+BEGIN_SRC
+openscad -D output_box_hull=1 -D n=0 -o box-hull-parts/0.stl chest.scad
+openscad -D output_box_hull=1 -D n=1 -o box-hull-parts/1.stl chest.scad
+ ...
+openscad -D output_box_hull=1 -D n=4 -o box-hull-parts/4.stl chest.scad
+#+END_SRC
+
+The ~-D output_box_hull=1~ argument causes the ~if~ statement near the
+bottom to invoke the ~chest_box_hull~ module.  The ~-D n=X~ argument
+sets the global ~n~ variable to ~X~ and controls which ~if~ statement
+in ~chest_box_hull~ is activated.  5 OBJ files are created in the
+~box-hull-parts/~ subdirectory, and they are combined with
+
+#+BEGIN_SRC
+wavefront-obj-tool -n -c box-hull-parts/0.obj box-hull-parts/1.obj box-hull-parts/2.obj box-hull-parts/3.obj box-hull-parts/4.obj -o chest-box-hull.obj
+#+END_SRC
+
+When the chest box is rezzed, it will have its ~modelURL~ property set to
+a URL pointing to ~chest-box.obj~ and it will have its
+~compoundShapeURL~ set to a URL pointing to ~chest-box-hull.obj~.
+
+The collision hull model could be used for the visual model, as well,
+but it has more triangles and will suffer from z-fighting.  These
+problems are not important when the model is used as a collision shape.
+
+* Lid
+
+The lid and its collision-hull are made with similar strategies as the box.  They are
+handled by the ~chest-lid.obj~ and ~chest-lid-hull.obj~ targets of the Makefile.
+
+| [[./chest-lid.obj.png]] | [[./chest-lid-hull.obj.png]] |
+
+
+
+The box and lid are both given the same [[http://paulbourke.net/dataformats/mtl/][material file]] and material name, which just
+makes all the faces brown:
+
+#+BEGIN_SRC
+newmtl chest_wood_mtl
+Ka 0.65 0.16 0.16
+Kd 0.65 0.16 0.16
+Ns 10
+#+END_SRC
+
+* Hinge
+
+Bullet supports [[http://bulletphysics.org/mediawiki-1.5.8/index.php/Constraints][constraints]], which are mechanisms for limiting the
+motion of a rigid body.  The chest-rezzing script creates the chest
+box and lid and then links them together with a [[http://bulletphysics.org/mediawiki-1.5.8/index.php/Constraints#Hinge][hinge constraint]].  The
+hinge is added with the ~Entities.addAction~ call at the end of the
+[[rez-chest.js][rez-chest script]]:
+
+#+BEGIN_SRC
+Entities.addAction("hinge", chestBoxID, {
+        pivot: { x: 0, y: height/2 + 0.002, z: -depth/2 },
+        axis: { x: 1, y: 0, z: 0 },
+        otherEntityID: chestLidID,
+        otherPivot: { x: 0, y: -depth / 4, z: -depth/2 },
+        otherAxis: { x: 1, y: 0, z: 0 },
+        tag: "chest hinge"
+    });
+#+END_SRC
+
+In High Fidelity, every constraint is associated with an owning
+entity.  The constraint may refer to another entity (as this one
+does), but it's a weak reference.  If the owning entity is deleted, so
+is the constraint.  If the referenced entity is deleted (or hasn't
+loaded yet), the constraint exists in a disabled state.
+
+This hinge's owner is the chest box.  The arguments mean:
+|---------------+---------------------------------------------------------------------|
+| pivot         | offset from the center of the box                                   |
+| axis          | a vector that determines how the hinge lines up relative to the box |
+| otherEntityID | the ID of the lid                                                   |
+| otherPivot    | offset from the center of the lid                                   |
+| otherAxis     | a vector that lines the hinge up in the lid's frame of reference    |
+| tag           | associates a string with the constraint, for debugging              |
+|---------------+---------------------------------------------------------------------|
+
+Once the hinge is in place, bullet will attempt to keep the two entities next to each
+other, as if connected by a hinge.  If one is moved, the other will be tugged along.
+
+
+* Grabbing
+
+There are quite a few different modes for manipulating entites in High
+Fidelity -- mouse, hand controllers, the create app, etc.  Some of
+them do tricks to make a held entity follow the hand-controllers more
+tightly; they teleport the entity to the correct position, at a high
+frequency.  This doesn't work well with entities that have bullet
+constraints on them, because bullet doesn't have a chance to *not*
+allow these micro-teleports.  The result is that if someone uses
+hand-controllers to grab the chest lid, they can rip it right off.
+When they release it, it will snap back, but it still looks terrible.
+
+Some grabbing behavior is controlled by the ~grabbableKey~ in the
+~userData~ property of the grabbed entity.  The lid and the box both
+get this:
+
+#+BEGIN_SRC
+    userData: JSON.stringify({
+        grabbableKey: {
+            grabbable: true,
+            kinematic: false
+        }
+    })
+#+END_SRC
+
+This indicates to the scripts that enable grabbing that the entity is
+grabbable and that it should not be subjected to micro-teleports
+(because ~kinematic~ is false).  Instead, its position will be
+affected by rapid adjustments to the /velocity/ of the entity.  It
+wont track the hand as closely, but it allows bullet to sort out all
+the constraints and keep the box and lid together.
+
+* Bugs
+
+Notice in the rez script that the box and lid ~dimensions~ properties
+are explicitly set.  This shouldn't be required, but sometimes the
+entities come in as a strange size.  Setting the dimensions here works
+around this bug.  The dimensions can be determined with
+~wavefrom-obj-tool~:
+
+#+BEGIN_SRC
+$ wavefront-obj-tool -p chest-box.obj
+aa-box: (#(-0.5 0 -0.25) #(0.5 0.5 0.25))
+texture-aa-box: (#(-0.2388 -0.186 0) #(0.9588 0.999 0))
+dimensions: (#(1.0 0.5 0.5))
+materials: (chest.mtl)
+vertices: 16
+meshes: 1
+#+END_SRC

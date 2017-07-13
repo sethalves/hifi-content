@@ -2,12 +2,18 @@
 #
 #
 
+DOMAIN=eschatology
+
 # VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
-N=-n
+ATP_CLIENT=../../hifi/build/tools/atp-client/atp-client
+WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 
 %.obj: %.stl
-	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@
+	wavefront-obj-tool -m 0.4 -n -c $^ -o $@
 
+%.obj.gz: %.obj
+	rm -f $@
+	gzip -9 $<
 
 box-hull-parts/%.stl: chest.scad
 	mkdir -p box-hull-parts
@@ -34,7 +40,7 @@ chest-box.stl: chest.scad
 	openscad -D output_box=1 -o $@ $^
 
 chest-box.obj: chest-box.stl
-	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S chest_wood_mtl
+	wavefront-obj-tool -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
 
 #
 # visual lid model
@@ -44,13 +50,13 @@ chest-lid.stl: chest.scad
 	openscad -D output_lid=1 -o $@ $^
 
 chest-lid.obj: chest-lid.stl
-	wavefront-obj-tool -m 0.4 ${N} -c $^ -o $@ -S chest_wood_mtl
+	wavefront-obj-tool -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
 
 # chest-lid-hull.obj: chest-lid.obj
 # 	$(VHACD) -g -i $^ -o $@ --maxvertices 64 --concavity 0.001 --resolution 400000 --depth 30
 
 chest-lid-hull.obj: ${LID_HULL_PARTS}
-	wavefront-obj-tool ${N} -c $^ -o $@
+	wavefront-obj-tool -n -c $^ -o $@
 
 
 #
@@ -58,20 +64,30 @@ chest-lid-hull.obj: ${LID_HULL_PARTS}
 #
 
 chest-box-hull.obj: ${BOX_HULL_PARTS}
-	wavefront-obj-tool ${N} -c $^ -o $@
+	wavefront-obj-tool -n -c $^ -o $@
 
 #
 #
 #
 
-upload: ${TARGETS}
+upload-www: ${TARGETS}
 	mkdir -p chest
 	cp $^ chest/
 	rsync --delete -avP chest/ headache.hungry.com:public_html/hifi/chest/
 
+
+upload: chest-box.obj.gz chest-box-hull.obj.gz chest-lid.obj.gz chest-lid-hull.obj.gz chest.mtl
+	- $(ATP_CLIENT) -T chest-box.obj.gz atp://$(DOMAIN)/chest/chest-box.obj.gz
+	- $(ATP_CLIENT) -T chest-box-hull.obj.gz atp://$(DOMAIN)/chest/chest-box-hull.obj.gz
+	- $(ATP_CLIENT) -T chest-lid.obj.gz atp://$(DOMAIN)/chest/chest-lid.obj.gz
+	- $(ATP_CLIENT) -T chest-lid-hull.obj.gz atp://$(DOMAIN)/chest/chest-lid-hull.obj.gz
+	- $(ATP_CLIENT) -T chest.mtl atp://$(DOMAIN)/chest/chest.mtl
+
+
 clean:
 	rm -f *~
-	rm -f chest-box.stl chest-box.obj chest-box-hull.obj
-	rm -f chest-lid.stl chest-lid.obj chest-lid-hull.obj
+	rm -f chest-box.stl chest-box.obj chest-box-hull.obj chest-box.obj.gz chest-box-hull.obj.gz
+	rm -f chest-lid.stl chest-lid.obj chest-lid-hull.obj chest-lid.obj.gz chest-lid-hull.obj.gz
 	rm -rf box-hull-parts
 	rm -rf lid-hull-parts
+	rm -rf chest
