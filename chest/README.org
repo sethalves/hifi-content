@@ -136,11 +136,11 @@ This hinge's owner is the chest box.  The arguments mean:
 | otherPivot    | offset from the center of the lid                                   |
 | otherAxis     | a vector that lines the hinge up in the lid's frame of reference    |
 | tag           | associates a string with the constraint, for debugging              |
+|               |                                                                     |
 |---------------+---------------------------------------------------------------------|
 
 Once the hinge is in place, bullet will attempt to keep the two entities next to each
 other, as if connected by a hinge.  If one is moved, the other will be tugged along.
-
 
 * Grabbing
 
