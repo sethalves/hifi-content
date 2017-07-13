@@ -109,7 +109,7 @@ Bullet supports [[http://bulletphysics.org/mediawiki-1.5.8/index.php/Constraints
 motion of a rigid body.  The chest-rezzing script creates the chest
 box and lid and then links them together with a [[http://bulletphysics.org/mediawiki-1.5.8/index.php/Constraints#Hinge][hinge constraint]].  The
 hinge is added with the ~Entities.addAction~ call at the end of the
-[[rez-chest.js][rez-chest script]]:
+[[https://github.com/sethalves/hifi-content/blob/master/chest/rez-chest.js][rez-chest script]]:
 
 #+BEGIN_SRC
 Entities.addAction("hinge", chestBoxID, {
