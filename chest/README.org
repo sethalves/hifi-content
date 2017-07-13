@@ -1,6 +1,6 @@
 #+TITLE: A Chest with a Working Lid for High Fidelity
 
-This assumes you've already read the [[https://github.com/sethalves/hifi-content/blob/master/clock/clock.org][description of creating a clock
+This assumes you've already read the [[https://github.com/sethalves/hifi-content/blob/master/clock/][description of creating a clock
 for High Fidelity]].  The chest has two main parts: a box and a lid.
 They are connected with a hinge constraint.
 
