@@ -14,6 +14,6 @@ familiar with High Fidelity and that you're comfortable
 with Linux.  I imagine this is a small audience.  Anyway,
 as I write them, I'll link to them from here:
 
-[[https://github.com/sethalves/hifi-content/blob/master/clock/clock.org][a clock]]
+[[https://github.com/sethalves/hifi-content/blob/master/clock/README.org][a clock]]
 
-[[https://github.com/sethalves/hifi-content/blob/master/chest/chest.org][a chest with a lid]]
+[[https://github.com/sethalves/hifi-content/blob/master/chest/README.org][a chest with a lid]]
