@@ -1,30 +1,34 @@
 "use strict";
 
-/* global Entities, Script, Tablet, MyAvatar, Quat, Vec3, Messages */
+/* global Entities, Script, Tablet, MyAvatar, Vec3, Messages */
 
 (function() { // BEGIN LOCAL_SCOPE
     Script.include("/~/system/libraries/utils.js");
     // Script.include("/~/system/libraries/Xform.js");
 
     var BUGGY_UI_URL = Script.resolvePath("buggy.html");
-    var DEG_TO_RAD = Math.PI / 180.0;
+    // var DEG_TO_RAD = Math.PI / 180.0;
+    // var RAD_TO_DEG = 180.0 / Math.PI;
     var DEFAULT_BUGGY_SIZE = { x: 2, y: 0.25, z: 2.8 };
 
     var lifetime = 7200;
     var speed = 0.0;
     var impulse = 4.0;
 
-    var carBodyID = null;
-    var wheel0ID = null;
-    var wheel1ID = null;
-    var wheel2ID = null;
-    var wheel3ID = null;
-    var steeringLeverID = null;
-    var wheel0Constraint = null;
-    var wheel1Constraint = null;
-    var wheel2Constraint = null;
-    var wheel3Constraint = null;
-    var steeringLeverConstraint = null;
+    var carBodyID;
+    var wheel0ID;
+    var wheel1ID;
+    var wheel2ID;
+    var wheel3ID;
+    var steeringLeverID;
+    var wheel0Constraint;
+    var wheel1Constraint;
+    var wheel2Constraint;
+    var wheel3Constraint;
+    var steeringLeverConstraint;
+
+    var avatarLocalPosition;
+    var avatarLocalRotation;
 
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     var button = tablet.addButton({
@@ -44,16 +48,26 @@
             y: params['buggy-height'],
             z: params['buggy-length']
         };
+
         var wheelRadius = 0.3;
-        var wheel0Offset = { x: bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: bodyDimensions.z / 2 };
-        var wheel1Offset = { x: -bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: bodyDimensions.z / 2 };
-        var wheel2Offset = { x: bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: -bodyDimensions.z / 2 };
-        var wheel3Offset = { x: -bodyDimensions.x / 2, y: bodyDimensions.y / -2 - wheelRadius - 0.01, z: -bodyDimensions.z / 2 };
+        var wheelGap = 0.03;
+        var wheel0Offset = { x: bodyDimensions.x / 2,
+                             y: bodyDimensions.y / -2 - wheelRadius - wheelGap,
+                             z: bodyDimensions.z / 2 };
+        var wheel1Offset = { x: -bodyDimensions.x / 2,
+                             y: bodyDimensions.y / -2 - wheelRadius - wheelGap,
+                             z: bodyDimensions.z / 2 };
+        var wheel2Offset = { x: bodyDimensions.x / 2,
+                             y: bodyDimensions.y / -2 - wheelRadius - wheelGap,
+                             z: -bodyDimensions.z / 2 };
+        var wheel3Offset = { x: -bodyDimensions.x / 2,
+                             y: bodyDimensions.y / -2 - wheelRadius - wheelGap,
+                             z: -bodyDimensions.z / 2 };
 
         var steeringLeverLength = 1.3;
         var steeringLeverOffset = { x: 0,
                                     y: steeringLeverLength / 2.0 + bodyDimensions.y / 2.0 + 0.1,
-                                    z: 0.1 };
+                                    z: bodyDimensions.z / 4.0 };
 
         carBodyID = Entities.addEntity({
             name: "hinge test car body",
@@ -140,7 +154,7 @@
             axis: { x: 1, y: 0, z: 0 },
             otherEntityID: carBodyID,
             otherPivot: wheel0Offset,
-            otherAxis: { x: 1, y: 0, z: 0 },
+            otherAxis: { x: -1, y: 0, z: 0 },
             tag: "wheel 0"
         });
         wheel1Constraint = Entities.addAction("hinge", wheel1ID, {
@@ -148,15 +162,34 @@
             axis: { x: 1, y: 0, z: 0 },
             otherEntityID: carBodyID,
             otherPivot: wheel1Offset,
-            otherAxis: { x: 1, y: 0, z: 0 },
+            otherAxis: { x: -1, y: 0, z: 0 },
             tag: "wheel 1"
         });
+
+        // wheel0Constraint = Entities.addAction("hinge", carBodyID, {
+        //     pivot: wheel0Offset,
+        //     axis: { x: 1, y: 0, z: 0 },
+        //     otherEntityID: wheel0ID,
+        //     otherPivot: { x: 0, y: 0, z: 0 },
+        //     otherAxis: { x: 1, y: 0, z: 0 },
+        //     tag: "wheel 0"
+        // });
+        // wheel1Constraint = Entities.addAction("hinge", carBodyID, {
+        //     pivot: wheel1Offset,
+        //     axis: { x: 1, y: 0, z: 0 },
+        //     otherEntityID: wheel1ID,
+        //     otherPivot: { x: 0, y: 0, z: 0 },
+        //     otherAxis: { x: 1, y: 0, z: 0 },
+        //     tag: "wheel 1"
+        // });
+
+
         wheel2Constraint = Entities.addAction("hinge", wheel2ID, {
             pivot: { x: 0, y: 0, z: 0 },
             axis: { x: 1, y: 0, z: 0 },
             otherEntityID: carBodyID,
             otherPivot: wheel2Offset,
-            otherAxis: { x: 1, y: 0, z: 0 },
+            otherAxis: { x: -1, y: 0, z: 0 },
             tag: "wheel 2"
         });
         wheel3Constraint = Entities.addAction("hinge", wheel3ID, {
@@ -164,7 +197,7 @@
             axis: { x: 1, y: 0, z: 0 },
             otherEntityID: carBodyID,
             otherPivot: wheel3Offset,
-            otherAxis: { x: 1, y: 0, z: 0 },
+            otherAxis: { x: -1, y: 0, z: 0 },
             tag: "wheel 3"
         });
         steeringLeverConstraint = Entities.addAction("hinge", steeringLeverID, {
@@ -308,28 +341,31 @@
 
     Messages.subscribe('buggy');
     Messages.messageReceived.connect(function(channel, message, sender) {
-        // print("got message: " + message);
         if (sender === MyAvatar.sessionUUID) {
             if (channel === 'buggy') {
                 var data = JSON.parse(message);
-                var speed = data.speed;
-                var direction = data.direction; // left is about -2, right is about 2
-                var directionQ = Quat.fromVec3Radians({ x: 0, y: direction, z: 0 });
-                var axis = Vec3.multiplyQbyV(directionQ, { x: 1, y: 0, z: 0 });
-                // print("direction = " + direction);
-                // Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
-                // Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
 
-                Entities.updateAction(wheel0ID, wheel0Constraint, {
-                    motorVelocity: speed,
-                    maxImpulse: impulse,
-                    axis: axis
-                });
-                Entities.updateAction(wheel1ID, wheel1Constraint, {
-                    motorVelocity: speed,
-                    maxImpulse: impulse,
-                    axis: axis
-                });
+                if (data.start) {
+                    avatarLocalPosition = MyAvatar.localPosition;
+                    avatarLocalRotation = MyAvatar.localOrientation;
+                } else if (data.stop) {
+                    avatarLocalPosition = null;
+                    avatarLocalRotation = null;
+                } else if (avatarLocalPosition && avatarLocalRotation) {
+                    // MyAvatar.localPosition = avatarLocalPosition;
+                    // MyAvatar.localOrientation = avatarLocalRotation;
+                }
+
+                var speed = data.speed;
+                var direction = data.direction * -2.0; // radians
+
+                Entities.updateAction(wheel0ID, wheel0Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                Entities.updateAction(wheel1ID, wheel1Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                Entities.updateAction(wheel2ID, wheel2Constraint, { motorVelocity: speed, maxImpulse: impulse });
+                Entities.updateAction(wheel3ID, wheel3Constraint, { motorVelocity: speed, maxImpulse: impulse });
+
+                Entities.editEntity(carBodyID, { angularVelocity: { x: 0, y: direction, z: 0} });
+
             }
         }
     });

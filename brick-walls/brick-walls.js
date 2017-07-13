@@ -906,7 +906,7 @@
         // for toolbar mode: change button to active when window is first openend, false otherwise.
         button.editProperties({isActive: shouldActivateButton});
         shouldActivateButton = false;
-        onBricksScreen = false;
+        onBricksScreen = shouldActivateButton;
     }
 
     function cleanup() {

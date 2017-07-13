@@ -23,7 +23,7 @@ var aetherID = findEntityIDByName("voxel paint aether");
 Entities.addEntity({
     name: "terrain model",
     type: "Model",
-    modelURL: "http://headache.hungry.com/~seth/hifi/voronoi-terrain-1/terrain-sans-caves.obj",
+    modelURL: "http://headache.hungry.com/~seth/hifi/voronoi-terrain-2/terrain-sans-caves.obj",
     localPosition: { x: 0, y: 0, z: 0 },
     localRotation: { x: 0, y: 0, z: 0, w: 1 },
     dimensions: { x: 1024 / 64, y: 322.515 / 64, z: 1024 / 64 },

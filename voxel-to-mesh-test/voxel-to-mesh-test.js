@@ -15,9 +15,9 @@
     function retryingVoxelsToMesh(entityID, callback) {
         // if the polyvox mesh isn't yet computed, Entities.voxelsToMesh will start the process and call-back
         // with success set to false.
-        Entities.voxelsToMesh(entityID, function(mesh, success) {
+        Entities.getMeshes(entityID, function(meshes, success) {
             if (success) {
-                callback(mesh, true);
+                callback(meshes, true);
             } else {
                 Script.setTimeout(function() {
                     retryingVoxelsToMesh(entityID, callback);
@@ -66,8 +66,10 @@
         Entities.setVoxelSphere(voxelID0, position, 0.5, 0);
         Entities.setVoxelSphere(voxelID1, position, 1, 255);
 
-        retryingVoxelsToMesh(voxelID0, function(mesh0) {
-            retryingVoxelsToMesh(voxelID1, function(mesh1) {
+        retryingVoxelsToMesh(voxelID0, function(meshes0) {
+            retryingVoxelsToMesh(voxelID1, function(meshes1) {
+                var mesh0 = meshes0[0];
+                var mesh1 = meshes1[0];
                 var mesh0T = Model.transformMesh(Entities.getEntityTransform(voxelID0), mesh0);
                 var mesh1T = Model.transformMesh(Entities.getEntityTransform(voxelID1), mesh1);
 

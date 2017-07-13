@@ -33,7 +33,10 @@
                 if (_this.baton) {
                     _this.baton.claim(
                         function () { // onGrant
-                            Entities.editEntity(_this.boatID, {velocity: newVelocity});
+                            Entities.editEntity(_this.boatID, {
+                                velocity: newVelocity,
+                                localizedSimulation: true
+                            });
                             _this.baton.release();
                         },
                         null, // onRelease
@@ -44,7 +47,7 @@
                     );
                 } else {
                     // baton isn't (yet?) working.
-                    Entities.editEntity(_this.boatID, {velocity: newVelocity});
+                    Entities.editEntity(_this.boatID, { velocity: newVelocity, localizedSimulation: true });
                     _this.baton = acBaton({ batonName: _this.batonName, timeScale: 15000 });
                 }
             }

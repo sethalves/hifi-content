@@ -13,6 +13,7 @@ all:
 	(cd picture-u && make export)
 	(cd picture-zh && make export)
 	(cd picture-zi && make export)
+	(cd picture-zj && make export)
 	rsync -avP export/ headache.hungry.com:public_html/hifi/quinn-gallery/
 
 clean:
@@ -27,4 +28,5 @@ clean:
 	(cd picture-u && make clean)
 	(cd picture-zh && make clean)
 	(cd picture-zi && make clean)
+	(cd picture-zj && make clean)
 	rm -rf export/

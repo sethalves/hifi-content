@@ -2,7 +2,7 @@
 #
 #
 
-VHACD=~/src/hifi-master/build/tools/vhacd-util/vhacd-util
+VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 N=-n
 
 %.obj: %.stl

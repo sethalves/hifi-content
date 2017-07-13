@@ -5,8 +5,8 @@
 #
 #
 
-WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
-# WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 ATP_GET=/home/seth/src/hifi/build/tools/atp-get/atp-get
 VHACD=/home/seth/src/hifi/build/tools/vhacd-util/vhacd-util
 
@@ -22,7 +22,7 @@ OUTPUT_HEIGHT=1024
 PAINT_SAVE_N=6085
 
 
-all: terrain-lines.png terrain.scad terrain-textured.obj # terrain-sans-caves.obj
+all: terrain-lines.png terrain.scad terrain-textured.obj terrain-hull.obj # terrain-sans-caves.obj
 
 voronoi-terrain-chicken: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
@@ -107,13 +107,15 @@ terrain-lines.png: terrain-lines.pnm
 
 
 terrain-hull.obj: terrain-textured.obj
-	$(VHACD) -f -i $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) --bullet-hull -c $^ > $@
+
+#	$(VHACD) -f -i $^ -o $@
 
 
-upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg # terrain-sans-caves.obj
+upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj # terrain-sans-caves.obj
 	mkdir -p voronoi-terrain
 	cp $^ voronoi-terrain/
-	rsync --delete -avP voronoi-terrain/ headache.hungry.com:public_html/hifi/voronoi-terrain-1/
+	rsync --delete -avP voronoi-terrain/ headache.hungry.com:public_html/hifi/voronoi-terrain-2/
 
 
 clean:
