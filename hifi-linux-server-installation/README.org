@@ -5,9 +5,9 @@
 
 Sign up with https://www.digitalocean.com/
 
-Upload an ssh key.
+[[https://www.digitalocean.com/community/tutorials/how-to-use-ssh-keys-with-digitalocean-droplets][Upload an ssh key]].
 
-Create a "droplet".  "Ubuntu 17.04 x64, 2 GB Memory / 40 GB Disk"
+Create a [[https://www.digitalocean.com/community/tutorials/how-to-create-your-first-digitalocean-droplet-virtual-server][droplet]].  "Ubuntu 17.04 x64, 2 GB Memory / 40 GB Disk"
 works well.  The next size down can also work, though it will become
 overloaded if a few people visit the domain at once.
 
@@ -27,6 +27,9 @@ chown -R hifi:hifi ~hifi/.ssh
 usermod -aG sudo hifi
 exit
 #+END_SRC
+
+Log into the new host as the non-root user.  Install the prerequisites
+for building High Fidelity's servers.
 
 #+BEGIN_SRC
 ssh hifi@x.x.x.x
@@ -84,7 +87,7 @@ WantedBy=assignment-clients.target
 EOF
 #+END_SRC
 
-* Run the servers.
+* Run the servers
 
 #+BEGIN_SRC
 systemctl start domain-server
