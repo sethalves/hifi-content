@@ -101,6 +101,8 @@ systemctl start assignment-client
 Visit the domain-server page: http://x.x.x.x:40100/ and add a password
 (don't use a password that's in use elsewhere).
 
+See [[https://docs.highfidelity.com/create-and-explore/start-working-in-your-sandbox/server-settings-for-your-domain][domain-server settings documentation]].
+
 * Building on Older Ubuntu
 
 The only reason for Ubuntu 17 is to get acceptable Qt packages.  Older
@@ -125,3 +127,14 @@ export QT_CMAKE_PREFIX_PATH=/home/hifi/Qt/5.9/gcc_64/lib/cmake/
 you'll need to adjust the path to match the exact version of Qt you
 install.  If this works, cmake will configure the build to use the Qt
 libraries from ~/Qt rather than looking for system libraries.
+* Domain Content
+
+Built this way, the entity data will be here:
+
+#+BEGIN_SRC
+/home/hifi/.local/share/High Fidelity - dev/assignment-client/entities/models.json.gz
+#+END_SRC
+
+It would make sense to set up a recurring backup of this directory.
+
+You may also want to give this server a [[https://docs.highfidelity.com/create-and-explore/start-working-in-your-sandbox/place-names][place name]].
