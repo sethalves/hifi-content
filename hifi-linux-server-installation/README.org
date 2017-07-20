@@ -105,7 +105,7 @@ Visit the domain-server page: http://x.x.x.x:40100/ and add a password
 
 The only reason for Ubuntu 17 is to get acceptable Qt packages.  Older
 Ubuntu works fine if you can run Qt's installer.  It's possible to run
-[[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]] on a local Linux machine and install to ~\~/Qt~, and
+[[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]] on a local Linux machine and install to ~/Qt, and
 then
 
 #+BEGIN_SRC
@@ -124,4 +124,4 @@ export QT_CMAKE_PREFIX_PATH=/home/hifi/Qt/5.9/gcc_64/lib/cmake/
 
 you'll need to adjust the path to match the exact version of Qt you
 install.  If this works, cmake will configure the build to use the Qt
-libraries from ~\~Qt~ rather than looking for system libraries.
+libraries from ~/Qt rather than looking for system libraries.
