@@ -39,7 +39,7 @@ sudo apt-get install build-essential libssl-dev cmake
 sudo apt-get install qt*5-dev libqt5quick5 libqt5websockets5-dev
 #+END_SRC
 
-* Checkout High Fidelity's source and build.
+* Checkout High Fidelity's source and build
 
 #+BEGIN_SRC
 git clone https://github.com/highfidelity/hifi.git
@@ -50,7 +50,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DSERVER_ONLY=TRUE ..
 make -j2
 #+END_SRC
 
-* Set up systemd files.
+* Set up systemd files
 
 #+BEGIN_SRC
 sudo su
