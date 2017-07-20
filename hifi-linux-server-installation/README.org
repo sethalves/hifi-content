@@ -14,7 +14,7 @@ overloaded if a few people visit the domain at once.
 Visit digitalocean's [[https://cloud.digitalocean.com/droplets][droplets]] page and discover the ip address of
 your new host.  Whenever you see ~x.x.x.x~ below, use the ip address.
 
-* Create a non-root user
+* Create a Non-root User
 
 Log into the new host.  Make a non-root account and copy root's ssh
 public keys into it.  Give the new account sudo rights with [[https://www.digitalocean.com/community/tutorials/how-to-create-a-sudo-user-on-ubuntu-quickstart][usermod]].
@@ -28,6 +28,8 @@ usermod -aG sudo hifi
 exit
 #+END_SRC
 
+* Install Build Requirements
+
 Log into the new host as the non-root user.  Install the prerequisites
 for building High Fidelity's servers.
 
@@ -39,7 +41,7 @@ sudo apt-get install build-essential libssl-dev cmake
 sudo apt-get install qt*5-dev libqt5quick5 libqt5websockets5-dev
 #+END_SRC
 
-* Checkout High Fidelity's source and build
+* Checkout High Fidelity's Source and Build
 
 #+BEGIN_SRC
 git clone https://github.com/highfidelity/hifi.git
@@ -50,7 +52,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DSERVER_ONLY=TRUE ..
 make -j2
 #+END_SRC
 
-* Set up systemd files
+* Set up Systemd Files
 
 #+BEGIN_SRC
 sudo su
@@ -87,14 +89,32 @@ WantedBy=assignment-clients.target
 EOF
 #+END_SRC
 
-* Run the servers
+* Run the Servers
 
 #+BEGIN_SRC
 systemctl start domain-server
 systemctl start assignment-client
 #+END_SRC
 
-* Adjust server settings
+* Adjust Server Settings
 
 Visit the domain-server page: http://x.x.x.x:40100/ and add a password (don't use a password that's
 in use elsewhere).
+
+* Building on Older Ubuntu
+
+The only reason for Ubuntu 17 is to get acceptable Qt packages.  Older Ubuntu works fine
+if you can run Qt's installer.  It's possible to run [[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]] on a local Linux machine
+and install to ~\~/Qt~, and then
+
+#+BEGIN_SRC
+rsync -avP ~/Qt/ hifi@x.x.x.x:Qt/
+#+END_SRC
+
+Before running cmake, do
+
+#+BEGIN_SRC
+export QT_CMAKE_PREFIX_PATH=/home/hifi/Qt/5.9/gcc_64/lib/cmake/
+#+END_SRC
+
+you'll need to adjust the path to match the exact version of Qt you install.
