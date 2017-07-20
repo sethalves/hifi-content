@@ -104,8 +104,8 @@ Visit the domain-server page: http://x.x.x.x:40100/ and add a password
 * Building on Older Ubuntu
 
 The only reason for Ubuntu 17 is to get acceptable Qt packages.  Older
-Ubuntu works fine if you can run Qt's installer.  It's possible to run
-[[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]] on a local Linux machine and install to ~/Qt, and
+Ubuntu works fine if you can run [[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]].  It's possible to run
+Qt's installer on a local Linux machine and install to ~/Qt, and
 then
 
 #+BEGIN_SRC
