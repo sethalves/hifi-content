@@ -11,10 +11,13 @@ Create a "droplet".  "Ubuntu 17.04 x64, 2 GB Memory / 40 GB Disk"
 works well.  The next size down can also work, though it will become
 overloaded if a few people visit the domain at once.
 
-Log into the new host.  Make a non-root account and copy root's ssh
-public keys into it.  Give the new account sudo rights with [[https://www.digitalocean.com/community/tutorials/how-to-create-a-sudo-user-on-ubuntu-quickstart][usermod]].
+Visit digitalocean's [[https://cloud.digitalocean.com/droplets][droplets]] page and discover the ip address of
+your new host.  Whenever you see ~x.x.x.x~ below, use the ip address.
 
 * Create a non-root user
+
+Log into the new host.  Make a non-root account and copy root's ssh
+public keys into it.  Give the new account sudo rights with [[https://www.digitalocean.com/community/tutorials/how-to-create-a-sudo-user-on-ubuntu-quickstart][usermod]].
 
 #+BEGIN_SRC
 ssh root@x.x.x.x
@@ -59,8 +62,7 @@ After=network.target
 [Service]
 Restart=on-failure
 WorkingDirectory=/home/hifi/hifi/build/domain-server
-ExecStartPre=/bin/bash -c 'if /usr/bin/pgrep -l domain-server; then /usr/bin/pkill -SIGKILL -f /etc/hifi/server/active/domain-server; fi'
-ExecStart=/bin/bash -c 'ulimit -c unlimited; /home/hifi/hifi/build/domain-server/domain-server 2>&1 >>  /var/log/hifi/domain-server.log || echo $? > /tmp/domain-server.exit'
+ExecStart=/bin/bash -c 'ulimit -c unlimited; /home/hifi/hifi/build/domain-server/domain-server 2>&1 >>  /var/log/hifi/domain-server.log'
 [Install]
 WantedBy=multi-user.target
 EOF
