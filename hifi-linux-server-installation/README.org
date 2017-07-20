@@ -98,18 +98,23 @@ systemctl start assignment-client
 
 * Adjust Server Settings
 
-Visit the domain-server page: http://x.x.x.x:40100/ and add a password (don't use a password that's
-in use elsewhere).
+Visit the domain-server page: http://x.x.x.x:40100/ and add a password
+(don't use a password that's in use elsewhere).
 
 * Building on Older Ubuntu
 
-The only reason for Ubuntu 17 is to get acceptable Qt packages.  Older Ubuntu works fine
-if you can run Qt's installer.  It's possible to run [[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]] on a local Linux machine
-and install to ~\~/Qt~, and then
+The only reason for Ubuntu 17 is to get acceptable Qt packages.  Older
+Ubuntu works fine if you can run Qt's installer.  It's possible to run
+[[http://download.qt.io/official_releases/qt/5.9/][Qt's installer]] on a local Linux machine and install to ~\~/Qt~, and
+then
 
 #+BEGIN_SRC
 rsync -avP ~/Qt/ hifi@x.x.x.x:Qt/
 #+END_SRC
+
+Depending on your net connection, you might also be able to just run
+the installer from the cloud host and have it display on your local X
+server.
 
 Before running cmake, do
 
@@ -117,4 +122,6 @@ Before running cmake, do
 export QT_CMAKE_PREFIX_PATH=/home/hifi/Qt/5.9/gcc_64/lib/cmake/
 #+END_SRC
 
-you'll need to adjust the path to match the exact version of Qt you install.
+you'll need to adjust the path to match the exact version of Qt you
+install.  If this works, cmake will configure the build to use the Qt
+libraries from ~\~Qt~ rather than looking for system libraries.
