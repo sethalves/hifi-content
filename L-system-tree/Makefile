@@ -2,6 +2,9 @@
 #
 #
 
+# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+
 all: L-system-tree
 
 # ---
@@ -30,16 +33,16 @@ link-libs: very-clean
 	openscad -o $@ $^
 
 %-trunk.obj: %-trunk.stl
-	wavefront-obj-tool -n -c $^ -o $@ -S trunk_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ -S trunk_mtl
 
 %-leaves.obj: %-leaves.stl
-	wavefront-obj-tool -n -c $^ -o $@ -S leaves_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ -S leaves_mtl
 
 %.obj: %.stl
-	wavefront-obj-tool -n -c $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
 
 %.obj: %-trunk.obj %-leaves.obj
-	wavefront-obj-tool -n -L L-system-trees.mtl -o $@ $^
+	$(WAVEFRONT_OBJ_TOOL) -n -L L-system-trees.mtl -o $@ $^
 
 
 # ---
@@ -88,7 +91,7 @@ tree2-hull.scad: L-system-tree Makefile
 
 
 upload: L-system-trees.mtl \
-	tree0.obj tree0-hull.obj \
+		tree0.obj tree0-hull.obj \
         tree1.obj tree1-hull.obj \
         tree2.obj tree2-hull.obj
 	scp $^ headache:public_html/hifi/
