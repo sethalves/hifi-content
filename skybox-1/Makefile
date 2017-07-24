@@ -24,7 +24,8 @@ LIBS='(foldling command-line)' '(seth obj-model)' '(seth scad-model)' '(srfi 27)
 	pnmtopng $^ > $@
 
 
-all: grass.png trees-skybox-0.png trees-skybox-1.png
+all: trees-skybox-0.png trees-skybox-1.png trees-skybox-2.png trees-skybox-3.png trees-skybox-4.png \
+	trees-skybox-5.png trees-skybox-6.png trees-skybox-7.png trees-skybox-8.png trees-skybox-9.png
 
 
 blank.pnm:
@@ -49,43 +50,60 @@ trees.pov: tree-locations.dat skybox-header.pov make-povray-input.sh
 ###
 
 
-trees00.png trees01.png trees02.png trees03.png trees04.png trees05.png \
-trees06.png trees07.png trees08.png trees09.png trees10.png trees11.png: trees.pov trees.ini
-	povray +W${WIDTH} +H${HEIGTH} trees.ini
+# trees00.png trees01.png trees02.png trees03.png trees04.png trees05.png \
+# trees06.png trees07.png trees08.png trees09.png trees10.png trees11.png: trees.pov trees.ini
+# 	povray +W${WIDTH} +H${HEIGTH} trees.ini
 
 ###
 
-trees0-row0.pnm: trees00.pnm blank.pnm
-	pnmcat -lr blank.pnm $^ blank.pnm > $@
+# trees0-row0.pnm: trees00.pnm blank.pnm
+# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
 
-trees0-row1.pnm: trees01.pnm trees02.pnm trees03.pnm trees04.pnm
-	pnmcat -lr $^ > $@
+# trees0-row1.pnm: trees01.pnm trees02.pnm trees03.pnm trees04.pnm
+# 	pnmcat -lr $^ > $@
 
-trees0-row2.pnm: trees05.pnm blank.pnm
-	pnmcat -lr blank.pnm $^ blank.pnm > $@
+# trees0-row2.pnm: trees05.pnm blank.pnm
+# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
 
-trees-skybox-0.pnm: trees0-row0.pnm trees0-row1.pnm trees0-row2.pnm
-	pnmcat -tb $^ > $@
+# trees-skybox-0.pnm: trees0-row0.pnm trees0-row1.pnm trees0-row2.pnm
+# 	pnmcat -tb $^ > $@
 
-grass.png: trees05.png
-	cp $^ $@
+# grass.png: trees05.png
+# 	cp $^ $@
+
+# ###
+
+# trees1-row0.pnm: trees06.pnm blank.pnm
+# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+# trees1-row1.pnm: trees07.pnm trees08.pnm trees09.pnm trees10.pnm
+# 	pnmcat -lr $^ > $@
+
+# trees1-row2.pnm: trees11.pnm blank.pnm
+# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+# trees-skybox-1.pnm: trees1-row0.pnm trees1-row1.pnm trees1-row2.pnm
+# 	pnmcat -tb $^ > $@
+
+# ###
+
+# trees2-row0.pnm: trees12.pnm blank.pnm
+# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+# trees2-row1.pnm: trees13.pnm trees14.pnm trees15.pnm trees16.pnm
+# 	pnmcat -lr $^ > $@
+
+# trees2-row2.pnm: trees17.pnm blank.pnm
+# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+# trees-skybox-2.pnm: trees2-row0.pnm trees2-row1.pnm trees2-row2.pnm
+# 	pnmcat -tb $^ > $@
+
 
 ###
 
-trees1-row0.pnm: trees06.pnm blank.pnm
-	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-trees1-row1.pnm: trees07.pnm trees08.pnm trees09.pnm trees10.pnm
-	pnmcat -lr $^ > $@
-
-trees1-row2.pnm: trees11.pnm blank.pnm
-	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-trees-skybox-1.pnm: trees1-row0.pnm trees1-row1.pnm trees1-row2.pnm
-	pnmcat -tb $^ > $@
-
-
-###
+trees.make:
+	./generate-makefile.scm > $@
 
 libs:
 	snow2 install $(LIBS)
@@ -103,16 +121,10 @@ clean:
 	rm -f tree-locations.dat tree-locations.png
 	rm -f trees.pov
 	rm -f *.pov-state
-	rm -f blank.pnm grass.png
-	rm -f trees00.png trees01.png trees02.png trees03.png trees04.png trees05.png
-	rm -f trees00.pnm trees01.pnm trees02.pnm trees03.pnm trees04.pnm trees05.pnm
-	rm -f trees0-row0.pnm trees0-row1.pnm trees0-row2.pnm trees-skybox-0.pnm
-	rm -f trees-skybox-0.png
-	rm -f trees06.png trees07.png trees08.png trees09.png trees10.png trees11.png
-	rm -f trees06.pnm trees07.pnm trees08.pnm trees09.pnm trees10.pnm trees11.pnm
-	rm -f trees1-row0.pnm trees1-row1.pnm trees1-row2.pnm trees-skybox-1.pnm
-	rm -f trees-skybox-1.png
+	rm -f *.png *.pnm
 
 
 very-clean: clean
-	rm -rf seth snow srfi foldling
+	rm -rf seth snow srfi foldling trees.make
+
+include trees.make

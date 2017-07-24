@@ -6,10 +6,52 @@ global_settings {
 
 #if(frame_number>=0 & frame_number<6)
 #declare camloc = <0,2,0>;
+#declare baseframe = 0;
 #end
 
 #if(frame_number>=6 & frame_number<12)
-#declare camloc = <0,7,0>;
+#declare camloc = <0,12,0>;
+#declare baseframe = 6;
+#end
+
+#if(frame_number>=12 & frame_number<18)
+#declare camloc = <0,22,0>;
+#declare baseframe = 12;
+#end
+
+#if(frame_number>=18 & frame_number<24)
+#declare camloc = <0,32,0>;
+#declare baseframe = 18;
+#end
+
+#if(frame_number>=24 & frame_number<30)
+#declare camloc = <0,42,0>;
+#declare baseframe = 24;
+#end
+
+#if(frame_number>=30 & frame_number<36)
+#declare camloc = <0,52,0>;
+#declare baseframe = 30;
+#end
+
+#if(frame_number>=36 & frame_number<42)
+#declare camloc = <0,62,0>;
+#declare baseframe = 36;
+#end
+
+#if(frame_number>=42 & frame_number<48)
+#declare camloc = <0,72,0>;
+#declare baseframe = 42;
+#end
+
+#if(frame_number>=48 & frame_number<54)
+#declare camloc = <0,82,0>;
+#declare baseframe = 48;
+#end
+
+#if(frame_number>=54 & frame_number<60)
+#declare camloc = <0,92,0>;
+#declare baseframe = 54;
 #end
 
 
@@ -21,27 +63,27 @@ camera {
 
  angle 90
 
-#if(frame_number=0)
+#if(frame_number-baseframe=0)
     look_at camloc + y
 #end
 
-#if(frame_number=1)
+#if(frame_number-baseframe=1)
     look_at camloc + -x
 #end
 
-#if(frame_number=2)
+#if(frame_number-baseframe=2)
     look_at camloc + z
 #end
 
-#if(frame_number=3)
+#if(frame_number-baseframe=3)
     look_at camloc + x
 #end
 
-#if(frame_number=4)
+#if(frame_number-baseframe=4)
     look_at camloc + -z
 #end
 
-#if(frame_number=5)
+#if(frame_number-baseframe=5)
     look_at camloc + -y
 #end
 }
