@@ -1,0 +1,16 @@
+-*- org -*-
+
+terrain location: -416 0.49 -549.9
+        dimensions: 3072 x 3072
+
+ground level y: 0.5205
+
+terrain bounds: 
+    low: (-1952 -2085)
+   high: (1120 987)
+
+tree area:
+    low: (-2976 -3109)
+   high: (2144 2011)
+
+dimensions: (5120 5120)
