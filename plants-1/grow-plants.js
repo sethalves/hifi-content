@@ -14,6 +14,10 @@
     var showOverlays = false;
     var active = false;
 
+    var plantURLs = [Script.resolvePath("plant-0.obj"),
+                     Script.resolvePath("plant-1.obj"),
+                     Script.resolvePath("plant-2.obj")];
+
     var initialPlantData = {
         age: 0.0,
         size: 0.1
@@ -271,11 +275,14 @@
         rot = Quat.fromVec3Radians({ x: 0, y: eulerRot.y, z: 0 });
 
         if (getHasRoomToGrow(NULL_UUID, pos, rot, plantSize)) {
+
+            var whichPlant = Math.floor(Math.random() * 3);
+
             var zReg = calculateZReg();
             var plantID = Entities.addEntity({
                 type: "Model",
-                name: "Plant-0",
-                modelURL: "http://headache.hungry.com/~seth/hifi/plants-1/plant-0.obj",
+                name: "Plant-" + whichPlant,
+                modelURL: plantURLs[whichPlant],
                 position: pos,
                 rotation: rot,
                 registrationPoint: { x: 0.5, y: 0, z: zReg },
@@ -383,15 +390,15 @@
                         var vertexCount = Model.getVertexCount(transedMesh);
                         for (var i = 0; i < vertexCount; i++) {
                             var vertex = Model.getVertex(transedMesh, i);
-                            Entities.addEntity({
-                                name: "debug vertex point",
-                                color: { blue: 30, green: 42, red: 40 },
-                                dimensions: { x: 0.06, y: 0.06, z: 0.06 },
-                                position: vertex,
-                                type: "Sphere",
-                                lifetime: 60,
-                                dynamic: false
-                            });
+                            // Entities.addEntity({
+                            //     name: "debug vertex point",
+                            //     color: { blue: 30, green: 42, red: 40 },
+                            //     dimensions: { x: 0.06, y: 0.06, z: 0.06 },
+                            //     position: vertex,
+                            //     type: "Sphere",
+                            //     lifetime: 60,
+                            //     dynamic: false
+                            // });
 
                             if (bbSet) {
                                 bbLow = {
@@ -415,7 +422,7 @@
                     });
                 }
             });
-            // Entities.deleteEntity(plantProps.entityID);
+            Entities.deleteEntity(plantProps.entityID);
         });
 
         var originalsCenter = {
@@ -444,7 +451,7 @@
                     dimensions: finalDimensions,
                     position: originalsCenter,
                     name: "combined plants",
-                    lifetime: 60,
+                    // lifetime: 60,
                     dynamic: false,
                     collisionless: true
                 });
