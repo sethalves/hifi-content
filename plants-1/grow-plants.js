@@ -257,6 +257,10 @@
             // wait for the seed to land before growing it
             return;
         }
+        if (properties.position.y < 0.3) {
+            // stay out of the water
+            return;
+        }
         var plantSize = 0.1;
         var plantAge = 0;
         var pos = properties.position;
@@ -355,35 +359,75 @@
             var trans = Entities.getEntityTransform(plantProps.entityID);
             Entities.getMeshes(plantProps.entityID, function(meshes, success) {
                 if (success) {
-                    if (bbSet) {
-                        bbLow = {
-                            x: Math.min(bbLow.x, plantProps.boundingBox.brn.x),
-                            y: Math.min(bbLow.y, plantProps.boundingBox.brn.y),
-                            z: Math.min(bbLow.z, plantProps.boundingBox.brn.z)
-                        };
-                        bbHigh = {
-                            x: Math.max(bbHigh.x, plantProps.boundingBox.tfl.x),
-                            y: Math.max(bbHigh.y, plantProps.boundingBox.tfl.y),
-                            z: Math.max(bbHigh.z, plantProps.boundingBox.tfl.z)
-                        };
-                    } else {
-                        bbLow = plantProps.boundingBox.brn;
-                        bbHigh = plantProps.boundingBox.tfl;
-                        bbSet = true;
-                    }
+                    // if (bbSet) {
+                    //     bbLow = {
+                    //         x: Math.min(bbLow.x, plantProps.boundingBox.brn.x),
+                    //         y: Math.min(bbLow.y, plantProps.boundingBox.brn.y),
+                    //         z: Math.min(bbLow.z, plantProps.boundingBox.brn.z)
+                    //     };
+                    //     bbHigh = {
+                    //         x: Math.max(bbHigh.x, plantProps.boundingBox.tfl.x),
+                    //         y: Math.max(bbHigh.y, plantProps.boundingBox.tfl.y),
+                    //         z: Math.max(bbHigh.z, plantProps.boundingBox.tfl.z)
+                    //     };
+                    // } else {
+                    //     bbLow = plantProps.boundingBox.brn;
+                    //     bbHigh = plantProps.boundingBox.tfl;
+                    //     bbSet = true;
+                    // }
 
                     meshes.forEach(function(mesh) {
-                        resultMeshes.push(Model.transformMesh(trans, mesh));
+                        var transedMesh = Model.transformMesh(trans, mesh);
+                        resultMeshes.push(transedMesh);
+
+                        var vertexCount = Model.getVertexCount(transedMesh);
+                        for (var i = 0; i < vertexCount; i++) {
+                            var vertex = Model.getVertex(transedMesh, i);
+                            Entities.addEntity({
+                                name: "debug vertex point",
+                                color: { blue: 30, green: 42, red: 40 },
+                                dimensions: { x: 0.06, y: 0.06, z: 0.06 },
+                                position: vertex,
+                                type: "Sphere",
+                                lifetime: 60,
+                                dynamic: false
+                            });
+
+                            if (bbSet) {
+                                bbLow = {
+                                    x: Math.min(bbLow.x, vertex.x),
+                                    y: Math.min(bbLow.y, vertex.y),
+                                    z: Math.min(bbLow.z, vertex.z)
+                                };
+                                bbHigh = {
+                                    x: Math.max(bbHigh.x, vertex.x),
+                                    y: Math.max(bbHigh.y, vertex.y),
+                                    z: Math.max(bbHigh.z, vertex.z)
+                                };
+                            } else {
+                                bbLow = vertex;
+                                bbHigh = vertex;
+                                bbSet = true;
+                            }
+
+
+                        }
                     });
                 }
             });
-            Entities.deleteEntity(plantProps.entityID);
+            // Entities.deleteEntity(plantProps.entityID);
         });
 
         var originalsCenter = {
             x: (bbLow.x + bbHigh.x) / 2,
             y: (bbLow.y + bbHigh.y) / 2,
             z: (bbLow.z + bbHigh.z) / 2
+        };
+
+        var finalDimensions = {
+            x: (bbHigh.x - bbLow.x),
+            y: (bbHigh.y - bbLow.y),
+            z: (bbHigh.z - bbLow.z)
         };
 
         var combinedMeshes = Model.appendMeshes(resultMeshes);
@@ -397,9 +441,10 @@
                 Entities.addEntity({
                     type: "Model",
                     modelURL: "atp:" + fileName,
+                    dimensions: finalDimensions,
                     position: originalsCenter,
                     name: "combined plants",
-                    // lifetime: 600,
+                    lifetime: 60,
                     dynamic: false,
                     collisionless: true
                 });
