@@ -183,17 +183,20 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (let* ((my-length (* (- base-length depth) scale))
            (my-thickness (* (/ base-width (+ depth 1.)) scale))
            (child-thickness (* (/ base-width (+ depth 2.)) scale))
-           (tip-offset (vector3-rotate (vector 0 my-length 0) rotation))
-           (tip (vector3-sum position tip-offset))
            (new-child (lambda (r) ;; r is euler radians
-                        (make-segment base-width base-length tip
-                                      (combine-rotations (euler->quaternion r)
-                                                         rotation)
-                                      scale
-                                      (substring tree-definition 1)
-                                      (+ depth 1)
-                                      skip-trunk skip-leaves
-                                      port output-type transform sphere cylinder))))
+                        (let* ((child-rotation (combine-rotations (euler->quaternion r) rotation))
+                               (child-back-up (vector3-rotate (vector 0 0.4 0) child-rotation))
+                               (tip-offset (vector3-rotate (vector 0 my-length 0) rotation))
+                               (tip (vector3-diff
+                                     (vector3-sum position tip-offset)
+                                     child-back-up)))
+                          (make-segment base-width base-length tip
+                                        child-rotation
+                                        scale
+                                        (substring tree-definition 1)
+                                        (+ depth 1)
+                                        skip-trunk skip-leaves
+                                        port output-type transform sphere cylinder)))))
 
       (cond ((not skip-trunk)
              (display
@@ -239,9 +242,8 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                )
           (new-child (quaternion->euler r0~~))
           (new-child (quaternion->euler r1~~))
-          )
+          ))
 
-        )
        ((eqv? #\x (string-ref tree-definition 0))
         (let* ((r0 (rotation-quaternion-d (vector 1 0 0) (+ 50 (* 5 depth))))
                (r1 (combine-rotations r0 (rotation-quaternion-d (vector 0 1 0) 120)))
@@ -249,6 +251,13 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
           (new-child (quaternion->euler r0))
           (new-child (quaternion->euler r1))
           (new-child (quaternion->euler r2))))
+
+       ((eqv? #\f (string-ref tree-definition 0))
+        (let* ((r0 (rotation-quaternion-d (vector 1 0 0) (+ 50 (* 5 depth))))
+               (r1 (combine-rotations r0 (rotation-quaternion-d (vector 0 1 0) 120))))
+          (new-child (quaternion->euler r0))
+          (new-child (quaternion->euler r1))))
+
        (else
         (error "unknown tree definition character: "
                (string (string-ref tree-definition 0)))))))))
@@ -275,6 +284,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (cout "   -v --povray                   output in pov-ray format\n")
     (cout "   -t --tree ixyo                Define the shape of the tree\n")
     (cout "   -d --delete filename          subtract out scad file from output\n")
+    (cout "   --fn n                        Set OpenSCAD's $fn variable\n")
     (cout "      i = no branching\n")
     (cout "      y = one becomes 2\n")
     (cout "      x = one becomes 3\n")
@@ -291,6 +301,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   (-t tree-definition)
                   ((-o --output) output-file)
                   ((-d --delete) subtract-file)
+                  (--fn fn)
                   ((--skip-trunk --skip-leaves -v --povray --pov-ray))
                   (-?) (-h))))
          (pos zero-vector)
@@ -322,6 +333,8 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                             (string->number (list-ref arg 3)))))
          ((-s --scale)
           (set! scale (string->number (cadr arg))))
+         ((--fn)
+          (set! fn (string->number (cadr arg))))
          ((--skip-trunk)
           (set! skip-trunk #t))
          ((--skip-leaves)

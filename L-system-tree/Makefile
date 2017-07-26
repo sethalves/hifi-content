@@ -4,7 +4,9 @@
 
 # WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+L_SYSTEM_TREE=./L-system-tree
 
+OPENSCAD_FN=16
 COMBINE_DISTANCE=0.2
 
 
@@ -16,7 +18,8 @@ COMBINE_DISTANCE=0.2
 
 TARGETS=tree0.obj.gz tree0-hull.obj.gz \
 		tree1.obj.gz tree1-hull.obj.gz \
-		tree2.obj.gz tree2-hull.obj.gz
+		tree2.obj.gz tree2-hull.obj.gz \
+		tree3.obj.gz tree3-hull.obj.gz
 
 
 # TARGETS=tree0.obj tree0-hull.obj \
@@ -42,68 +45,13 @@ libs:
 
 link-libs: very-clean
 	snow2 -s \
-	      -p 'http://foldling.org/snow2/index.scm' \
-	      -p '../../snow2-packages/seth/' \
-              install '(seth obj-model)' '(foldling command-line)'
+	-p 'http://foldling.org/snow2/index.scm' \
+	-p '../../snow2-packages/seth/' \
+	install '(seth obj-model)' '(foldling command-line)'
 
 
-%.stl: %.scad
-	openscad -o $@ $^
 
-%-trunk.obj: %-trunk.stl
-	$(WAVEFRONT_OBJ_TOOL) -n -C $(COMBINE_DISTANCE) -c $^ -o $@ --color 0.65 0.16 0.16
-
-%-leaves.obj: %-leaves.stl
-	$(WAVEFRONT_OBJ_TOOL) -n -C $(COMBINE_DISTANCE) -c $^ -o $@ --color 0 1 0
-
-%.obj: %.stl
-	$(WAVEFRONT_OBJ_TOOL) -n -C $(COMBINE_DISTANCE) -c $^ -o $@
-
-%.obj: %-trunk.obj %-leaves.obj
-	$(WAVEFRONT_OBJ_TOOL) -n -C $(COMBINE_DISTANCE) -o $@ $^
-
-
-# ---
-
-TREE0_W=5
-TREE0_SHAPE=iixxyiO
-
-tree0-leaves.scad: L-system-tree Makefile
-	./L-system-tree -w $(TREE0_W) -t $(TREE0_SHAPE) --skip-trunk -o $@
-
-tree0-trunk.scad: L-system-tree Makefile tree0-leaves.scad
-	./L-system-tree -w $(TREE0_W) -t $(TREE0_SHAPE) --skip-leaves -o $@ -d tree0-leaves.scad
-
-tree0-hull.scad: L-system-tree Makefile
-	./L-system-tree -w $(TREE0_W) -t $(TREE0_SHAPE) --hull -o tree0-hull.scad
-
-# ---
-
-TREE1_W=3
-TREE1_SHAPE=iixyyyiO
-
-tree1-leaves.scad: L-system-tree Makefile
-	./L-system-tree -w $(TREE1_W) -t $(TREE1_SHAPE) --skip-trunk -o $@
-
-tree1-trunk.scad: L-system-tree Makefile tree1-leaves.scad
-	./L-system-tree -w $(TREE1_W) -t $(TREE1_SHAPE) --skip-leaves -o $@ -d tree1-leaves.scad
-
-tree1-hull.scad: L-system-tree Makefile
-	./L-system-tree -w $(TREE1_W) -t $(TREE1_SHAPE) --hull -o tree1-hull.scad
-
-# ---
-
-TREE2_W=4
-TREE2_SHAPE=iixyxxiO
-
-tree2-leaves.scad: L-system-tree Makefile
-	./L-system-tree -w $(TREE2_W) -t $(TREE2_SHAPE) --skip-trunk -o $@
-
-tree2-trunk.scad: L-system-tree Makefile tree2-leaves.scad
-	./L-system-tree -w $(TREE2_W) -t $(TREE2_SHAPE) --skip-leaves -o $@ -d tree2-leaves.scad
-
-tree2-hull.scad: L-system-tree Makefile
-	./L-system-tree -w $(TREE2_W) -t $(TREE2_SHAPE) --hull -o tree2-hull.scad
+include L-system-tree.make
 
 # ---
 
@@ -128,6 +76,10 @@ clean:
 	rm -f tree2-leaves.scad tree2-leaves.stl tree2-leaves.obj.tmp.obj tree2-leaves.obj
 	rm -f tree2-trunk.scad tree2-trunk.stl tree2-trunk.obj.tmp.obj tree2-trunk.obj
 	rm -f tree2-hull.scad tree2-hull.stl tree2-hull.obj.tmp.obj tree2-hull.obj tree2-hull.obj.gz
+	rm -f tree3.obj tree3.obj.gz
+	rm -f tree3-leaves.scad tree3-leaves.stl tree3-leaves.obj.tmp.obj tree3-leaves.obj
+	rm -f tree3-trunk.scad tree3-trunk.stl tree3-trunk.obj.tmp.obj tree3-trunk.obj
+	rm -f tree3-hull.scad tree3-hull.stl tree3-hull.obj.tmp.obj tree3-hull.obj tree3-hull.obj.gz
 	rm -rf trees
 
 
