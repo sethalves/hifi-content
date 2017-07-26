@@ -170,8 +170,9 @@ upload: combined-trees-0-0.obj.gz combined-trees-0-1.obj.gz combined-trees-0-2.o
 
 
 clean:
+	rm -f *~
 	rm -rf lines points terrain.scad
-	rm -rf voronoi-terrain
+	rm -rf voronoi-terrain-3
 	rm -rf terrain-texture.png
 	rm -rf terrain-texture.ppm
 	rm -rf terrain-textured.obj
@@ -184,7 +185,34 @@ clean:
 	rm -f terrain-sans-caves.obj
 	rm -f terrain-sans-caves.stl
 	rm -f terrain.obj
+	rm -f tree-locations.png
 	rm -f terrain-hull.obj terrain-reduced.obj terrain-with-caves-reduced.obj
+	rm -f combined-trees-0-0.obj combined-trees-0-1.obj combined-trees-0-2.obj \
+		combined-trees-0-3.obj combined-trees-0-4.obj combined-trees-0-5.obj \
+		combined-trees-1-0.obj combined-trees-1-1.obj combined-trees-1-2.obj \
+		combined-trees-1-3.obj combined-trees-1-4.obj combined-trees-1-5.obj \
+		combined-trees-2-0.obj combined-trees-2-1.obj combined-trees-2-2.obj \
+		combined-trees-2-3.obj combined-trees-2-4.obj combined-trees-2-5.obj \
+		combined-trees-3-0.obj combined-trees-3-1.obj combined-trees-3-2.obj \
+		combined-trees-3-3.obj combined-trees-3-4.obj combined-trees-3-5.obj \
+		combined-trees-4-0.obj combined-trees-4-1.obj combined-trees-4-2.obj \
+		combined-trees-4-3.obj combined-trees-4-4.obj combined-trees-4-5.obj \
+		combined-trees-5-0.obj combined-trees-5-1.obj combined-trees-5-2.obj \
+		combined-trees-5-3.obj combined-trees-5-4.obj combined-trees-5-5.obj \
+		tree-locations.dat
+	rm -f combined-trees-0-0.obj.gz combined-trees-0-1.obj.gz combined-trees-0-2.obj.gz \
+		combined-trees-0-3.obj.gz combined-trees-0-4.obj.gz combined-trees-0-5.obj.gz \
+		combined-trees-1-0.obj.gz combined-trees-1-1.obj.gz combined-trees-1-2.obj.gz \
+		combined-trees-1-3.obj.gz combined-trees-1-4.obj.gz combined-trees-1-5.obj.gz \
+		combined-trees-2-0.obj.gz combined-trees-2-1.obj.gz combined-trees-2-2.obj.gz \
+		combined-trees-2-3.obj.gz combined-trees-2-4.obj.gz combined-trees-2-5.obj.gz \
+		combined-trees-3-0.obj.gz combined-trees-3-1.obj.gz combined-trees-3-2.obj.gz \
+		combined-trees-3-3.obj.gz combined-trees-3-4.obj.gz combined-trees-3-5.obj.gz \
+		combined-trees-4-0.obj.gz combined-trees-4-1.obj.gz combined-trees-4-2.obj.gz \
+		combined-trees-4-3.obj.gz combined-trees-4-4.obj.gz combined-trees-4-5.obj.gz \
+		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
+		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz \
+		rez-combined-trees.js
 
 
 very-clean: clean

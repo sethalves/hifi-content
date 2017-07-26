@@ -28,7 +28,7 @@
 
     (define (main-program)
       (cerr "loading...\n")
-      (let* ((tree-count 400)
+      (let* ((tree-count 800)
              (random-i 12)
              (random-j 3)
              (random-source (make-random-source))
@@ -164,16 +164,14 @@
                        (output-port (open-output-file output-filename))
                        (output-model (hash-table-ref slices-hash (slice-indices->slice-key x-slice z-slice)))
                        (output-model-bb (model-aa-box output-model))
-                       (output-model-center (aa-box-center output-model-bb))
+                       (output-model-center (if output-model-bb
+                                                (aa-box-center output-model-bb)
+                                                (vector 0 0 0)))
                        (output-model-dimensions
                         (if output-model-bb
                             (vector3-diff (aa-box-high-corner output-model-bb)
                                           (aa-box-low-corner output-model-bb))
-                            (vector 1 1 1)))
-                       ;; (slice-center (vector (+ (vector3-x (aa-box-low-corner aa-box)) (* (+ x-slice 0.5) slice-x-size))
-                       ;;                       0
-                       ;;                       (+ (vector3-z (aa-box-low-corner aa-box)) (* (+ z-slice 0.5) slice-z-size))))
-                       )
+                            (vector 1 1 1))))
                   (cerr "writing " output-filename " : "
                         (if output-model-bb output-model-center #f)
                         "\n")
