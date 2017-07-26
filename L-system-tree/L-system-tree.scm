@@ -274,6 +274,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
     (cout "   -o --output filename          File to write to\n")
     (cout "   -v --povray                   output in pov-ray format\n")
     (cout "   -t --tree ixyo                Define the shape of the tree\n")
+    (cout "   -d --delete filename          subtract out scad file from output\n")
     (cout "      i = no branching\n")
     (cout "      y = one becomes 2\n")
     (cout "      x = one becomes 3\n")
@@ -288,7 +289,8 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   ((-w --base-width) width)
                   ((-h --hull))
                   (-t tree-definition)
-                  (-o output-file)
+                  ((-o --output) output-file)
+                  ((-d --delete) subtract-file)
                   ((--skip-trunk --skip-leaves -v --povray --pov-ray))
                   (-?) (-h))))
          (pos zero-vector)
@@ -301,6 +303,7 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
          (skip-trunk #f)
          (skip-leaves #f)
          (output-file #f)
+         (subtract-file #f)
          (output-povray #f)
          (output-port (current-output-port))
          (extra-arguments '()))
@@ -331,9 +334,12 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
           (set! output-as-hull #t))
          ((-t)
           (set! tree-definition (cadr arg)))
-         ((-o)
+         ((-o --output)
           (if output-file (usage "give -o only once"))
           (set! output-file (cadr arg)))
+         ((-d --delete)
+          (if subtract-file (usage "give -d only once"))
+          (set! subtract-file (cadr arg)))
          ((--)
           (set! extra-arguments (cdr arg))
           )))
@@ -341,6 +347,12 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
 
     (if output-file
         (set! output-port (open-output-file output-file)))
+
+
+    (cond (subtract-file
+           (cout "difference() {\n"
+                 "union() {\n\n"
+                 output-port)))
 
     (make-segment base-width base-length pos
                   (euler->quaternion (degrees->radians rot))
@@ -355,6 +367,13 @@ exec csi -include-path /usr/local/share/scheme -s $0 "$@"
                   (if output-povray pov-ray-sphere scad-sphere)
                   (if output-povray pov-ray-cylinder scad-cylinder)
                   )
+
+    (cond (subtract-file
+           (cout "}\n"
+                 "include <" subtract-file ">\n"
+                 "}\n"
+                 output-port)
+           ))
     ))
 
 (main-program)
