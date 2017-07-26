@@ -1,9 +1,0 @@
-newmtl trunk_mtl
-Ka 0.65 0.16 0.16
-Kd 0.65 0.16 0.16
-Ns 10
-
-newmtl leaves_mtl
-Ka 0 1 0
-Kd 0 1 0
-Ns 10

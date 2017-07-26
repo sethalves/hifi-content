@@ -5,7 +5,23 @@
 # WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 
-all: L-system-tree
+
+.PRECIOUS: %.obj %.stl
+
+%.obj.gz: %.obj
+	cat $< | gzip -9 - > $@
+
+
+TARGETS=tree0.obj.gz tree0-hull.obj.gz \
+		tree1.obj.gz tree1-hull.obj.gz \
+		tree2.obj.gz tree2-hull.obj.gz
+
+
+# TARGETS=tree0.obj tree0-hull.obj \
+# 		tree1.obj tree1-hull.obj \
+# 		tree2.obj tree2-hull.obj
+
+all: L-system-tree $(TARGETS)
 
 # ---
 
@@ -33,16 +49,16 @@ link-libs: very-clean
 	openscad -o $@ $^
 
 %-trunk.obj: %-trunk.stl
-	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ -S trunk_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ --color 0.65 0.16 0.16
 
 %-leaves.obj: %-leaves.stl
-	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ -S leaves_mtl
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@ --color 0 1 0
 
 %.obj: %.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
 
 %.obj: %-trunk.obj %-leaves.obj
-	$(WAVEFRONT_OBJ_TOOL) -n -L L-system-trees.mtl -o $@ $^
+	$(WAVEFRONT_OBJ_TOOL) -n -o $@ $^
 
 
 # ---
@@ -90,27 +106,27 @@ tree2-hull.scad: L-system-tree Makefile
 # ---
 
 
-upload: L-system-trees.mtl \
-		tree0.obj tree0-hull.obj \
-        tree1.obj tree1-hull.obj \
-        tree2.obj tree2-hull.obj
-	scp $^ headache:public_html/hifi/
+upload: ${TARGETS}
+	mkdir -p trees
+	cp $^ trees/
+	rsync --delete -avP trees/ headache.hungry.com:public_html/hifi/trees/
 
 
 clean:
 	rm -f *~ L-system-tree
-	rm -f tree0.obj
+	rm -f tree0.obj tree0.obj.gz
 	rm -f tree0-leaves.scad tree0-leaves.stl tree0-leaves.obj.tmp.obj tree0-leaves.obj
 	rm -f tree0-trunk.scad tree0-trunk.stl tree0-trunk.obj.tmp.obj tree0-trunk.obj
-	rm -f tree0-hull.scad tree0-hull.stl tree0-hull.obj.tmp.obj tree0-hull.obj
-	rm -f tree1.obj
+	rm -f tree0-hull.scad tree0-hull.stl tree0-hull.obj.tmp.obj tree0-hull.obj tree0-hull.obj.gz
+	rm -f tree1.obj tree1.obj.gz
 	rm -f tree1-leaves.scad tree1-leaves.stl tree1-leaves.obj.tmp.obj tree1-leaves.obj
 	rm -f tree1-trunk.scad tree1-trunk.stl tree1-trunk.obj.tmp.obj tree1-trunk.obj
-	rm -f tree1-hull.scad tree1-hull.stl tree1-hull.obj.tmp.obj tree1-hull.obj
-	rm -f tree2.obj
+	rm -f tree1-hull.scad tree1-hull.stl tree1-hull.obj.tmp.obj tree1-hull.obj tree1-hull.obj.gz
+	rm -f tree2.obj tree2.obj.gz
 	rm -f tree2-leaves.scad tree2-leaves.stl tree2-leaves.obj.tmp.obj tree2-leaves.obj
 	rm -f tree2-trunk.scad tree2-trunk.stl tree2-trunk.obj.tmp.obj tree2-trunk.obj
-	rm -f tree2-hull.scad tree2-hull.stl tree2-hull.obj.tmp.obj tree2-hull.obj
+	rm -f tree2-hull.scad tree2-hull.stl tree2-hull.obj.tmp.obj tree2-hull.obj tree2-hull.obj.gz
+	rm -rf trees
 
 
 very-clean: clean
