@@ -92,3 +92,52 @@ Step 2 (create a mlx file containing the operations you want to apply)
 
 terrain-caves-reduced.obj: terrain-caves-water-tight.obj mc-edge-collapse.mlx
 	meshlabserver -i $< -o $@ -s mc-edge-collapse.mlx # -om vc vn
+* trees
+
+writing combined-trees-0-0.obj : #(-1745.813267 41.856106000000004 -1884.516252)
+writing combined-trees-0-1.obj : #(-1707.041204 41.756486 -1339.0338875)
+writing combined-trees-0-2.obj : #(-1766.818241 36.989446 -799.7955465)
+writing combined-trees-0-3.obj : #(-1686.897579 41.756486 -277.419049)
+writing combined-trees-0-4.obj : #(-1544.8983945 43.823419 169.0900155)
+writing combined-trees-0-5.obj : #(-1692.1693635000001 39.329016 604.3764035)
+writing combined-trees-1-0.obj : #(-1189.4163785 34.474076000000004 -1813.166306)
+writing combined-trees-1-1.obj : #(-1275.851529 44.183956 -1246.411207)
+writing combined-trees-1-2.obj : #(-1210.8505365 43.330221 -955.3075409999999)
+writing combined-trees-1-3.obj : #(-1225.586025 44.289436 -236.62886650000002)
+writing combined-trees-1-4.obj : #(-1263.209679 75.913473 206.95544049999998)
+writing combined-trees-1-5.obj : #(-1189.994898 77.2219355 790.734472)
+writing combined-trees-2-0.obj : #(-661.7879865 44.183956 -1822.0140455)
+writing combined-trees-2-1.obj : #(-679.7583159999999 43.330221 -1435.072807)
+writing combined-trees-2-2.obj : #f
+writing combined-trees-2-3.obj : #f
+writing combined-trees-2-4.obj : #(-667.354824 44.2894335 215.524562)
+writing combined-trees-2-5.obj : #(-679.030805 77.9789525 763.4455325)
+writing combined-trees-3-0.obj : #(11.872665 46.923446 -1958.165905)
+writing combined-trees-3-1.obj : #(-168.75068850000002 43.330221 -1285.8690545)
+writing combined-trees-3-2.obj : #f
+writing combined-trees-3-3.obj : #f
+writing combined-trees-3-4.obj : #(-73.95222150000001 24.764196000000002 251.66461500000003)
+writing combined-trees-3-5.obj : #(-152.7502285 63.753191 735.7189545)
+writing combined-trees-4-0.obj : #(268.0178785 84.07233149999999 -1880.4408845)
+writing combined-trees-4-1.obj : #(444.708125 120.6582415 -1280.0819755)
+writing combined-trees-4-2.obj : #(395.302457 76.804109 -812.8270075)
+writing combined-trees-4-3.obj : #(539.2903975 60.011552 -258.6053195)
+writing combined-trees-4-4.obj : #(442.1229125 109.7795395 266.4486175)
+writing combined-trees-4-5.obj : #(266.7135225 83.7758855 772.719754)
+writing combined-trees-5-0.obj : #(964.7010505 48.3526375 -1803.034216)
+writing combined-trees-5-1.obj : #(862.093893 114.676674 -1334.710542)
+writing combined-trees-5-2.obj : #(775.8507635 111.105264 -779.352771)
+writing combined-trees-5-3.obj : #(1091.960584 45.552488999999994 -310.98031100000003)
+writing combined-trees-5-4.obj : #(850.5024745000001 78.105449 229.308468)
+writing combined-trees-5-5.obj : #(877.732527 74.010053 699.6607315)
+
+Entities.addEntity({
+    name: "combined trees",
+    type: "Model",
+    modelURL: "http://headache.hungry.com/~seth/hifi/voronoi-terrain-3/combined-trees-5-5.obj.gz",
+    position: { x: -1745.813267, y: 41.856106, z: -1884.516252 },
+    collisionless: true
+});
+
+
+

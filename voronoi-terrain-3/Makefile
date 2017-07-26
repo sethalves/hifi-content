@@ -22,6 +22,13 @@ OUTPUT_HEIGHT=1024
 PAINT_SAVE_N=6085
 
 
+%.stl: %.scad
+	openscad -o $@ $^
+
+%.obj.gz: %.obj
+	cat $< | gzip -9 - > $@
+
+
 all: terrain-lines.png terrain.scad terrain-textured.obj terrain-hull.obj # terrain-sans-caves.obj
 
 voronoi-terrain-chicken: voronoi-terrain-chicken.scm
@@ -117,8 +124,46 @@ terrain-hull.obj: terrain-textured.obj
 
 #	$(VHACD) -f -i $^ -o $@
 
+###
 
-upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj # terrain-sans-caves.obj
+
+combined-trees-0-0.obj combined-trees-0-1.obj combined-trees-0-2.obj \
+combined-trees-0-3.obj combined-trees-0-4.obj combined-trees-0-5.obj \
+combined-trees-1-0.obj combined-trees-1-1.obj combined-trees-1-2.obj \
+combined-trees-1-3.obj combined-trees-1-4.obj combined-trees-1-5.obj \
+combined-trees-2-0.obj combined-trees-2-1.obj combined-trees-2-2.obj \
+combined-trees-2-3.obj combined-trees-2-4.obj combined-trees-2-5.obj \
+combined-trees-3-0.obj combined-trees-3-1.obj combined-trees-3-2.obj \
+combined-trees-3-3.obj combined-trees-3-4.obj combined-trees-3-5.obj \
+combined-trees-4-0.obj combined-trees-4-1.obj combined-trees-4-2.obj \
+combined-trees-4-3.obj combined-trees-4-4.obj combined-trees-4-5.obj \
+combined-trees-5-0.obj combined-trees-5-1.obj combined-trees-5-2.obj \
+combined-trees-5-3.obj combined-trees-5-4.obj combined-trees-5-5.obj \
+tree-locations.dat: scatter-trees-gauche.scm scatter-trees-main.sld
+	./$< > tree-locations.dat
+
+tree-locations.png: tree-locations.dat
+	gnuplot trees.gnuplot
+	eog $@
+
+
+###
+
+
+upload: combined-trees-0-0.obj.gz combined-trees-0-1.obj.gz combined-trees-0-2.obj.gz \
+		combined-trees-0-3.obj.gz combined-trees-0-4.obj.gz combined-trees-0-5.obj.gz \
+		combined-trees-1-0.obj.gz combined-trees-1-1.obj.gz combined-trees-1-2.obj.gz \
+		combined-trees-1-3.obj.gz combined-trees-1-4.obj.gz combined-trees-1-5.obj.gz \
+		combined-trees-2-0.obj.gz combined-trees-2-1.obj.gz combined-trees-2-2.obj.gz \
+		combined-trees-2-3.obj.gz combined-trees-2-4.obj.gz combined-trees-2-5.obj.gz \
+		combined-trees-3-0.obj.gz combined-trees-3-1.obj.gz combined-trees-3-2.obj.gz \
+		combined-trees-3-3.obj.gz combined-trees-3-4.obj.gz combined-trees-3-5.obj.gz \
+		combined-trees-4-0.obj.gz combined-trees-4-1.obj.gz combined-trees-4-2.obj.gz \
+		combined-trees-4-3.obj.gz combined-trees-4-4.obj.gz combined-trees-4-5.obj.gz \
+		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
+		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz \
+		rez-combined-trees.js \
+		terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj
 	mkdir -p voronoi-terrain-3
 	cp $^ voronoi-terrain-3/
 	rsync --delete -avP voronoi-terrain-3/ headache.hungry.com:public_html/hifi/voronoi-terrain-3/
