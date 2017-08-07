@@ -29,7 +29,25 @@ PAINT_SAVE_N=6085
 	cat $< | gzip -9 - > $@
 
 
-all: terrain-lines.png terrain.scad terrain-textured.obj terrain-hull.obj # terrain-sans-caves.obj
+TERRAIN_TARGETS=terrain-lines.png terrain-hull.obj \
+		combined-trees-0-0.obj.gz combined-trees-0-1.obj.gz combined-trees-0-2.obj.gz \
+		combined-trees-0-3.obj.gz combined-trees-0-4.obj.gz combined-trees-0-5.obj.gz \
+		combined-trees-1-0.obj.gz combined-trees-1-1.obj.gz combined-trees-1-2.obj.gz \
+		combined-trees-1-3.obj.gz combined-trees-1-4.obj.gz combined-trees-1-5.obj.gz \
+		combined-trees-2-0.obj.gz combined-trees-2-1.obj.gz combined-trees-2-2.obj.gz \
+		combined-trees-2-3.obj.gz combined-trees-2-4.obj.gz combined-trees-2-5.obj.gz \
+		combined-trees-3-0.obj.gz combined-trees-3-1.obj.gz combined-trees-3-2.obj.gz \
+		combined-trees-3-3.obj.gz combined-trees-3-4.obj.gz combined-trees-3-5.obj.gz \
+		combined-trees-4-0.obj.gz combined-trees-4-1.obj.gz combined-trees-4-2.obj.gz \
+		combined-trees-4-3.obj.gz combined-trees-4-4.obj.gz combined-trees-4-5.obj.gz \
+		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
+		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz \
+		rez-combined-trees.js \
+		terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj
+
+
+all: $(TERRAIN_TARGETS)
+
 
 voronoi-terrain-chicken: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
@@ -76,16 +94,18 @@ terrain-caves.obj:
 terrain-caves-water-tight.obj: terrain-caves.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -s 64 -o $@
 
-	# $(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -s 64 -o $@
-
-
 terrain-caves-reduced.obj: terrain-caves-water-tight.obj terrain-caves.mlx
 	meshlabserver -i $< -o $@ -s terrain-caves.mlx # -om vc vn
 
 terrain-caves.scad: terrain-caves-reduced.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -o $@
 
-terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
+
+###
+
+# terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
+
+terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad
 	openscad -o $@ $<
 
 terrain-with-caves-reduced.obj: terrain-with-caves.stl terrain-with-caves.mlx
@@ -126,6 +146,18 @@ terrain-hull.obj: terrain-textured.obj
 
 ###
 
+L_SYSTEM_TREE=../L-system-tree/L-system-tree
+
+OPENSCAD_FN=10
+COMBINE_DISTANCE=0.2
+
+include ../L-system-tree/L-system-tree.make
+
+TREE_TARGETS=\
+	tree0.obj tree0-hull.obj \
+	tree1.obj tree1-hull.obj \
+	tree2.obj tree2-hull.obj
+
 
 combined-trees-0-0.obj combined-trees-0-1.obj combined-trees-0-2.obj \
 combined-trees-0-3.obj combined-trees-0-4.obj combined-trees-0-5.obj \
@@ -139,7 +171,7 @@ combined-trees-4-0.obj combined-trees-4-1.obj combined-trees-4-2.obj \
 combined-trees-4-3.obj combined-trees-4-4.obj combined-trees-4-5.obj \
 combined-trees-5-0.obj combined-trees-5-1.obj combined-trees-5-2.obj \
 combined-trees-5-3.obj combined-trees-5-4.obj combined-trees-5-5.obj \
-tree-locations.dat: scatter-trees-gauche.scm scatter-trees-main.sld
+tree-locations.dat: scatter-trees-gauche.scm scatter-trees-main.sld terrain-textured.obj $(TREE_TARGETS)
 	./$< > tree-locations.dat
 
 tree-locations.png: tree-locations.dat
@@ -150,20 +182,7 @@ tree-locations.png: tree-locations.dat
 ###
 
 
-upload: combined-trees-0-0.obj.gz combined-trees-0-1.obj.gz combined-trees-0-2.obj.gz \
-		combined-trees-0-3.obj.gz combined-trees-0-4.obj.gz combined-trees-0-5.obj.gz \
-		combined-trees-1-0.obj.gz combined-trees-1-1.obj.gz combined-trees-1-2.obj.gz \
-		combined-trees-1-3.obj.gz combined-trees-1-4.obj.gz combined-trees-1-5.obj.gz \
-		combined-trees-2-0.obj.gz combined-trees-2-1.obj.gz combined-trees-2-2.obj.gz \
-		combined-trees-2-3.obj.gz combined-trees-2-4.obj.gz combined-trees-2-5.obj.gz \
-		combined-trees-3-0.obj.gz combined-trees-3-1.obj.gz combined-trees-3-2.obj.gz \
-		combined-trees-3-3.obj.gz combined-trees-3-4.obj.gz combined-trees-3-5.obj.gz \
-		combined-trees-4-0.obj.gz combined-trees-4-1.obj.gz combined-trees-4-2.obj.gz \
-		combined-trees-4-3.obj.gz combined-trees-4-4.obj.gz combined-trees-4-5.obj.gz \
-		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
-		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz \
-		rez-combined-trees.js \
-		terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj
+upload: $(TERRAIN_TARGETS)
 	mkdir -p voronoi-terrain-3
 	cp $^ voronoi-terrain-3/
 	rsync --delete -avP voronoi-terrain-3/ headache.hungry.com:public_html/hifi/voronoi-terrain-3/
@@ -213,6 +232,7 @@ clean:
 		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
 		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz \
 		rez-combined-trees.js
+	rm -f $(TREE_TARGETS)
 
 
 very-clean: clean

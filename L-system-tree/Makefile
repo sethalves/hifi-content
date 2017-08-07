@@ -7,7 +7,7 @@ WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 L_SYSTEM_TREE=./L-system-tree
 
 OPENSCAD_FN=16
-COMBINE_DISTANCE=0.2
+COMBINE_DISTANCE=0.3
 
 
 .PRECIOUS: %.obj %.stl
@@ -19,7 +19,8 @@ COMBINE_DISTANCE=0.2
 TARGETS=tree0.obj.gz tree0-hull.obj.gz \
 		tree1.obj.gz tree1-hull.obj.gz \
 		tree2.obj.gz tree2-hull.obj.gz \
-		tree3.obj.gz tree3-hull.obj.gz
+		tree3.obj.gz tree3-hull.obj.gz \
+		tree4.obj.gz tree4-hull.obj.gz
 
 
 # TARGETS=tree0.obj tree0-hull.obj \
@@ -80,6 +81,10 @@ clean:
 	rm -f tree3-leaves.scad tree3-leaves.stl tree3-leaves.obj.tmp.obj tree3-leaves.obj
 	rm -f tree3-trunk.scad tree3-trunk.stl tree3-trunk.obj.tmp.obj tree3-trunk.obj
 	rm -f tree3-hull.scad tree3-hull.stl tree3-hull.obj.tmp.obj tree3-hull.obj tree3-hull.obj.gz
+	rm -f tree4.obj tree4.obj.gz
+	rm -f tree4-leaves.scad tree4-leaves.stl tree4-leaves.obj.tmp.obj tree4-leaves.obj
+	rm -f tree4-trunk.scad tree4-trunk.stl tree4-trunk.obj.tmp.obj tree4-trunk.obj
+	rm -f tree4-hull.scad tree4-hull.stl tree4-hull.obj.tmp.obj tree4-hull.obj tree4-hull.obj.gz
 	rm -rf trees
 
 

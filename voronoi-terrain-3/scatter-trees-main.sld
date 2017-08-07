@@ -29,8 +29,10 @@
     (define (main-program)
       (cerr "loading...\n")
       (let* ((tree-count 800)
-             (random-i 12)
-             (random-j 3)
+             (tree-y-fudge (vector 0 -0.5 0)) ;; try to keep trunks in the ground on steep hills
+             (ground-level 0.4) ;; no trees below here
+             (random-i 12) ;; arbitrary, done for repeatability
+             (random-j 3) ;; same as i
              (random-source (make-random-source))
              (random-integer (random-source-make-integers random-source))
              ;;
@@ -67,9 +69,9 @@
 
         (random-source-pseudo-randomize! random-source random-i random-j)
 
-        (read-obj-model-file "../L-system-tree/tree0.obj" tree0-model)
-        (read-obj-model-file "../L-system-tree/tree1.obj" tree1-model)
-        (read-obj-model-file "../L-system-tree/tree2.obj" tree2-model)
+        (read-obj-model-file "tree0.obj" tree0-model)
+        (read-obj-model-file "tree1.obj" tree1-model)
+        (read-obj-model-file "tree2.obj" tree2-model)
 
         (cerr "done loading.\n")
 
@@ -112,12 +114,11 @@
                                             (vector3-z p)))
                               (face (ray-cast terrain-model octree (vector ray0 ray1))))
                          (cond (face
-                                (let (;; (face-center (face->center-vertex terrain-model face))
-                                      ;; (face-normal (face->average-normal terrain-model face))
-                                      (root-point (segment-triangle-intersection
-                                                   (vector ray0 ray1)
-                                                   (face->vertices terrain-model face))))
-                                  (cond ((> (vector3-y root-point) 0.4)
+                                (let ((root-point (vector3-sum (segment-triangle-intersection
+                                                                (vector ray0 ray1)
+                                                                (face->vertices terrain-model face))
+                                                               tree-y-fudge)))
+                                  (cond ((> (vector3-y (vector3-diff root-point tree-y-fudge)) ground-level)
                                          ;; this is a good place for a tree.  generate the rest of its parameters
                                          (let ((r (random-integer 360)) ;; rotation
                                                (w (random-integer 3))

@@ -9,7 +9,7 @@ ATP_CLIENT=../../hifi/build/tools/atp-client/atp-client
 WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 
 %.obj: %.stl
-	wavefront-obj-tool -m 0.4 -n -c $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -m 0.4 -n -c $^ -o $@
 
 %.obj.gz: %.obj
 	rm -f $@
@@ -40,7 +40,7 @@ chest-box.stl: chest.scad
 	openscad -D output_box=1 -o $@ $^
 
 chest-box.obj: chest-box.stl
-	wavefront-obj-tool -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
+	$(WAVEFRONT_OBJ_TOOL) -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
 
 #
 # visual lid model
@@ -50,13 +50,13 @@ chest-lid.stl: chest.scad
 	openscad -D output_lid=1 -o $@ $^
 
 chest-lid.obj: chest-lid.stl
-	wavefront-obj-tool -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
+	$(WAVEFRONT_OBJ_TOOL) -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
 
 # chest-lid-hull.obj: chest-lid.obj
 # 	$(VHACD) -g -i $^ -o $@ --maxvertices 64 --concavity 0.001 --resolution 400000 --depth 30
 
 chest-lid-hull.obj: ${LID_HULL_PARTS}
-	wavefront-obj-tool -n -c $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
 
 
 #
@@ -64,7 +64,7 @@ chest-lid-hull.obj: ${LID_HULL_PARTS}
 #
 
 chest-box-hull.obj: ${BOX_HULL_PARTS}
-	wavefront-obj-tool -n -c $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
 
 #
 #

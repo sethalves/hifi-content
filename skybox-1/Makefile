@@ -3,12 +3,11 @@
 #
 
 # size of one segment.  the final image will be of size: (WIDTH * 4, HEIGTH * 3)
-WIDTH=100
-HEIGTH=100
-
 # WIDTH=900
 # HEIGTH=900
 
+WIDTH=640
+HEIGTH=640
 
 
 # WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
@@ -24,11 +23,13 @@ LIBS='(foldling command-line)' '(seth obj-model)' '(seth scad-model)' '(srfi 27)
 	pnmtopng $^ > $@
 
 
-all: trees-skybox-0.png trees-skybox-1.png trees-skybox-2.png trees-skybox-3.png trees-skybox-4.png \
+TARGETS=trees-skybox-0.png trees-skybox-1.png trees-skybox-2.png trees-skybox-3.png trees-skybox-4.png \
 	trees-skybox-5.png trees-skybox-6.png trees-skybox-7.png trees-skybox-8.png trees-skybox-9.png
 
+all: ${TARGETS}
 
-blank.pnm:
+
+blank.pnm: Makefile
 	pbmmake -black ${WIDTH} ${HEIGTH} > $@
 
 ###
@@ -49,60 +50,13 @@ trees.pov: tree-locations.dat skybox-header.pov make-povray-input.sh
 
 ###
 
-
-# trees00.png trees01.png trees02.png trees03.png trees04.png trees05.png \
-# trees06.png trees07.png trees08.png trees09.png trees10.png trees11.png: trees.pov trees.ini
-# 	povray +W${WIDTH} +H${HEIGTH} trees.ini
-
-###
-
-# trees0-row0.pnm: trees00.pnm blank.pnm
-# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-# trees0-row1.pnm: trees01.pnm trees02.pnm trees03.pnm trees04.pnm
-# 	pnmcat -lr $^ > $@
-
-# trees0-row2.pnm: trees05.pnm blank.pnm
-# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-# trees-skybox-0.pnm: trees0-row0.pnm trees0-row1.pnm trees0-row2.pnm
-# 	pnmcat -tb $^ > $@
-
-# grass.png: trees05.png
-# 	cp $^ $@
-
-# ###
-
-# trees1-row0.pnm: trees06.pnm blank.pnm
-# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-# trees1-row1.pnm: trees07.pnm trees08.pnm trees09.pnm trees10.pnm
-# 	pnmcat -lr $^ > $@
-
-# trees1-row2.pnm: trees11.pnm blank.pnm
-# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-# trees-skybox-1.pnm: trees1-row0.pnm trees1-row1.pnm trees1-row2.pnm
-# 	pnmcat -tb $^ > $@
-
-# ###
-
-# trees2-row0.pnm: trees12.pnm blank.pnm
-# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-# trees2-row1.pnm: trees13.pnm trees14.pnm trees15.pnm trees16.pnm
-# 	pnmcat -lr $^ > $@
-
-# trees2-row2.pnm: trees17.pnm blank.pnm
-# 	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-# trees-skybox-2.pnm: trees2-row0.pnm trees2-row1.pnm trees2-row2.pnm
-# 	pnmcat -tb $^ > $@
+upload: ${TARGETS}
+	mkdir -p skyboxes
+	cp $^ skyboxes/
+	rsync --delete -avP skyboxes/ headache.hungry.com:public_html/hifi/skyboxes/
 
 
-###
-
-trees.make:
+trees.make: generate-makefile.scm
 	./generate-makefile.scm > $@
 
 libs:

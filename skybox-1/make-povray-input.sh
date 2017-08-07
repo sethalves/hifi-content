@@ -11,7 +11,8 @@ do
     R=${treespec[3]}
     S=${treespec[4]}
     W=${treespec[5]}
-    ${L_SYSTEM_TREE} -s 0.$S -p $X $Y $Z -r 0 $R 0 -v -w $W -t iixxyiO -o tree.pov
+    echo ${L_SYSTEM_TREE} -s $S -p $X $Y $Z -r 0 $R 0 -v -w $W -t iixxyiO -o tree.pov 1>&2
+    ${L_SYSTEM_TREE} -s $S -p $X $Y $Z -r 0 $R 0 -v -w $W -t iixxyiO -o tree.pov
     cat tree.pov
     rm tree.pov
 done

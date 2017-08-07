@@ -74,11 +74,8 @@ module toroidal_section_by_angle(tor_low, tor_high, pol_low, pol_high) {
                  [5, 6, 2],
                  [2, 1, 5]
             ],
-
         convexity = 10);
 }
-
-
 
 
 module toroidal_section_by_index(toroidal_segment, poloidal_segment) {
@@ -131,30 +128,20 @@ module ring_section(tor_index, pol_index) {
 
 part_index = -1;
 
-if (part_index == -1) {
-    union() {
-        rotate([90, 0, 0]) {
+union() {
+    rotate([90, 0, 0]) {
+        if (part_index == -1) {
             for (tor_index = [0 : 1 : tor_segments - 1]) {
                 for (pol_index = [0 : 1 : pol_segments - 3]) {
                     ring_section(tor_index, pol_index);
                 }
             }
-        }
-    }
-} else {
-
-    // tor_index goes from 0 to 14
-    // pol_index goes from 0 to 8
-
-    tor_index = part_index % tor_segments;
-    pol_index = (part_index - tor_index) / tor_segments;
-
-    echo();
-    echo(tor_index);
-    echo(pol_index);
-
-    union() {
-        rotate([90, 0, 0]) {
+        } else {
+            // if tor_segments = 15 and pol_segments = 10,
+            // tor_index goes from 0 to 14
+            // pol_index goes from 0 to 8
+            tor_index = part_index % tor_segments;
+            pol_index = (part_index - tor_index) / tor_segments;
             ring_section(tor_index, pol_index);
         }
     }

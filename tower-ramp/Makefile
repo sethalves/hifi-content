@@ -39,7 +39,7 @@ clean:
 # upload: curved-ramp.obj curved-ramp-collision-hull.obj curved-ramp.mtl tower-ramp.jpg
 # 	scp $^ headache:public_html/hifi/
 
-upload: curved-ramp.obj curved-ramp-collision-hull.obj curved-ramp.mtl tower-ramp.jpg
+upload: curved-ramp.obj curved-ramp-collision-hull.obj curved-ramp.mtl tower-ramp.png
 	mkdir -p curved-ramp
 	cp $^ curved-ramp/
 	rsync --delete -avP curved-ramp/ headache.hungry.com:public_html/hifi/curved-ramp/

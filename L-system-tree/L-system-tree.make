@@ -96,3 +96,20 @@ tree3-hull.obj: tree3-hull.stl
 
 tree3.obj: tree3-trunk.obj tree3-leaves.obj
 	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^
+
+# ---
+
+TREE4_W=5
+TREE4_SHAPE=iixxyiO
+
+tree4.scad: $(L_SYSTEM_TREE)
+	$(L_SYSTEM_TREE) --fn $(OPENSCAD_FN) -w $(TREE4_W) -t $(TREE4_SHAPE) -o $@
+
+tree4-hull.scad: $(L_SYSTEM_TREE)
+	$(L_SYSTEM_TREE) --fn $(OPENSCAD_FN) -w $(TREE4_W) -t $(TREE4_SHAPE) --hull -o tree4-hull.scad
+
+tree4-hull.obj: tree4-hull.stl
+	$(WAVEFRONT_OBJ_TOOL) -n -c -o $@ $^
+
+tree4.obj: tree4.stl
+	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^

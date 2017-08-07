@@ -23,16 +23,17 @@
         (random-source-pseudo-randomize! random-source random-i random-j)
 
         (let loop ((count 0))
-          (let* ((a (/ (random-integer 180) pi)) ;; a and d chose tree location
-                 (d (+ (random-integer 500) 40))
+          (let* ((a (/ (random-integer 1800) (* pi 10))) ;; a and d chose tree location
+                 (d (+ (random-integer 900) 700))
                  (x (* (cos a) d))
                  (y 0.0)
                  (z (* (sin a) d))
                  (r (random-integer 360)) ;; rotation
                  (w (+ (random-integer 3) 3))
-                 (s (+ (random-integer 2) 2)) ;; size
+                 ;; (s (+ (random-integer 2) 2)) ;; size
+                 (s (/ (+ (random-integer 15) 5) 10.0)) ;; size: 0.5 to 2.0
                 )
-            (cond ((>= count 400)
+            (cond ((>= count 1600)
                    ;; done
                    #t)
                   (else
@@ -41,7 +42,7 @@
                          (exact (round z)) " "
                          (exact (round y)) " "
                          (exact (round r)) " "
-                         (exact (round s)) " "
+                         s " "
                          (exact (round w)) "\n")
                    (loop (+ count 1))))))
         ))

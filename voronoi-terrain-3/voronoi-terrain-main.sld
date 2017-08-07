@@ -818,7 +818,7 @@
                                                               (face-set-normals! model face)
                                                               face))
                                     (compact-obj-model model)
-                                    (fix-face-winding model))))
+                                    (fix-face-winding! model))))
                 (cond
 
                  (output-obj

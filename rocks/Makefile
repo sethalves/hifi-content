@@ -6,7 +6,7 @@
 WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 
 rock-%-no-txtr.obj: rock-%-points.obj
-	$(VHACD) -g -i $< -o $@
+	- $(VHACD) -g -i $< -o $@
 
 rock-%.obj: rock-%-no-txtr.obj
 	wavefront-obj-tool -m 0.8 -S rock_mtl -L rock.mtl $< -o $@

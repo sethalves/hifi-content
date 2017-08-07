@@ -20,11 +20,15 @@
         (let loop ((i 0))
           (cond ((= i point-count) #t)
                 (else
-                 (let* ((point-3d (vector (inexact (- (random-integer rand-max) half-rand-max))
-                                          (inexact (- (random-integer rand-max) half-rand-max))
-                                          (inexact (- (random-integer rand-max) half-rand-max))))
-                        (point-3d-str (vector-3->strings (vector3-scale point-3d (/ 1.0 reso)))))
-                   (model-append-vertex! model point-3d-str)
+                 (let* ((vertex
+                         (make-vertex-from-point/color
+                          (vector-scale
+                           (vector (inexact (- (random-integer rand-max) half-rand-max))
+                                   (inexact (- (random-integer rand-max) half-rand-max))
+                                   (inexact (- (random-integer rand-max) half-rand-max)))
+                           (/ 1.0 reso))
+                          #f)))
+                   (model-append-vertex! model vertex)
                    (loop (+ i 1))))))))
 
 
@@ -38,8 +42,8 @@
                         (theta (* (/ (random-integer 100) 100.0) pi))
                         (phi (* (/ (random-integer 100) 100.0) pi*2))
                         (point-3d (polar-coordinates->cartesian radius theta phi))
-                        (point-3d-str (vector-3->strings (vector3-scale point-3d (/ 1.0 reso)))))
-                   (model-append-vertex! model point-3d-str)
+                        (vertex (make-vertex-from-point/color (vector3-scale point-3d (/ 1.0 reso)) #f)))
+                   (model-append-vertex! model vertex)
                    (loop (+ i 1))))))))
 
 
@@ -51,15 +55,15 @@
             (lower-ring-y (* size 0.1))
             (lower-radius (* size 0.10))
             (a (/ pi*2 point-count)))
-        (model-append-vertex! model (vector-3->strings top-point))
-        (model-append-vertex! model (vector-3->strings bottom-point))
+        (model-append-vertex! model (make-vertex-from-point/color top-point #f))
+        (model-append-vertex! model (make-vertex-from-point/color bottom-point #f))
         (let loop ((i 0))
           (cond ((= i point-count) #t)
                 (else
                  (let* ((x (* (cos (* a i)) upper-radius))
                         (z (* (sin (* a i)) upper-radius))
                         (p (vector x upper-ring-y z)))
-                   (model-append-vertex! model (vector-3->strings p))
+                   (model-append-vertex! model (make-vertex-from-point/color p #f))
                    (loop (+ i 1))))))
         (let loop ((i 0))
           (cond ((= i point-count) #t)
@@ -67,7 +71,7 @@
                  (let* ((x (* (cos (* a i)) lower-radius))
                         (z (* (sin (* a i)) lower-radius))
                         (p (vector x lower-ring-y z)))
-                   (model-append-vertex! model (vector-3->strings p))
+                   (model-append-vertex! model (make-vertex-from-point/color p #f))
                    (loop (+ i 1))))))))
 
 

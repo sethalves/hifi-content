@@ -16,7 +16,7 @@ boat-collision-walls.stl: boat.scad
 	openscad -D output_walls=1 -o $@ $^
 
 boat-walls-collision-hull.obj: boat-collision-walls.obj
-	$(VHACD) -g -i $^ -o $@ # --maxvertices 14 --concavity 0.001 --resolution 400000 --depth 30
+	- $(VHACD) -g -i $^ -o $@ # --maxvertices 14 --concavity 0.001 --resolution 400000 --depth 30
 
 boat-walls.stl: boat.scad
 	openscad -D output_hull=1 -o $@ $^

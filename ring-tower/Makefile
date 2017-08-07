@@ -6,17 +6,19 @@ DOMAIN=eschatology
 
 # VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 ATP_CLIENT=../../hifi/build/tools/atp-client/atp-client
-WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+
 
 %.obj: %.stl
-	wavefront-obj-tool -m 0.4 -n -c $^ -o $@
+	$(WAVEFRONT_OBJ_TOOL) -m 0.2 -n -c $^ -o $@
 
 %.obj.gz: %.obj
 	rm -f $@
 	gzip -9 $<
 
 
-TARGETS=ring-tower.obj
+TARGETS=ring-tower.obj.gz ring-tower-hull.obj.gz ring-tower.mtl tower-ramp.png
 
 ring-parts/%.stl: ring-tower.scad
 	mkdir -p ring-parts
@@ -32,12 +34,23 @@ ring-tower.stl: ring-tower.scad
 	openscad -o $@ $^
 
 ring-tower.obj: ring-tower.stl
-	wavefront-obj-tool -m 0.4 -n -c $^ -o $@ -L ring-tower.mtl -S ring_tower_mtl
+	$(WAVEFRONT_OBJ_TOOL) -m 0.2 -n -c $^ -o $@ -L ring-tower.mtl -S ring_tower_mtl
 
 ring-tower-hull.obj: $(RING_PARTS)
-	wavefront-obj-tool -c -o $@ $^
+	$(WAVEFRONT_OBJ_TOOL) -c -o $@ $^
 
+upload: ${TARGETS}
+	mkdir -p ring-tower
+	cp $^ ring-tower/
+	rsync --delete -avP ring-tower/ headache.hungry.com:public_html/hifi/ring-tower/
+
+upload-atp: ring-tower.obj.gz ring-tower-hull.obj.gz ring-tower.mtl tower-ramp.png
+	- $(ATP_CLIENT) -T ring-tower.obj.gz atp://$(DOMAIN)/ring-tower/ring-tower.obj.gz
+	- $(ATP_CLIENT) -T ring-tower-hull.obj.gz atp://$(DOMAIN)/ring-tower/ring-tower-hull.obj.gz
+	- $(ATP_CLIENT) -T ring-tower.mtl atp://$(DOMAIN)/ring-tower/ring-tower.mtl
+	- $(ATP_CLIENT) -T ../tower-ramp/tower-ramp.png atp://$(DOMAIN)/ring-tower/tower-ramp.png
 
 clean:
-	rm -f *~ ring-tower.stl ring-tower.obj ring-tower-hull.obj
+	rm -f *~ ring-tower.stl ring-tower.obj ring-tower-hull.obj ring-tower.obj.gz ring-tower-hull.obj.gz
 	rm -rf ring-parts
+	rm -rf ring-tower
