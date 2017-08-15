@@ -38,13 +38,17 @@
         var Xkinematic = 4;
         var XignoreIK = 8;
 
+        var yFlip = Quat.fromPitchYawRollDegrees(0, 180, 0);
+
         for (var i = 0; i < 16; i++) {
             var sectionRelativeRotation = Quat.fromPitchYawRollDegrees(0, -360 * i / tableSections, 0);
             var sectionRotation = Quat.multiply(Mat4.extractRotation(testBaseTransform), sectionRelativeRotation);
             var sectionRelativeCenterA = Vec3.multiplyQbyV(sectionRotation, { x: -0.2, y: 1.25, z: tableRadius - 0.8 });
             var sectionRelativeCenterB = Vec3.multiplyQbyV(sectionRotation, { x: 0.2, y: 1.25, z: tableRadius - 0.8 });
+            var sectionRelativeCenterSign = Vec3.multiplyQbyV(sectionRotation, { x: 0, y: 1.5, z: tableRadius + 1.0 });
             var sectionCenterA = Mat4.transformPoint(testBaseTransform, sectionRelativeCenterA);
             var sectionCenterB = Mat4.transformPoint(testBaseTransform, sectionRelativeCenterB);
+            var sectionCenterSign = Mat4.transformPoint(testBaseTransform, sectionRelativeCenterSign);
 
             var dynamic = (i & Xdynamic) ? true : false;
             var collisionless = (i & Xcollisionless) ? true : false;
@@ -99,6 +103,29 @@
                 collisionless: collisionless
             };
             Entities.addEntity(propsCube);
+
+            var signText =
+                "dynamic: " + dynamic + "\n" +
+                "collisionless: " + collisionless + "\n" +
+                "kinematic: " + kinematic + "\n" +
+                "ignoreIK: " + ignoreIK + "\n";
+            var propsLabel = {
+                name: "controller-tests sign " + i,
+                type: "Text",
+                lineHeight: 0.125,
+                position: sectionCenterSign,
+                rotation: Quat.multiply(sectionRotation, yFlip),
+                text: signText,
+                dimensions: { x: 1, y: 1, z: 0.01 },
+                lifetime: lifetime,
+                userData: JSON.stringify({
+                    grabbableKey: {
+                        grabbable: false,
+                    },
+                    controllerTestEntity: true
+                })
+            };
+            Entities.addEntity(propsLabel);
         }
     }
 
