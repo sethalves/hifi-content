@@ -1,11 +1,14 @@
 "use strict";
 
-/* global Entities, MyAvatar, Vec3, Script, Mat4 */
+/* jslint bitwise: true */
+/* global Script, Entities, MyAvatar, Vec3, Quat, Mat4 */
 
 (function() { // BEGIN LOCAL_SCOPE
 
     // var lifetime = -1;
     var lifetime = 600;
+    var tableSections = 32;
+    var tableRadius = 9;
 
     function setupControllerTests(testBaseTransform) {
         // var tableID =
@@ -30,8 +33,72 @@
             lifetime: lifetime
         });
 
-        for (var i = 0; i < 4; i++) {
+        var Xdynamic = 1;
+        var Xcollisionless = 2;
+        var Xkinematic = 4;
+        var XignoreIK = 8;
 
+        for (var i = 0; i < 16; i++) {
+            var sectionRelativeRotation = Quat.fromPitchYawRollDegrees(0, -360 * i / tableSections, 0);
+            var sectionRotation = Quat.multiply(Mat4.extractRotation(testBaseTransform), sectionRelativeRotation);
+            var sectionRelativeCenterA = Vec3.multiplyQbyV(sectionRotation, { x: -0.2, y: 1.25, z: tableRadius - 0.8 });
+            var sectionRelativeCenterB = Vec3.multiplyQbyV(sectionRotation, { x: 0.2, y: 1.25, z: tableRadius - 0.8 });
+            var sectionCenterA = Mat4.transformPoint(testBaseTransform, sectionRelativeCenterA);
+            var sectionCenterB = Mat4.transformPoint(testBaseTransform, sectionRelativeCenterB);
+
+            var dynamic = (i & Xdynamic) ? true : false;
+            var collisionless = (i & Xcollisionless) ? true : false;
+            var kinematic = (i & Xkinematic) ? true : false;
+            var ignoreIK = (i & XignoreIK) ? true : false;
+
+            var propsModel = {
+                name: "controller-tests model object " + i,
+                type: "Model",
+                modelURL: Script.resolvePath('color-cube.obj'),
+
+                position: sectionCenterA,
+                rotation: sectionRotation,
+
+                gravity: (dynamic && !collisionless) ? { x: 0, y: -1, z: 0 } : { x: 0, y: 0, z: 0 },
+                dimensions: { x: 0.2, y: 0.2, z: 0.2 },
+                userData: JSON.stringify({
+                    grabbableKey: {
+                        grabbable: true,
+                        kinematic: kinematic,
+                        ignoreIK: ignoreIK
+                    },
+                    controllerTestEntity: true
+                }),
+                lifetime: lifetime,
+                shapeType: "box",
+                dynamic: dynamic,
+                collisionless: collisionless
+            };
+            Entities.addEntity(propsModel);
+
+            var propsCube = {
+                name: "controller-tests cube object " + i,
+                type: "Box",
+                shape: "Cube",
+                color: { "blue": 200, "green": 10, "red": 20 },
+                position: sectionCenterB,
+                rotation: sectionRotation,
+                gravity: dynamic ? { x: 0, y: -1, z: 0 } : { x: 0, y: 0, z: 0 },
+                dimensions: { x: 0.2, y: 0.2, z: 0.2 },
+                userData: JSON.stringify({
+                    grabbableKey: {
+                        grabbable: true,
+                        kinematic: kinematic,
+                        ignoreIK: ignoreIK
+                    },
+                    controllerTestEntity: true
+                }),
+                lifetime: lifetime,
+                shapeType: "box",
+                dynamic: dynamic,
+                collisionless: collisionless
+            };
+            Entities.addEntity(propsCube);
         }
     }
 

@@ -14,7 +14,7 @@ controller-tests-table.obj.gz: controller-tests-table.obj
 	rm -f $@
 	gzip -9 $<
 
-upload: controller-tests-table.obj.gz setup-controller-tests.js
+upload: controller-tests-table.obj.gz setup-controller-tests.js color-cube.obj
 	mkdir -p controller-tests
 	cp $^ controller-tests/
 	rsync --delete -avP controller-tests/ headache.hungry.com:public_html/hifi/controller-tests/
