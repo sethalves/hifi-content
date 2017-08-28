@@ -1,0 +1,46 @@
+-*- org -*-
+
+* hinges on doors for armor / weapons vendors
+
+var oggokID = "{6720b6d9-4d84-49cf-88cc-a9f7dbd219a2}";
+
+var oggokTrans = Entities.getEntityLocalTransform(oggokID);
+var invOggokTrans = Mat4.inverse(oggokTrans);
+var doorWorldPos = { x: 1463.385, y: -97.8856, z: -160.95 },
+
+var doorID = Entities.addEntity({
+    collidesWith: "dynamic,kinematic,myAvatar,otherAvatar,",
+    collisionMask: 30,
+    collisionsWillMove: 1,
+    dimensions: { x: 0.4, y: 4, z: 4 },
+    dynamic: 1,
+    modelURL: "http://headache.hungry.com/~seth/hifi/oggok-items/DOOR620X20_MP-103.obj",
+    position: doorWorldPos,
+    registrationPoint: { x: 1, y: 0.5, z: 0 },
+    rotation: { w: 1, x: 0, y: 0, z: 0 },
+    shapeType: "box",
+    type: "Model",
+    userData: JSON.stringify({ grabbableKey:{ grabbable: true, kinematic: false }}),
+    script: "http://headache.hungry.com/~seth/hifi/oggok-items/door.js"
+});
+
+;; *** put the door exactly where it should be when closed
+doorWorldPos = Entities.getEntityProperties(doorID, ["position"]).position;
+var doorRelPos = Mat4.transformPoint(invOggokTrans, doorWorldPos);
+
+Entities.addAction("hinge", doorID, {
+    pivot: { x: 0, y: 0, z: 0 },
+    axis: { x: 0, y: 1, z: 0 },
+    low: Math.PI/-2,
+    high: 0,
+    otherEntityID: oggokID,
+    otherPivot: doorRelPos,
+    otherAxis: { x: 0, y: 1, z: 0 },
+    tag: "oggok door hinge"
+});
+
+Entities.editEntity(doorID, { gravity: { x: 0, y: 0, z: 1 }});
+
+
+Entities.getActionIDs(doorID).forEach(function (actionID) { Entities.deleteAction(doorID, actionID); });
+
