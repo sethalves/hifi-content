@@ -6,7 +6,11 @@ var oggokID = "{6720b6d9-4d84-49cf-88cc-a9f7dbd219a2}";
 
 var oggokTrans = Entities.getEntityLocalTransform(oggokID);
 var invOggokTrans = Mat4.inverse(oggokTrans);
-var doorWorldPos = { x: 1463.385, y: -97.8856, z: -160.95 },
+
+** metal armor doors
+
+var doorWorldPos = { x: 1463.385, y: -97.8856, z: -160.95 };
+// doorWorldPos = { x: 1463.4, y: -97.8856, z: -152.5400 };
 
 var doorID = Entities.addEntity({
     collidesWith: "dynamic,kinematic,myAvatar,otherAvatar,",
@@ -39,8 +43,258 @@ Entities.addAction("hinge", doorID, {
     tag: "oggok door hinge"
 });
 
-Entities.editEntity(doorID, { gravity: { x: 0, y: 0, z: 1 }});
+
+** leather armor doors:
+
+doorWorldPos = { x: 1473.5710, y: -97.8856, z: -149.3725 };
+// doorWorldPos = { x: 1473.5710, y: -97.8856, z: -157.3725 };
+
+var doorID = Entities.addEntity({
+    collidesWith: "dynamic,kinematic,myAvatar,otherAvatar,",
+    collisionMask: 30,
+    collisionsWillMove: 1,
+    dimensions: { x: 0.4, y: 4, z: 4 },
+    dynamic: 1,
+    modelURL: "http://headache.hungry.com/~seth/hifi/oggok-items/DOOR620X20_MP-103.obj",
+    position: doorWorldPos,
+    registrationPoint: { x: 1, y: 0.5, z: 0 },
+    rotation: Quat.fromPitchYawRollDegrees(0, 180, 0),
+    shapeType: "box",
+    type: "Model",
+    userData: JSON.stringify({ grabbableKey:{ grabbable: true, kinematic: false }}),
+    script: "http://headache.hungry.com/~seth/hifi/oggok-items/door1.js"
+});
+
+;; *** put the door exactly where it should be when closed
+doorWorldPos = Entities.getEntityProperties(doorID, ["position"]).position;
+var doorRelPos = Mat4.transformPoint(invOggokTrans, doorWorldPos);
+
+Entities.addAction("hinge", doorID, {
+    pivot: { x: 0, y: 0, z: 0 },
+    axis: { x: 0, y: 1, z: 0 },
+    low: Math.PI/2,
+    high: Math.PI,
+    otherEntityID: oggokID,
+    otherPivot: doorRelPos,
+    otherAxis: { x: 0, y: 1, z: 0 },
+    tag: "oggok door hinge"
+});
 
 
-Entities.getActionIDs(doorID).forEach(function (actionID) { Entities.deleteAction(doorID, actionID); });
+** remove actions
 
+
+// Entities.getActionIDs(doorID).forEach(function (actionID) { Entities.deleteAction(doorID, actionID); });
+
+** json from after doors are placed
+
+        {
+            "actionData": "AAAAAQAAAMATiPuUe/n55kHTnQ/R2Pfxs+0AAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAAAAGcgttlNhEnPiMyp99vSGaJAMX7oAAAAAMBF2RngAAAAQFv+PKAAAAAAAAAAAAAAAD/wAAA\
+AAAAAAAAAAAAAAAC/+SH7YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAG8AZwBnAG8AawAgAGQAbwBvAHIAIABoAGkAbgBnAGUAAAAAAAAAAAAAAAAAAAAAAAA/8AAAAAAAAAAAAAAAAAAAZyC22U2ESc+IzKn329IZokAxfugAAAAAwEXZGeAAAABAW/48oAAAAAAAA\
+AAAAAAAP/AAAAAAAAAAAAAAAAAAAL/5IftgAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAbwBnAGcAbwBrACAAZABvAG8AcgAgAGgAaQBuAGcAZQCaCDTnMhPMw9NIlofmIkp+SPDcAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABH7///4AAAAAEAAAAAAAAAAAAAAAA\
+AAAAAAAAAAAAAAAA/8AAAAAAAAD/gAAAAAAAAAQAFV8evkExyAAAAIABvAGcAZwBvAGsAIABjAGwAbwBzAGUAIABkAG8AbwByAAAAAAAAAAAAAAAAAAAAAAAtADgAOAA4AGMALQA2ADUAZgA2ADIAYgBjAGYAMQBjAGUAZAB9AAAAAAAAAAAAAAAAAAAAAA==",
+            "clientOnly": 0,
+            "collidesWith": "dynamic,kinematic,myAvatar,otherAvatar,",
+            "collisionMask": 30,
+            "collisionsWillMove": 1,
+            "created": "2017-08-28T02:40:15Z",
+            "dimensions": {
+                "x": 0.40000000596046448,
+                "y": 4,
+                "z": 4
+            },
+            "dynamic": 1,
+            "id": "{9391e71a-4d40-41a2-ba69-5bccbc34b1aa}",
+            "lastEdited": 1503890040415053,
+            "lastEditedBy": "{17b018ca-ce04-4556-888c-65f62bcf1ced}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/oggok-items/DOOR620X20_MP-103.obj",
+            "name": "oggok left metal armor door",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 1463.399658203125,
+                "y": -97.886978149414062,
+                "z": -152.54002380371094
+            },
+            "queryAACube": {
+                "scale": 8.9799776077270508,
+                "x": 1458.90966796875,
+                "y": -102.37696838378906,
+                "z": -157.03001403808594
+            },
+            "registrationPoint": {
+                "x": 1,
+                "y": 0.5,
+                "z": 0
+            },
+            "rotation": {
+                "w": 0.999969482421875,
+                "x": -1.52587890625e-05,
+                "y": 0.0012359619140625,
+                "z": -1.52587890625e-05
+            },
+            "script": "http://headache.hungry.com/~seth/hifi/oggok-items/door.js",
+            "shapeType": "box",
+            "type": "Model",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true,\"kinematic\":false}}"
+        },
+
+
+
+
+        {
+            "actionData": "AAAAAQAAAMATiPfTPrZMq0W4mwFPJjEOeCwAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAAAAGcgttlNhEnPiMyp99vSGaJAMXsAAAAAAMBF2ONgAAAAQFnj/yAAAAAAAAAAAAAAAD/wAAA\
+AAAAAAAAAAAAAAAC/+SH7YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAG8AZwBnAG8AawAgAGQAbwBvAHIAIABoAGkAbgBnAGUAAAAAAAAAAAAAAAAAAAAAAAA/8AAAAAAAAAAAAAAAAAAAZyC22U2ESc+IzKn329IZokAxewAAAAAAwEXY42AAAABAWeP/IAAAAAAAA\
+AAAAAAAP/AAAAAAAAAAAAAAAAAAAL/5IftgAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAbwBnAGcAbwBrACAAZABvAG8AcgAgAGgAaQBuAGcAZQAAANAXcABA4+fTKEDhiNq1ScmIvxsAAUCW3YYgAAAAwFh4raAAAADAZB524AAAAD/U63cAAAAAAQAAAAAAAAAAAAA\
+AAAAAAAAAAAAAAAAAAD/wAAAAAAAAR+///+AAAAABAAVXx6rf50QAAABWAGcAcgBhAGIALQB7ADEANwBiADAAMQA4AGMAYQAtAGMAZQAwADQALQA0ADUANQA2AC0AOAA4ADgAYwAtADYANQBmADYAMgBiAGMAZgAxAGMAZQBkAH0AAAAAAAAAAAAAAAAAAAAA",
+            "clientOnly": 0,
+            "collidesWith": "dynamic,kinematic,myAvatar,otherAvatar,",
+            "collisionMask": 30,
+            "collisionsWillMove": 1,
+            "created": "2017-08-28T02:42:26Z",
+            "dimensions": {
+                "x": 0.40000000596046448,
+                "y": 4,
+                "z": 4
+            },
+            "dynamic": 1,
+            "id": "{8cd4a178-6255-48ae-80a8-339f08b83b34}",
+            "lastEdited": 1503890020276875,
+            "lastEditedBy": "{17b018ca-ce04-4556-888c-65f62bcf1ced}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/oggok-items/DOOR620X20_MP-103.obj",
+            "name": "oggok right metal armor door",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 1463.385009765625,
+                "y": -97.885597229003906,
+                "z": -160.94999694824219
+            },
+            "queryAACube": {
+                "scale": 8.9799776077270508,
+                "x": 1458.89501953125,
+                "y": -102.37558746337891,
+                "z": -165.43998718261719
+            },
+            "registrationPoint": {
+                "x": 1,
+                "y": 0.5,
+                "z": 0
+            },
+            "rotation": {
+                "w": 0.999969482421875,
+                "x": -1.52587890625e-05,
+                "y": 0.0043793916702270508,
+                "z": -4.57763671875e-05
+            },
+            "script": "http://headache.hungry.com/~seth/hifi/oggok-items/door.js",
+            "shapeType": "box",
+            "type": "Model",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true,\"kinematic\":false}}"
+        },
+
+
+
+        {
+            "actionData": "AAAAAQAAAMATiH+tlEUNGkd8lENv8sz9MhkAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAAAAGcgttlNhEnPiMyp99vSGaJAO6q4AAAAAMBF2OUAAAAAQFzJ00AAAAAAAAAAAAAAAD/wAAA\
+AAAAAAAAAAAAAAAA/+SH7YAAAAEAJIftgAAAAAAAAAAAAAAAAAAAgAG8AZwBnAG8AawAgAGQAbwBvAHIAIABoAGkAbgBnAGUAAAAAAAAAAAAAAAAAAAAAAAA/8AAAAAAAAAAAAAAAAAAAZyC22U2ESc+IzKn329IZokA7qrgAAAAAwEXY5QAAAABAXMnTQAAAAAAAA\
+AAAAAAAP/AAAAAAAAAAAAAAAAAAAD/5IftgAAAAQAkh+2AAAAAAAAAAAAAAAAAAACAAbwBnAGcAbwBrACAAZABvAG8AcgAgAGgAaQBuAGcAZQCaCDT2Ln9Y7spItItLnMRBQDZ6AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABH7///4AAAAAGAAAAAAAAAAD/wAAA\
+AAAAAgAAAAAAAAAC+Z3elwAAAAD/gAAAAAAAAAQAFV8eq8e5oAAAAIABvAGcAZwBvAGsAIABjAGwAbwBzAGUAIABkAG8AbwByAAAAAAAAAAAAAAAAAAAAAAA2AC0AOAA4ADgAYwAtADYANQBmADYAMgBiAGMAZgAxAGMAZQBkAH0AAAAAAAAAAAAAAAAAAAAAAAAAm\
+Ag0Zgt5YV+kQLOdYx1HPvWx4AABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR+///+AAAAABAAAAAAAAAAC/5qCegAAAAAAAAAAAAAAAP+agnoAAAAA/4AAAAAAAAAEABVfHqtnReQAAAB4AbwBnAGcAbwBrACAAbwBwAGUAbgAgAGQAbwBvAHIAAAAAAAAAAAAAAAA\
+AAAAA",
+            "clientOnly": 0,
+            "collidesWith": "dynamic,kinematic,myAvatar,otherAvatar,",
+            "collisionMask": 30,
+            "collisionsWillMove": 1,
+            "created": "2017-08-28T02:44:37Z",
+            "dimensions": {
+                "x": 0.40000000596046448,
+                "y": 4,
+                "z": 4
+            },
+            "dynamic": 1,
+            "id": "{a8ad2b12-b744-48a0-9984-a1a89b942206}",
+            "lastEdited": 1503889998300639,
+            "lastEditedBy": "{17b018ca-ce04-4556-888c-65f62bcf1ced}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/oggok-items/DOOR620X20_MP-103.obj",
+            "name": "oggok right leather armor door",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 1473.571044921875,
+                "y": -97.885597229003906,
+                "z": -149.35861206054688
+            },
+            "queryAACube": {
+                "scale": 8.9799776077270508,
+                "x": 1469.0810546875,
+                "y": -102.37558746337891,
+                "z": -153.84860229492188
+            },
+            "registrationPoint": {
+                "x": 1,
+                "y": 0.5,
+                "z": 0
+            },
+            "rotation": {
+                "w": -0.0049591660499572754,
+                "x": 1.52587890625e-05,
+                "y": 0.999969482421875,
+                "z": -1.52587890625e-05
+            },
+            "script": "http://headache.hungry.com/~seth/hifi/oggok-items/door1.js",
+            "shapeType": "box",
+            "type": "Model",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true,\"kinematic\":false}}"
+        },
+
+
+
+        {
+            "actionData": "AAAAAgAAAMATiCRcXqlk6UAHhxl9msHQcRoAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAAAAGcgttlNhEnPiMyp99vSGaJAO7GgAAAAAMBF2N1gAAAAQFrjhEAAAAAAAAAAAAAAAD/wAAA\
+AAAAAAAAAAAAAAAA/+SH7YAAAAEAJIftgAAAAAAAAAAAAAAAAAAAgAG8AZwBnAG8AawAgAGQAbwBvAHIAIABoAGkAbgBnAGUAAACaCDRZiE88GxRDrJh/E17gYg/fAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABH7///4AAAAAGAAAAAAAAAAD/wAAAAAAAAgAAAA\
+AAAAAC+Z3elwAAAAD/gAAAAAAAAAQAFV8eolKu9AAAAIABvAGcAZwBvAGsAIABjAGwAbwBzAGUAIABkAG8AbwByAAAAAAAAAAAAAAAAAAAAAACaCDRZiE88GxRDrJh/E17gYg/fAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABH7///4AAAAAGAAAAAAAAAAD/wAAA\
+AAAAAgAAAAAAAAAC+Z3elwAAAAD/gAAAAAAAAAQAFV8eolKtgAAAAIABvAGcAZwBvAGsAIABjAGwAbwBzAGUAIABkAG8AbwByAAAAAAAAAAAAAAAAAAAAAAAAANAXcJ8OgssMVEwKmz1hAWmsbmMAAUCXBm0AAAAAwFh4raAAAADAY54coAAAAD/gkD1AAAAAAQAAA\
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAD/wAAAAAAAAR+///+AAAAABAAVXx6kILYMAAABWAGcAcgBhAGIALQB7ADEANwBiADAAMQA4AGMAYQAtAGMAZQAwADQALQA0ADUANQA2AC0AOAA4ADgAYwAtADYANQBmADYAMgBiAGMAZgAxAGMAZQBkAH0AAAAAAAAAAAAAAAA\
+AAAAA",
+            "clientOnly": 0,
+            "collidesWith": "dynamic,kinematic,myAvatar,otherAvatar,",
+            "collisionMask": 30,
+            "collisionsWillMove": 1,
+            "created": "2017-08-28T03:08:39Z",
+            "dimensions": {
+                "x": 0.40000000596046448,
+                "y": 4,
+                "z": 4
+            },
+            "dynamic": 1,
+            "id": "{95fad89c-0947-4e23-b100-f3ac1d58f9f0}",
+            "lastEdited": 1503889988003254,
+            "lastEditedBy": "{17b018ca-ce04-4556-888c-65f62bcf1ced}",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/oggok-items/DOOR620X20_MP-103.obj",
+            "name": "oggok left leather armor door",
+            "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+            "position": {
+                "x": 1473.5982666015625,
+                "y": -97.885597229003906,
+                "z": -156.95718383789062
+            },
+            "queryAACube": {
+                "scale": 8.9799776077270508,
+                "x": 1469.1082763671875,
+                "y": -102.37558746337891,
+                "z": -161.44717407226562
+            },
+            "registrationPoint": {
+                "x": 1,
+                "y": 0.5,
+                "z": 0
+            },
+            "rotation": {
+                "w": -0.0094453096389770508,
+                "x": 1.52587890625e-05,
+                "y": 0.99993896484375,
+                "z": -1.52587890625e-05
+            },
+            "script": "http://headache.hungry.com/~seth/hifi/oggok-items/door1.js",
+            "shapeType": "box",
+            "type": "Model",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true,\"kinematic\":false}}"
+        },
