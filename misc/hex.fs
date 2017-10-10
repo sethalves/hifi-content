@@ -19,7 +19,7 @@ vec4 hexagon(vec2 p) {
     float e = dot(ma,
             1.0 - pf.yx + ca * (pf.x + pf.y - 1.0) + cb * (pf.yx - 2.0 * pf.xy));
 
-    // distance to center           
+    // distance to center
     p = vec2(q.x + floor(0.5 + p.y / 1.5), 4.0 * p.y / 3.0) * 0.5 + 0.5;
     float f = length((fract(p) - 0.5) * vec2(1.0, 0.85));
 
@@ -32,7 +32,7 @@ float hash1(vec2 p) {
     return fract(sin(n) * 43758.5453);
 }
 
-vec4 getProceduralColor() {
+float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float shininess) {
     vec2 uv = _position.xz + 0.5;
     vec2 pos = _position.xz * iWorldScale.xz;
     // gray
@@ -44,5 +44,7 @@ vec4 getProceduralColor() {
     col *= 1.0 + 0.15 * sin(40.0 * h.z);
     col *= 0.75 + 0.5 * h.z * n;
     col *= pow(16.0 * uv.x * (1.0 - uv.x) * uv.y * (1.0 - uv.y), 0.1);
-    return vec4(col, 1.0);
+    specular = col;
+    diffuse = col;
+    return 1.0;
 }
