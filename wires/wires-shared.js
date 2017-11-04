@@ -23,21 +23,26 @@ segmentIndexToBitValue = [1, 2, 4, 8, 16, 32];
 function extractWireValueFromModelURL(modelURL) {
     // TODO rewrite with RegExp
     if (!modelURL) {
+        print("extractWireValueFromModelURL -- " + modelURL + " --> null 0");
         return null;
     }
     var modelURLSplit = modelURL.split("/");
     if (modelURLSplit.length < 2) {
+        print("extractWireValueFromModelURL -- " + modelURL + " --> null 1");
         return null;
     }
     var modelURLFilename = modelURLSplit[ modelURLSplit.length - 1 ];
     if (!modelURLFilename.startsWith("wires-")) {
+        print("extractWireValueFromModelURL -- " + modelURL + " --> null 2");
         return null;
     }
     var modelURLLastPart = modelURLFilename.slice(6);
     var modelURLLastPartSplit = modelURLLastPart.split(".");
     if (modelURLLastPartSplit.length != 2 || modelURLLastPartSplit[1] != 'obj') {
+        print("extractWireValueFromModelURL -- " + modelURL + " --> null 3");
         return null;
     }
+    print("extractWireValueFromModelURL -- " + modelURL + " --> " + parseInt(modelURLLastPartSplit[0]));
     return parseInt(modelURLLastPartSplit[0]);
 }
 
@@ -71,12 +76,14 @@ getGridWireValue = function (gridCoords) {
     for (var j = 0; j < possibleWireIDs.length; j++) {
         var possibleWireID = possibleWireIDs[j];
         var possibleWireProps = Entities.getEntityProperties(possibleWireID, ['name', 'position', 'modelURL']);
-        if (possibleWireProps.name == 'wire' &&
-            Vec3.distance(possibleWireProps.position, worldPos) < 0.01) {
+        if (possibleWireProps.name.startsWith('wires-') &&
+            Vec3.distance(possibleWireProps.position, worldPos) < 0.001) {
             var wireValue = extractWireValueFromModelURL(possibleWireProps.modelURL);
             if (wireValue) {
                 return [possibleWireID, wireValue];
             }
+        } else {
+            print("HERE distance = " + Vec3.distance(possibleWireProps.position, worldPos));
         }
     }
 

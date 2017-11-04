@@ -47,13 +47,13 @@ module main() {
     }
 
     if (segment_4) {
-        rotate([90, 0, 0]) {
+        rotate([-90, 0, 0]) {
             cylinder(grid_size / 2, r1=wire_radius, r2=wire_radius);
         }
     }
 
     if (segment_5) {
-        rotate([-90, 0, 0]) {
+        rotate([90, 0, 0]) {
             cylinder(grid_size / 2, r1=wire_radius, r2=wire_radius);
         }
     }

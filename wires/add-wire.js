@@ -5,6 +5,7 @@
 (function() {
     var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
     var wires = Script.require(Script.resolvePath("wires-shared.js"));
+    var wireRegistrationPoints = Script.require(Script.resolvePath("wire-reg-points.js"));
 
     var wireAdder = genericTool.genericTool(
         function() { // start
@@ -52,20 +53,23 @@
         var IDAndOldValue = wires.getGridWireValue(gridCoords);
         var oldID = IDAndOldValue[0];
         var oldValue = IDAndOldValue[1];
+        var newValue = oldValue | bitValue;
         if (!oldID) {
             // var newWireID =
             Entities.addEntity({
                 name: "wires-" + gridCoords.x + "," + gridCoords.y + "," + gridCoords.z,
                 type: "Model",
-                modelURL: wires.wireValueToModelURL(bitValue),
+                modelURL: wires.wireValueToModelURL(newValue),
                 position: wires.gridCoordinatesToWorldPosition(gridCoords),
                 rotation: { "w": 1, "x": 0, "y": 0, "z": 0 },
+                registrationPoint: wireRegistrationPoints[newValue],
                 userData: JSON.stringify({
                 })
             });
         } else {
             Entities.editEntity(oldID, {
-                modelURL: wires.wireValueToModelURL(oldValue | bitValue)
+                modelURL: wires.wireValueToModelURL(newValue),
+                registrationPoint: wireRegistrationPoints[newValue]
             });
         }
     };
