@@ -1,6 +1,6 @@
 
 
-grid_size = 0.1;
+grid_size = 0.1; // should match gridSize in wires-shared.js
 wire_radius = 0.01;
 
 center = 0;

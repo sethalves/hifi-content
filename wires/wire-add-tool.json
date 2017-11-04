@@ -1,0 +1,32 @@
+{
+    "Entities": [
+        {
+            "clientOnly": 0,
+            "collidesWith": "",
+            "collisionMask": 0,
+            "color": { "blue": 0, "green": 255, "red": 0 },
+            "dimensions": { "x": 0.05, "y": 0.05, "z": 0.05 },
+            "id": "{adc349a2-c63e-4320-9219-325e86fa9f51}",
+            "name": "wire add tool tip",
+            "parentID": "{76fc5fad-49e8-44a2-b9e2-af1f9e3441ea}",
+            "position": { "x": 0, "y": 0.16, "z": 0 },
+            "rotation": { "w": 1, "x": 0, "y": 0, "z": 0 },
+            "type": "Sphere"
+        },
+        {
+            "collidesWith": "",
+            "collisionMask": 0,
+            "color": { "blue": 0, "green": 0, "red": 160 },
+            "created": "2017-09-15T18:23:27Z",
+            "dimensions": { "x": 0.03, "y": 0.3, "z": 0.03 },
+            "id": "{76fc5fad-49e8-44a2-b9e2-af1f9e3441ea}",
+            "name": "wire add tool handle",
+            "rotation": { "w": 1, "x": 0, "y": 0, "z": 0 },
+            "script": "http://headache.hungry.com/~seth/hifi/wires/add-wire.js",
+            "shape": "Cube",
+            "type": "Box",
+            "userData": "{\"grabbableKey\":{\"grabbable\":true},\"wearable\":{\"joints\":{\"LeftHand\":[{\"x\":-0.10801754891872406,\"y\":0.15447449684143066,\"z\":0.030637264251708984},{\"x\":-0.32700979709625244,\"y\":0.623619794845581,\"z\":0.28943854570388794,\"w\":0.6483823657035828}],\"RightHand\":[{\"x\":0.11031082272529602,\"y\":0.19449540972709656,\"z\":0.0405043363571167},{\"x\":0.2807741165161133,\"y\":0.6332069635391235,\"z\":0.2997693121433258,\"w\":-0.6557632088661194}]}}}"
+        }
+    ],
+    "Version": 79
+}
