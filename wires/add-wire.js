@@ -17,23 +17,35 @@
             var gridCoords = wires.worldPositionToGridCoordinates(ironTipProps.position);
 
             if (this.previousGridCoords) {
-                if (gridCoords.x == this.previousGridCoords.x - 1) {
-                    this.addWire(this.previousGridCoords, 2, gridCoords, 0);
-                }
-                if (gridCoords.x == this.previousGridCoords.x + 1) {
-                    this.addWire(this.previousGridCoords, 0, gridCoords, 2);
-                }
-                if (gridCoords.y == this.previousGridCoords.y - 1) {
-                    this.addWire(this.previousGridCoords, 5, gridCoords, 4);
-                }
-                if (gridCoords.y == this.previousGridCoords.y + 1) {
-                    this.addWire(this.previousGridCoords, 4, gridCoords, 5);
-                }
-                if (gridCoords.z == this.previousGridCoords.z - 1) {
-                    this.addWire(this.previousGridCoords, 1, gridCoords, 3);
-                }
-                if (gridCoords.z == this.previousGridCoords.z + 1) {
-                    this.addWire(this.previousGridCoords, 3, gridCoords, 1);
+                var changedAxisCount =
+                    (gridCoords.x == this.previousGridCoords.x ? 0 : 1) +
+                    (gridCoords.y == this.previousGridCoords.y ? 0 : 1) +
+                    (gridCoords.z == this.previousGridCoords.z ? 0 : 1);
+                if (changedAxisCount == 1) {
+                    if (gridCoords.x == this.previousGridCoords.x - 1) {
+                        this.addWire(this.previousGridCoords, 2);
+                        this.addWire(gridCoords, 0);
+                    }
+                    if (gridCoords.x == this.previousGridCoords.x + 1) {
+                        this.addWire(this.previousGridCoords, 0);
+                        this.addWire(gridCoords, 2);
+                    }
+                    if (gridCoords.y == this.previousGridCoords.y - 1) {
+                        this.addWire(this.previousGridCoords, 5);
+                        this.addWire(gridCoords, 4);
+                    }
+                    if (gridCoords.y == this.previousGridCoords.y + 1) {
+                        this.addWire(this.previousGridCoords, 4);
+                        this.addWire(gridCoords, 5);
+                    }
+                    if (gridCoords.z == this.previousGridCoords.z - 1) {
+                        this.addWire(this.previousGridCoords, 1);
+                        this.addWire(gridCoords, 3);
+                    }
+                    if (gridCoords.z == this.previousGridCoords.z + 1) {
+                        this.addWire(this.previousGridCoords, 3);
+                        this.addWire(gridCoords, 1);
+                    }
                 }
             }
 
@@ -42,65 +54,30 @@
         null); // stop
 
 
-    wireAdder.addWire = function (previousGridCoords, previousSegmentIndex, gridCoords, segmentIndex) {
-        // gather data about where the brush was before
-        var previousBitValue = wires.segmentIndexToBitValue[previousSegmentIndex];
-        var previousIDAndOldValue = wires.getGridWireValue(previousGridCoords);
-        var previousOldID = previousIDAndOldValue[0];
-        var previousOldValue = previousIDAndOldValue[1];
-        var previousNewValue;
-
-        // gather data about where the brush is now
+    wireAdder.addWire = function (gridCoords, segmentIndex) {
         var bitValue = wires.segmentIndexToBitValue[segmentIndex];
         var IDAndOldValue = wires.getGridWireValue(gridCoords);
         var oldID = IDAndOldValue[0];
         var oldValue = IDAndOldValue[1];
         var newValue;
 
-        if ((previousOldValue & previousBitValue > 0) && (oldValue & bitValue > 0)) {
-            // this wire segment already existed, so we're erasing
-            print("erase");
-            previousNewValue = previousOldValue & ~previousBitValue;
+        if (oldID && ((oldValue & bitValue) > 0)) {
+            // we're deleting connections
             newValue = oldValue & ~bitValue;
         } else {
-            // we're adding
-            previousNewValue = previousOldValue | previousBitValue;
+            // we're adding new connections
             newValue = oldValue | bitValue;
         }
-
-        var previousPositionData = wireRegistrationPoints[previousNewValue];
-        var previousRegistrationPoint = previousPositionData[0];
-        var previousDimensions = previousPositionData[1];
-        var previousRotation = previousPositionData[2];
 
         var positionData = wireRegistrationPoints[newValue];
         var registrationPoint = positionData[0];
         var dimensions = positionData[1];
         var rotation = positionData[2];
 
-        if (!previousOldID) {
-            // var newWireID =
-            Entities.addEntity({
-                name: "wires-" + previousGridCoords.x + "," + previousGridCoords.y + "," + previousGridCoords.z,
-                type: "Model",
-                modelURL: wires.wireValueToModelURL(previousNewValue),
-                position: wires.gridCoordinatesToWorldPosition(previousGridCoords),
-                dimensions: previousDimensions,
-                rotation: previousRotation,
-                registrationPoint: previousRegistrationPoint,
-                userData: JSON.stringify({
-                })
-            });
-        } else {
-            Entities.editEntity(previousOldID, {
-                modelURL: wires.wireValueToModelURL(previousNewValue),
-                dimensions: previousDimensions,
-                rotation: previousRotation,
-                registrationPoint: previousRegistrationPoint
-            });
-        }
-
-        if (!oldID) {
+        if (oldID && newValue === 0) {
+            // this grid point no longer has any connections
+            Entities.deleteEntity(oldID);
+        } else if (!oldID) {
             // var newWireID =
             Entities.addEntity({
                 name: "wires-" + gridCoords.x + "," + gridCoords.y + "," + gridCoords.z,

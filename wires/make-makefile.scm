@@ -40,7 +40,7 @@ exec gosh \
 (define centers (make-vector 64 #t))
 (for-each
  (lambda (n) (vector-set! centers n #f))
- (list 1 2 4 5 8 10 48))
+ (list 5 10 48)) ;; no center-circle for straight runs
 
 (let loop ((n 1))
   (cond ((<= n (+ 32 16 8 4 2 1))

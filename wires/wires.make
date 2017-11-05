@@ -1,10 +1,10 @@
 models/wires-1.stl: wires.scad
 	mkdir -p models
-	openscad -Dsegment_0=1 -o $@ $^
+	openscad -Dsegment_0=1 -Dcenter=1 -o $@ $^
 
 models/wires-2.stl: wires.scad
 	mkdir -p models
-	openscad -Dsegment_1=1 -o $@ $^
+	openscad -Dsegment_1=1 -Dcenter=1 -o $@ $^
 
 models/wires-3.stl: wires.scad
 	mkdir -p models
@@ -12,7 +12,7 @@ models/wires-3.stl: wires.scad
 
 models/wires-4.stl: wires.scad
 	mkdir -p models
-	openscad -Dsegment_2=1 -o $@ $^
+	openscad -Dsegment_2=1 -Dcenter=1 -o $@ $^
 
 models/wires-5.stl: wires.scad
 	mkdir -p models
@@ -28,7 +28,7 @@ models/wires-7.stl: wires.scad
 
 models/wires-8.stl: wires.scad
 	mkdir -p models
-	openscad -Dsegment_3=1 -o $@ $^
+	openscad -Dsegment_3=1 -Dcenter=1 -o $@ $^
 
 models/wires-9.stl: wires.scad
 	mkdir -p models
