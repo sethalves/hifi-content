@@ -22,8 +22,9 @@ exec gosh \
         (seth math-3d)
         (seth cout))
 
+(cout "// each element is: [registration-point, dimensions, rotation]\n\n")
 (cout "wireRegistrationPoints = [\n")
-(cout "    { x: 0.5, y: 0.5, z: 0.5 },\n")
+(cout "    [{ x: 0.5, y: 0.5, z: 0.5 }, { x: 1.0, y: 1.0, z: 1.0 }, { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }],\n")
 
 (let loop ((n 1))
   (cond ((<= n (+ 32 16 8 4 2 1))
@@ -37,7 +38,11 @@ exec gosh \
                         (+ (/ (- (vector3-x center)) (vector3-x dimensions)) 0.5)
                         (+ (/ (- (vector3-y center)) (vector3-y dimensions)) 0.5)
                         (+ (/ (- (vector3-z center)) (vector3-z dimensions)) 0.5))))
-             (cout (format "    { x: ~a, y: ~a, z: ~a },\n" (vector3-x reg) (vector3-y reg) (vector3-z reg)))))
+             (cout (format "    [{ x: ~a, y: ~a, z: ~a }, { x: ~a, y: ~a, z: ~a }, { x: ~a, y: ~a, z: ~a, w: ~a }],\n"
+                           (vector3-x reg) (vector3-y reg) (vector3-z reg)
+                           (vector3-x dimensions) (vector3-y dimensions) (vector3-z dimensions)
+                           0 0 0 1 ;; rotation
+                           ))))
          (loop (+ n 1)))))
 
 (cout "];\n\n")
