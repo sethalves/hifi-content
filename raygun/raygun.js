@@ -1,12 +1,12 @@
 
-/*global Entities, genericTool, Script, Vec3 */
+/*global Entities, Script, Vec3 */
 
 (function() {
-    Script.include("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
 
     var rayGun;
 
-    rayGun = genericTool(
+    rayGun = genericTool.genericTool(
         // start
         function() {
             var origin = this.pickRay.origin;
@@ -44,7 +44,7 @@
         },
         // stop
         function() {
-            Entities.deleteEntity(this.rayID);
+            // Entities.deleteEntity(this.rayID);
         }
     );
 
@@ -63,7 +63,7 @@
             parentJointIndex: -1,
             localRotation: {x: 0, y: 0, z: 0, w: 1},
             localPosition: {x: 0, y: 0.008, z: 0.12},
-            lifetime: 0.08
+            lifetime: 0.25
         });
     };
 
