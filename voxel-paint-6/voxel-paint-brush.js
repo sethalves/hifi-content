@@ -1,11 +1,11 @@
 
-/* global Entities, genericTool, Script, Vec3, Quat, PALETTE_COLORS */
+/* global Entities, Script, Vec3, Quat, PALETTE_COLORS */
 
 (function() {
-    Script.include("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
     Script.include(Script.resolvePath('voxel-paint-shared.js'));
 
-    var brush = genericTool(
+    var brush = genericTool.genericTool(
         function() { // start
             this.brush = Entities.getChildrenIDs(this.entityID)[0];
             this.previousBrushPositionSet = false;

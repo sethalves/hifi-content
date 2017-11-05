@@ -1,10 +1,10 @@
 
-/* global Entities, genericTool, Script */
+/* global Entities, Script */
 
 (function() {
-    Script.include("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
 
-    return genericTool(
+    return genericTool.genericTool(
         function() { // start
             this.brush = Entities.getChildrenIDs(this.entityID)[0];
         },
