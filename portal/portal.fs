@@ -9,6 +9,22 @@ float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float s
     vec3 v = normalize(_position.xyz);
 
     mat4 cameraView = getTransformCamera()._view;
+    cameraView[3] = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 zAxis = cameraView * vec4(0.0, 0.0, 1.0, 0.0);
+    // cancel out the roll and pitch
+    vec3 newZ, newY, newX;
+    if (zAxis.x == 0 && zAxis.z == 0.0) {
+        newZ = vec3(1.0, 0.0, 0.0);
+    } else {
+        newZ = normalize(vec3(zAxis.x, 0.0, zAxis.z));
+    }
+    newX = cross(vec3(0.0, 1.0, 0.0), newZ);
+    newY = cross(newZ, newX);
+    cameraView = mat4(
+        vec4(newX, 0.0),
+        vec4(newY, 0.0),
+        vec4(newZ, 0.0),
+        vec4(0.0, 0.0, 0.0, 1.0));
 
     v = vec3(cameraView * vec4(v, 0.0));
     float theta = atan(v.x, v.z) + PI;
