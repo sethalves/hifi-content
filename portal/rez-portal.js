@@ -3,18 +3,15 @@
 /* global MyAvatar, Entities, Vec3, Quat */
 
 (function() { // BEGIN LOCAL_SCOPE
-    var avRotEulers = Quat.safeEulerAngles(MyAvatar.orientation);
-
-    Entities.addEntity({
-        name: "Portal",
-        // lifetime: 120,
+    var sphereID = Entities.addEntity({
+        name: "Portal Sphere",
+        lifetime: 120,
         type: "Sphere",
         color: { blue: 255, green: 255, red: 255 },
         position: Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 0.2, z: -4 })),
-        // rotation: Quat.multiply(Quat.fromVec3Degrees({ x: 0, y: avRotEulers.y, z: 0 }),
-        //                         Quat.fromVec3Degrees({ x: 90, y: 0, z: 0 })),
-        rotation: Quat.fromVec3Degrees({ x: 0, y: 90, z: 0 })
-        dimensions: { x: 0.8, y: 0.8, z: 0.8 },
+        rotation: Quat.fromVec3Degrees({ x: 0, y: 0, z: 0 }),
+        dimensions: { x: 1, y: 2, z: 1 },
+        collisionless: true,
         userData: JSON.stringify({
             grabbableKey: {
                 grabbable: true
@@ -26,4 +23,19 @@
             }
         })
     });
+
+    Entities.addEntity({
+        name: "Portal Zone",
+        dimensions: { x: 1, y: 2, z: 1 },
+        script: "http://headache.hungry.com/~seth/hifi/portal/portalES.js",
+        shapeType: "box",
+        type: "Zone",
+        userData: JSON.stringify({
+            "teleportal-destination": "hifi://eschatology/"
+        }),
+        parentID: sphereID,
+        localPosition: { x: 0, y: 0, z: 0 },
+        localRotation: { x: 0, y: 0, z: 0, w: 1 }
+    });
+
 }()); // END LOCAL_SCOPE

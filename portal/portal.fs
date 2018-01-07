@@ -15,14 +15,25 @@ float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float s
     float phi = acos(v.y);
 
     vec2 uv = vec2(theta / TAU, phi / PI);
-    // diffuse = texture(iChannel0, uv).rgb;
 
-    float w = (0.5 - (uv.x)) * (iResolution.x / iResolution.y);
-    float h = 0.5 - uv.y;
-    float distanceFromCenter = sqrt(w * w + h * h);
-    float sinArg = distanceFromCenter * 10.0 - iGlobalTime * 1.2;
-    float slope = cos(sinArg) ;
-    diffuse = vec3(texture(iChannel0, uv + normalize(vec2(w, h)) * slope * 0.05));
+    vec2 warpUV = 2.0 * uv;
+
+    float d = length(warpUV);
+    float speed = 2.0;
+    vec2 st = warpUV * 0.1 + 0.2 * vec2(cos(0.071 * iGlobalTime * speed + d),
+                                        sin(0.073 * iGlobalTime * speed - d));
+
+    vec3 warpedCol = texture(iChannel0, st).xyz * 2.0;
+    float w = max(warpedCol.r, 0.85);
+
+    vec2 offset = 0.01 * cos(warpedCol.rg * 3.14159);
+    vec2 texCoord = uv + offset;
+    texCoord.y = ((texCoord.y - 0.5) / 2.0) + 0.5; // because the portal is twice as tall as wide
+    vec3 col = texture(iChannel0, texCoord).rgb * vec3(0.8, 0.8, 1.5);
+    col *= w * 1.2;
+
+    diffuse = mix(col, texture(iChannel0, texCoord).rgb, 0.5);
+
 
     return 1.0;
 }
