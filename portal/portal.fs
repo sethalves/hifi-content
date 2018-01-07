@@ -31,8 +31,7 @@ float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float s
     vec3 warpedCol = texture(iChannel0, st).xyz * 2.0;
     float w = max(warpedCol.r, 0.85);
 
-
-    vec2 offset = 0.01 * cos(warpedCol.rg * 3.14159);
+    vec2 offset = 0.01 * cos(warpedCol.rg * PI);
     vec2 texCoord = uv + offset;
     vec3 col = texture(iChannel0, texCoord).rgb * vec3(0.8, 0.8, 1.5);
     col *= w * 1.2;
