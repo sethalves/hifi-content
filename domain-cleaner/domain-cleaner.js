@@ -5,17 +5,15 @@
 
 (function() { // BEGIN LOCAL_SCOPE
 
-    Script.include("/~/system/libraries/utils.js");
-
     var DOMAIN_CLEANER_UI_URL = Script.resolvePath("domain-cleaner.html");
     var EVENT_KEY = "domain-cleaner-command";
 
-
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+
     var button = tablet.addButton({
         icon: Script.resolvePath("domain-cleaner.svg"),
         text: "Cleaner",
-        sortOrder: 15
+        sortOrder: 18
     });
 
     function saveDomain(params) {
@@ -56,28 +54,27 @@
         }
     }
 
-
-    var active = false;
+    var onCleanupScreen = false;
+    var shouldActivateButton = false;
 
     function onClicked() {
-        if (active) {
-            active = false;
+        if (onCleanupScreen) {
             tablet.gotoHomeScreen();
         } else {
-            active = true;
+            shouldActivateButton = true;
             tablet.gotoWebScreen(DOMAIN_CLEANER_UI_URL);
+            onCleanupScreen = true;
         }
     }
 
     function onScreenChanged() {
-        button.editProperties({isActive: active});
+        // for toolbar mode: change button to active when window is first openend, false otherwise.
+        button.editProperties({isActive: shouldActivateButton});
+        shouldActivateButton = false;
+        onCleanupScreen = shouldActivateButton;
     }
 
     function cleanup() {
-        if (active) {
-            active = false;
-            tablet.gotoHomeScreen();
-        }
         button.clicked.disconnect(onClicked);
         tablet.removeButton(button);
     }
