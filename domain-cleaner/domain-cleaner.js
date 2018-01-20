@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Entities, Script, Tablet, Assets, MyAvatar, Vec3 */
+/* global Entities, Script, Messages, Tablet, Assets, MyAvatar, Vec3 */
 
 (function() { // BEGIN LOCAL_SCOPE
 
@@ -11,8 +11,23 @@
     var button = tablet.addButton({
         icon: Script.resolvePath("domain-cleaner.svg"),
         text: "Cleaner",
-        sortOrder: 18
+        sortOrder: 30
     });
+
+    var handleMessages = function(channel, message, sender) {
+        if (channel !== 'Domain-Cleaner') {
+            return;
+        }
+
+        var parsedMessage = {};
+        try {
+            parsedMessage = JSON.parse(message);
+        }  catch (e) {
+            print(e);
+        }
+
+        print("got Domain-Cleaner message: " + JSON.stringify(parsedMessage));
+    };
 
     function saveDomain(params) {
         var entitiesToSave = [];
@@ -23,6 +38,10 @@
             if (props.locked) {
                 continue;
             }
+            if (props.clientOnly) {
+                continue;
+            }
+
             delete props.clientOnly;
             delete props.created;
             delete props.lastEdited;
@@ -36,14 +55,21 @@
             delete props.acceleration;
             delete props.scriptTimestamp;
             delete props.boundingBox;
-            delete props.localPosition;
-            delete props.localRotation;
-            delete props.localVelocity;
-            delete props.localAngularVelocity;
-            delete props.localDimensions;
+            delete props.Position;
+            delete props.Rotation;
+            delete props.Velocity;
+            delete props.AngularVelocity;
+            delete props.Dimensions;
             delete props.renderInfo;
 
-            entitiesToSave.push(props);
+            var saveProps = {
+                id: props.id,
+                position: props.position,
+                rotation: props.rotation,
+                dimensions: props.dimensions,
+            };
+
+            entitiesToSave.push(saveProps);
         }
 
         var data = JSON.stringify(entitiesToSave);
@@ -54,25 +80,34 @@
     }
 
     function restoreDomain(params) {
-        Assets.getMapping("/domain-cleaner-data.json", function (hash) {
-            Assets.downloadData(hash, function (data) {
-                print("done downloading...");
-                var savedEntityProps = JSON.parse(data);
-                print("done parsing...");
-                for (var i; i < savedEntityProps.length; i++) {
-                    var props = savedEntityProps[i];
-                    var entityID = props.id;
-                    delete props.id;
-                    Entities.editEntity(entityID, props);
-                }
-            });
-        });
+
+        Messages.sendMessage('Domain-Cleaner', JSON.stringify({
+            action: 'restore',
+            position: MyAvatar.position
+        }));
+
+        // Assets.getMapping("/domain-cleaner-data.json", function (hash, success) {
+        //     if (!success || hash === "") {
+        //         print("failed to get mapping for /domain-cleaner-data.json");
+        //         return;
+        //     }
+        //     Assets.downloadData("atp:" + hash, function (data) {
+        //         var savedEntityProps = JSON.parse(data);
+        //         for (var i = 0; i < savedEntityProps.length; i++) {
+        //             var props = savedEntityProps[i];
+        //             var entityID = props.id;
+        //             delete props.id;
+        //             // delete props.type;
+        //             Entities.editEntity(entityID, props);
+        //         }
+        //     });
+        // });
     }
 
     function deleteUnknown(params) {
         var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -2}));
         Entities.addEntity({
-            name: "hinge test ",
+            name: "domain-cleaner test",
             type: "Box",
             color: { blue: 200, green: 0, red: 0 },
             dimensions: { x: 0.2, y: 0.2, z: 0.1 },
@@ -133,7 +168,10 @@
     function cleanup() {
         button.clicked.disconnect(onClicked);
         tablet.removeButton(button);
+        Messages.messageReceived.disconnect(handleMessages);
     }
+
+    Messages.messageReceived.connect(handleMessages);
 
     button.clicked.connect(onClicked);
     tablet.webEventReceived.connect(onWebEventReceived);
