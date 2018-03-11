@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Entities, Messages, Assets, Script */
+/* global Entities, Messages, Assets, Script, print */
 
 (function() {
 
@@ -11,26 +11,34 @@
         print("preload...");
         self.entityID = entityID;
 
-        var props = Entities.getEntityProperties(self.entityID, ["position"]);
+        // var props = Entities.getEntityProperties(self.entityID, ["position", "rotation"]);
 
-        var entityIDs = Entities.findEntities(props.position, 1000);
-        print("I see " + entityIDs.length + " entities" + ", version 3");
+        // EntityViewer.setPosition(props.position);
+        // EntityViewer.setOrientation(props.rotation);
+        // EntityViewer.setCenterRadius(30.0);
+        // EntityViewer.queryOctree();
     };
 
-    function editEntities(lst) {
+    function recreateEntities(lst, resultingPropsList, finishedCallback) {
         var props = lst.pop();
-        var entityID = props.id;
 
+        var entityID = props.id;
         delete props.id;
 
-        Entities.editEntity(entityID, props);
+        // Entities.editEntity(entityID, props);
+        Entities.deleteEntity(entityID);
+        var newEntityID = Entities.addEntity(props);
+
+        props.id = newEntityID;
+        resultingPropsList.push(props);
 
         if (lst.length > 0) {
             Script.setTimeout(function () {
-                editEntities(lst);
+                recreateEntities(lst, resultingPropsList, finishedCallback);
             }, 100);
         } else {
             running = false;
+            finishedCallback(resultingPropsList);
         }
     }
 
@@ -41,12 +49,20 @@
             return;
         }
         running = true;
-        print("restoring saved domain...");
-        Assets.getMapping("/domain-cleaner-data.json", function (hash, success) {
-            if (!success || hash === "") {
-                print("failed to get mapping for /domain-cleaner-data.json");
+
+
+        // var props = Entities.getEntityProperties(self.entityID, ["position", "rotation"]);
+        // var entityIDs = Entities.findEntities(props.position, 1000);
+        // print("I see " + entityIDs.length + " entities" + ", version 5");
+
+        print("restoring saved domain, version 9...");
+        Assets.getMapping("/domain-cleaner-data.json", function (error, hash) {
+            print("Assets.getMapping callback: " + error + " " + hash);
+            if (error || hash === "") {
+                print("failed to get mapping for /domain-cleaner-data.json -- " + error);
                 return;
             }
+            print("calling Assets.downloadData");
             Assets.downloadData("atp:" + hash, function (data) {
                 print("download of /domain-cleaner-data.json is done...");
 
@@ -54,7 +70,18 @@
 
                 print("got " + savedEntityProps.length + " entities.");
 
-                editEntities(savedEntityProps);
+                recreateEntities(savedEntityProps, [],
+                                 function(resultingPropsList) {
+                                     // upload the new list of entities
+                                     print("resaving " + resultingPropsList.length + " entities");
+                                     var newData = JSON.stringify(resultingPropsList);
+                                     Assets.uploadData(newData, function(url, hash) {
+                                         print("save-data uploaded: " + hash);
+                                         Assets.setMapping("/domain-cleaner-data.json", hash, function() {
+                                             print("save-data mapping set");
+                                         });
+                                     });
+                                 });
             });
         });
     }

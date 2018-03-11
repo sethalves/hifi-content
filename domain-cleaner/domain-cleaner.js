@@ -29,6 +29,38 @@
         print("got Domain-Cleaner message: " + JSON.stringify(parsedMessage));
     };
 
+    function cleanProperties(props) {
+        // delete props.id;
+        delete props.clientOnly;
+        delete props.created;
+        delete props.lastEdited;
+        delete props.lastEditedBy;
+        delete props.owningAvatarID;
+        delete props.queryAACube;
+        delete props.age;
+        delete props.ageAsText;
+        delete props.naturalDimensions;
+        delete props.naturalPosition;
+        delete props.acceleration;
+        delete props.scriptTimestamp;
+        delete props.boundingBox;
+        delete props.position;
+        delete props.rotation;
+        delete props.velocity;
+        delete props.angularVelocity;
+        delete props.dimensions;
+        delete props.renderInfo;
+        // delete props.parentID;
+        // delete props.parentJointIndex;
+        // delete props.localPosition;
+        // delete props.localRotation;
+        delete props.lifetime;
+        delete props.actionData; // XXX need to handle these differently for ID remapping
+        delete props.localVelocity;
+        delete props.localAngularVelocity;
+        return props;
+    }
+
     function saveDomain(params) {
         var entitiesToSave = [];
         var entityIDs = Entities.findEntities(MyAvatar.position, 1000);
@@ -42,39 +74,24 @@
                 continue;
             }
 
-            delete props.clientOnly;
-            delete props.created;
-            delete props.lastEdited;
-            delete props.lastEditedBy;
-            delete props.owningAvatarID;
-            delete props.queryAACube;
-            delete props.age;
-            delete props.ageAsText;
-            delete props.naturalDimensions;
-            delete props.naturalPosition;
-            delete props.acceleration;
-            delete props.scriptTimestamp;
-            delete props.boundingBox;
-            delete props.Position;
-            delete props.Rotation;
-            delete props.Velocity;
-            delete props.AngularVelocity;
-            delete props.Dimensions;
-            delete props.renderInfo;
+            props = cleanProperties(props);
 
-            var saveProps = {
-                id: props.id,
-                position: props.position,
-                rotation: props.rotation,
-                dimensions: props.dimensions,
-            };
+            // var saveProps = {
+            //     id: props.id,
+            //     position: props.position,
+            //     rotation: props.rotation,
+            //     dimensions: props.dimensions,
+            // };
 
-            entitiesToSave.push(saveProps);
+            entitiesToSave.push(props);
         }
 
+        print("found " + entitiesToSave.length + " entities.");
         var data = JSON.stringify(entitiesToSave);
         Assets.uploadData(data, function(url, hash) {
+            print("save-data uploaded: " + hash);
             Assets.setMapping("/domain-cleaner-data.json", hash, function() {
+                print("save-data mapping set");
             });
         });
     }
