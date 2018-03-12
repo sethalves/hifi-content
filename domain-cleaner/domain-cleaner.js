@@ -55,9 +55,31 @@
         // delete props.localPosition;
         // delete props.localRotation;
         delete props.lifetime;
-        delete props.actionData; // XXX need to handle these differently for ID remapping
+        // delete props.actionData; // XXX need to handle these differently for ID remapping
         delete props.localVelocity;
         delete props.localAngularVelocity;
+
+        props.actions = [];
+        var actionIDs = Entities.getActionIDs(props.id);
+        for (var i = 0; i < actionIDs.length; i++) {
+            var actionArguments = Entities.getActionArguments(props.id, actionIDs[i]);
+
+            if (actionArguments.type == "none" ||
+                actionArguments.type == "hold" ||
+                actionArguments.type == "fargrab") {
+                continue;
+            }
+
+            delete actionArguments[":active"];
+            delete actionArguments["::active"];
+            delete actionArguments[":motion-type"];
+            delete actionArguments["::motion-type"];
+            delete actionArguments.isMine;
+
+            props.actions.push(actionArguments);
+            print("ACTION -- " + JSON.stringify(actionArguments));
+        }
+
         return props;
     }
 
@@ -75,14 +97,6 @@
             }
 
             props = cleanProperties(props);
-
-            // var saveProps = {
-            //     id: props.id,
-            //     position: props.position,
-            //     rotation: props.rotation,
-            //     dimensions: props.dimensions,
-            // };
-
             entitiesToSave.push(props);
         }
 
