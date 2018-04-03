@@ -15,7 +15,7 @@ HALF_DEPTH=0.04
 LIBS='(foldling command-line)' '(seth obj-model)' '(seth scad-model)' '(srfi 27)'
 
 
-all: clock.obj hour-hand.obj minute-hand.obj clock-face.png
+all: clock.obj hour-hand.obj minute-hand.obj second-hand.obj clock-face.png
 
 
 clock.stl: clock.scad
@@ -43,6 +43,7 @@ hour-hand.obj: hour-hand.stl
 
 # $(WAVEFRONT_OBJ_TOOL) --hull -n -c $^ -o $@
 
+### minute hand
 minute-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
 	./$< --length 0.4 > $@
 
@@ -52,6 +53,19 @@ minute-hand.stl: minute-hand.scad
 minute-hand.obj: minute-hand.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
 
+
+### second hand
+second-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
+	./$< --length 0.41 --base-width 0.01 > $@
+
+second-hand.stl: second-hand.scad
+	openscad -o $@ $^
+
+second-hand.obj: second-hand.stl
+	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
+
+
+### clock face
 clock-face-blank.png:
 	pbmmake -white 480 480 | pnmtopng > $@
 
@@ -83,16 +97,21 @@ minute-hand.obj.gz: minute-hand.obj
 	rm -f $@
 	gzip -9 $<
 
+second-hand.obj.gz: second-hand.obj
+	rm -f $@
+	gzip -9 $<
 
-upload-atp: clock.obj.gz clock.mtl clock-face.png hour-hand.obj.gz minute-hand.obj.gz clock.js
+
+upload-atp: clock.obj.gz clock.mtl clock-face.png hour-hand.obj.gz minute-hand.obj.gz second-hand.obj.gz clock.js
 	- $(ATP_CLIENT) -T clock.obj.gz atp://eschatology/clock/clock.obj.gz
 	- $(ATP_CLIENT) -T clock.mtl atp://eschatology/clock/clock.mtl
 	- $(ATP_CLIENT) -T clock-face.png atp://eschatology/clock/clock-face.png
 	- $(ATP_CLIENT) -T hour-hand.obj.gz atp://eschatology/clock/hour-hand.obj.gz
 	- $(ATP_CLIENT) -T minute-hand.obj.gz atp://eschatology/clock/minute-hand.obj.gz
+	- $(ATP_CLIENT) -T second-hand.obj.gz atp://eschatology/clock/second-hand.obj.gz
 	- $(ATP_CLIENT) -T clock.js atp://eschatology/clock/clock.js
 
-upload: clock.obj.gz clock.mtl clock-face.png rez-clock.js hour-hand.obj.gz minute-hand.obj.gz clock.js
+upload: clock.obj.gz clock.mtl clock-face.png rez-clock.js hour-hand.obj.gz minute-hand.obj.gz second-hand.obj.gz clock.js
 	mkdir -p clock
 	cp $^ clock/
 	rsync --delete -avP clock/ headache.hungry.com:public_html/hifi/clock/
@@ -112,9 +131,10 @@ link-libs: very-clean
 
 clean:
 	rm -f *~ clock.stl clock-untextured.obj clock-offset.obj clock.obj
-	rm -f clock.obj.gz hour-hand.obj.gz minute-hand.obj.gz
+	rm -f clock.obj.gz hour-hand.obj.gz minute-hand.obj.gz second-hand.obj.gz
 	rm -f hour-hand.stl hour-hand.obj
 	rm -f minute-hand.stl minute-hand.obj
+	rm -f second-hand.stl second-hand.obj
 	rm -rf clock
 	rm -f clock-face-blank.png clock-face.png
 	rm -f clock.md clock.html
