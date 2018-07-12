@@ -7,7 +7,6 @@
 
     var brush = genericTool.genericTool(
         function() { // start
-
             this.brush = Entities.getChildrenIDs(this.entityID)[0];
             this.previousBrushPositionSet = false;
         },
@@ -24,7 +23,10 @@
             var ids = this.addPolyVoxIfNeeded(brushProps.position, editSphereRadius);
 
             for (var i = 0; i < ids.length; i++) {
-                Entities.setVoxelCapsule(ids[i], this.previousBrushPosition, brushProps.position, editSphereRadius, 255);
+                if (Entities.setVoxelCapsule(ids[i], this.previousBrushPosition, brushProps.position, editSphereRadius, 255)) {
+                    // Entities.editEntity(ids[i], { lifetime: 28800 }); // 8 hours
+                    Entities.editEntity(ids[i], { lifetime: 200 });
+                }
             }
 
             this.previousBrushPosition = brushProps.position;
@@ -35,10 +37,20 @@
     brush.sliceSize = {x: 0.04, y: 0.04, z: 0.04}; // dimensions of one voxel
     brush.polyVoxSize = Vec3.multiply(brush.sliceSize, brush.voxelVolumeSize); // dimensions of one polyvox entity
     brush.showPolyVoxes = true;
-    brush.propsCache = {};
     brush.previousBrushPosition = null;
     brush.previousBrushPositionSet = false;
     brush.polyVoxes = {};
+
+
+    brush.getPolyVoxProperties = function (polyVoxID) {
+        var polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData", "age", "lifetime"]);
+        if (polyVoxProps.name != "voxel paint") {
+            return null;
+        }
+        polyVoxProps.expires = Date.now() + polyVoxProps.lifetime - polyVoxProps.age;
+        return polyVoxProps;
+    };
+
 
     brush.worldPositionToPolyVoxIndex = function (worldPosition) {
         return {
@@ -122,31 +134,30 @@
 
 
     brush.addPolyVoxIfNeeded = function (brushPosition, editSphereRadius) {
+        this.polyVoxes = {};
         var halfSliceSize = Vec3.multiply(this.sliceSize, 0.5);
         var sliceRadius = Math.sqrt(Vec3.dot(halfSliceSize, halfSliceSize));
         var capsuleLength = 2 * editSphereRadius + Vec3.length(Vec3.subtract(brushPosition, this.previousBrushPosition));
-        var capsuleCenter = Vec3.multiply(Vec3.sum(brushPosition, this.previousBrushPosition), 0.5);
+        var findCenter = Vec3.multiply(Vec3.sum(brushPosition, this.previousBrushPosition), 0.5);
+        var findRadius = capsuleLength + sliceRadius + 0.05;
 
-        var ids = Entities.findEntities(capsuleCenter, capsuleLength + sliceRadius + 0.05);
+        var ids = Entities.findEntities(findCenter, findRadius);
+
+        var now = Date.now();
 
         // find all the current polyvox entities
         var withThisColorIDs = [];
         for (var i = 0; i < ids.length; i++) {
             var possiblePolyVoxID = ids[i];
 
-            var polyVoxProps;
-            if (possiblePolyVoxID in this.propsCache) {
-                polyVoxProps = this.propsCache[possiblePolyVoxID];
-            } else {
-                polyVoxProps = Entities.getEntityProperties(possiblePolyVoxID, ['name', 'position', 'userData']);
-                if (polyVoxProps.name == "voxel paint") {
-                    this.propsCache[possiblePolyVoxID] = polyVoxProps;
-                } else {
-                    polyVoxProps = null;
-                }
+            var polyVoxProps = this.getPolyVoxProperties(possiblePolyVoxID);
+            if (!polyVoxProps) {
+                continue;
             }
 
-            if (!polyVoxProps) {
+            if (polyVoxProps.expires - now < 2) {
+                // this one is too close to expiring, avoid a race
+                Entities.deleteEntity(possiblePolyVoxID);
                 continue;
             }
 
@@ -165,20 +176,19 @@
         var lowWorldX = this.previousBrushPosition.x - editSphereRadius;
         var lowWorldY = this.previousBrushPosition.y - editSphereRadius;
         var lowWorldZ = this.previousBrushPosition.z - editSphereRadius;
-        lowWorldX = Math.floor(lowWorldX, brushPosition.x - editSphereRadius);
-        lowWorldY = Math.floor(lowWorldY, brushPosition.y - editSphereRadius);
-        lowWorldZ = Math.floor(lowWorldZ, brushPosition.z - editSphereRadius);
+        lowWorldX = Math.min(lowWorldX, brushPosition.x - editSphereRadius);
+        lowWorldY = Math.min(lowWorldY, brushPosition.y - editSphereRadius);
+        lowWorldZ = Math.min(lowWorldZ, brushPosition.z - editSphereRadius);
 
         var highWorldX = this.previousBrushPosition.x + editSphereRadius;
         var highWorldY = this.previousBrushPosition.y + editSphereRadius;
         var highWorldZ = this.previousBrushPosition.z + editSphereRadius;
-        highWorldX = Math.ceil(highWorldX, brushPosition.x + editSphereRadius);
-        highWorldY = Math.ceil(highWorldY, brushPosition.y + editSphereRadius);
-        highWorldZ = Math.ceil(highWorldZ, brushPosition.z + editSphereRadius);
+        highWorldX = Math.max(highWorldX, brushPosition.x + editSphereRadius);
+        highWorldY = Math.max(highWorldY, brushPosition.y + editSphereRadius);
+        highWorldZ = Math.max(highWorldZ, brushPosition.z + editSphereRadius);
 
         var lowWorld = { x: lowWorldX, y: lowWorldY, z: lowWorldZ };
         var highWorld = { x: highWorldX, y: highWorldY, z: highWorldZ };
-
         var lowIndex = this.worldPositionToPolyVoxIndex(lowWorld);
         var highIndex = this.worldPositionToPolyVoxIndex(highWorld);
 
@@ -235,7 +245,7 @@
             type: "PolyVox",
             name: "voxel paint",
             // offset each color slightly to try to avoid z-buffer fighting
-            position: Vec3.sum(polyVoxPosition, Vec3.multiply({x: c, y: c, z: c}, 0.002)),
+            position: Vec3.sum(polyVoxPosition, Vec3.multiply({ x: c, y: c, z: c }, 0.002)),
             dimensions: this.polyVoxSize,
             voxelVolumeSize: { x: this.voxelVolumeSize, y: this.voxelVolumeSize, z: this.voxelVolumeSize },
             voxelSurfaceStyle: 0,
@@ -244,8 +254,7 @@
             yTextureURL: xyzTextures[1],
             zTextureURL: xyzTextures[2],
             userData: JSON.stringify({color: c}),
-            // lifetime: 28800.0 // 8 hours
-            lifetime: 200.0
+            lifetime: 10
         });
 
         this.setPolyVox(x, y, z, c, newPolyVoxID);
@@ -255,10 +264,10 @@
                 name: "voxel paint debug cube",
                 type: "Model",
                 modelURL: "http://headache.hungry.com/~seth/hifi/voxel-paint-7/unitBoxTransparent.fbx",
-                position: polyVoxPosition,
+                localPosition: { x: 0, y: 0, z: 0 },
                 dimensions: this.polyVoxSize,
                 collisionless: true,
-                lifetime: 200.0
+                parentID: newPolyVoxID
             });
         }
 
