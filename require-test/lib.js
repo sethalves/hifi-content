@@ -7,10 +7,11 @@ function libContents(fuh) {
 
     Tool.prototype = {
 
-        fuh: fuh,
+        // fuh: fuh,
 
         doSomething: function () {
-            print("QQQQ something: " + this.fuh);
+            // print("QQQQ something: " + this.fuh);
+            print("QQQQ something: " + fuh);
         }
 
     };

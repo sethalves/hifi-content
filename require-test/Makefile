@@ -4,7 +4,7 @@
 
 all:
 
-upload: lib.js prog.js
+upload: lib.js prog.js es.js
 	rm -rf require-test
 	mkdir require-test
 	cp $^ require-test/
