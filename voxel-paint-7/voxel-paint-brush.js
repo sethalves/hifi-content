@@ -24,8 +24,7 @@
 
             for (var i = 0; i < ids.length; i++) {
                 if (Entities.setVoxelCapsule(ids[i], this.previousBrushPosition, brushProps.position, editSphereRadius, 255)) {
-                    // Entities.editEntity(ids[i], { lifetime: 28800 }); // 8 hours
-                    Entities.editEntity(ids[i], { lifetime: 200 });
+                    Entities.editEntity(ids[i], { lifetime: this.polyVoxLifetime });
                 }
             }
 
@@ -41,6 +40,9 @@
     brush.previousBrushPositionSet = false;
     brush.polyVoxes = {};
 
+    brush.polyVoxLifetime = 200;
+    // brush.polyVoxLifetime = 28800; // 8 hours
+
 
     brush.getPolyVoxProperties = function (polyVoxID) {
         var polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData", "age", "lifetime"]);
@@ -54,7 +56,6 @@
 
     brush.worldPositionToPolyVoxIndex = function (worldPosition) {
         return {
-            // XXX should use trunc -- this assumes positive space
             x: Math.floor(worldPosition.x / this.polyVoxSize.x),
             y: Math.floor(worldPosition.y / this.polyVoxSize.y),
             z: Math.floor(worldPosition.z / this.polyVoxSize.z)
