@@ -1,5 +1,5 @@
 
-/* global Entities, Script, Vec3, PALETTE_COLORS */
+/* global Entities, Script, Vec3, Quat, PALETTE_COLORS */
 
 (function() {
     var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
@@ -43,9 +43,9 @@
     brush.polyVoxLifetime = 200;
     // brush.polyVoxLifetime = 28800; // 8 hours
 
-
     brush.getPolyVoxProperties = function (polyVoxID) {
-        var polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData", "age", "lifetime"]);
+        var polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData",
+                                                                    "age", "lifetime", "parentID"]);
         if (polyVoxProps.name != "voxel paint") {
             return null;
         }
@@ -54,22 +54,55 @@
     };
 
 
-    brush.worldPositionToPolyVoxIndex = function (worldPosition) {
+    brush.addNewAether = function (worldAetherPosition) {
+        var aetherID = Entities.addEntity({
+            color: { red: 0, green: 0, blue: 0 },
+            dimensions: { x: 1, y: 1, z: 1 },
+            name: "voxel paint aether",
+            position: worldAetherPosition,
+            rotation: { x: 0, y: 0, z: 0, w: 1 },
+            shape: "Cube",
+            type: "Box",
+            collidesWith: "",
+            collisionMask: 0,
+            collisionless: true,
+            visible: false,
+            userData: JSON.stringify({ grabbableKey: {grabbable: true} })
+        });
+        return aetherID;
+    };
+
+
+    brush.worldPositionToPolyVoxIndex = function (brushWorldPosition, aetherProps) {
+        var brushOffsetFromAether = Vec3.subtract(brushWorldPosition, aetherProps.position);
+        var aetherToWorldRotation = aetherProps.rotation;
+        var worldToAetherRotation = Quat.inverse(aetherToWorldRotation);
+        var brushPositionInAetherFrame = Vec3.multiplyQbyV(worldToAetherRotation, brushOffsetFromAether);
         return {
-            x: Math.floor(worldPosition.x / this.polyVoxSize.x),
-            y: Math.floor(worldPosition.y / this.polyVoxSize.y),
-            z: Math.floor(worldPosition.z / this.polyVoxSize.z)
+            x: Math.floor(brushPositionInAetherFrame.x / this.polyVoxSize.x),
+            y: Math.floor(brushPositionInAetherFrame.y / this.polyVoxSize.y),
+            z: Math.floor(brushPositionInAetherFrame.z / this.polyVoxSize.z)
         };
     };
 
 
-    brush.polyVoxIndextoWorldPosition = function(polyVoxIndex) {
-        return {
+    brush.polyVoxIndextoLocalPosition = function(polyVoxIndex, aetherProps) {
+        var brushPositionInAetherFrame = {
             x: polyVoxIndex.x * this.polyVoxSize.x + (this.polyVoxSize.x / 2.0),
             y: polyVoxIndex.y * this.polyVoxSize.y + (this.polyVoxSize.y / 2.0),
             z: polyVoxIndex.z * this.polyVoxSize.z + (this.polyVoxSize.z / 2.0)
         };
+        return brushPositionInAetherFrame;
     };
+
+
+    // brush.polyVoxIndextoWorldPosition = function(polyVoxIndex, aetherProps) {
+    //     var brushPositionInAetherFrame = brush.polyVoxIndextoLocalPosition(polyVoxIndex, aetherProps);
+    //     var aetherToWorldRotation = aetherProps.rotation;
+    //     var brushOffsetFromAether = Vec3.multiplyQbyV(aetherToWorldRotation, brushPositionInAetherFrame);
+    //     var brushWorldPosition = Vec3.sum(aetherProps.position, brushOffsetFromAether);
+    //     return brushWorldPosition;
+    // };
 
 
     brush.getPolyVox = function (x, y, z, c) {
@@ -148,6 +181,7 @@
 
         // find all the current polyvox entities
         var withThisColorIDs = [];
+        var aetherID = null;
         for (var i = 0; i < ids.length; i++) {
             var possiblePolyVoxID = ids[i];
 
@@ -162,6 +196,10 @@
                 continue;
             }
 
+            if (!aetherID) {
+                aetherID = polyVoxProps.parentID;
+            }
+
             var userData = JSON.parse(polyVoxProps.userData);
             var cFind = userData.color;
 
@@ -169,9 +207,22 @@
                 continue;
             }
 
-            var polyVoxIndex = this.worldPositionToPolyVoxIndex(polyVoxProps.position);
+            if (polyVoxProps.parentID != aetherID) {
+                continue;
+            }
+
+            var polyVoxIndex = userData.index;
             this.setPolyVox(polyVoxIndex.x, polyVoxIndex.y, polyVoxIndex.z, cFind, possiblePolyVoxID);
             withThisColorIDs.push(possiblePolyVoxID);
+        }
+
+        var aetherProps;
+        if (!aetherID) {
+            aetherID = this.addNewAether(brushPosition);
+            aetherProps = { id: aetherID, position: brushPosition, rotation: { x: 0, y: 0, z: 0, w: 1 } };
+        } else {
+            aetherProps = Entities.getEntityProperties(aetherID, ["position", "rotation"]);
+            aetherProps.id = aetherID;
         }
 
         var lowWorldX = this.previousBrushPosition.x - editSphereRadius;
@@ -190,15 +241,19 @@
 
         var lowWorld = { x: lowWorldX, y: lowWorldY, z: lowWorldZ };
         var highWorld = { x: highWorldX, y: highWorldY, z: highWorldZ };
-        var lowIndex = this.worldPositionToPolyVoxIndex(lowWorld);
-        var highIndex = this.worldPositionToPolyVoxIndex(highWorld);
+
+        var lowIndex = this.worldPositionToPolyVoxIndex(lowWorld, aetherProps);
+        var highIndex = this.worldPositionToPolyVoxIndex(highWorld, aetherProps);
 
         this.dirtyNeighbors = {};
+
+        // print("QQQQ lowWorld = " + JSON.stringify(lowWorld) + ", highWorld = " + JSON.stringify(highWorld));
+        // print("QQQQ lowIndex = " + JSON.stringify(lowIndex) + ", highIndex = " + JSON.stringify(highIndex));
 
         for (var x = lowIndex.x; x <= highIndex.x; x++) {
             for (var y = lowIndex.y; y <= highIndex.y; y++) {
                 for (var z = lowIndex.z; z <= highIndex.z; z++) {
-                    var newID = this.addPolyVox(x, y, z, this.color);
+                    var newID = this.addPolyVox(x, y, z, aetherProps, this.color);
                     if (newID) {
                         withThisColorIDs.push(newID);
                         // keep track of which PolyVoxes need their neighbors hooked up
@@ -228,13 +283,13 @@
     };
 
 
-    brush.addPolyVox = function (x, y, z, c) {
+    brush.addPolyVox = function (x, y, z, aetherProps, c) {
         if (this.getPolyVox(x, y, z, c)) {
             // we already have a polyvox for this position and color
             return null;
         }
 
-        var polyVoxPosition = this.polyVoxIndextoWorldPosition({ x: x, y: y, z: z });
+        var polyVoxLocalPosition = this.polyVoxIndextoLocalPosition({ x: x, y: y, z: z }, aetherProps);
 
         var xyzTextures = typeof PALETTE_COLORS[c].textures === 'string' ? [
             PALETTE_COLORS[c].textures,
@@ -242,11 +297,17 @@
             PALETTE_COLORS[c].textures
         ] : PALETTE_COLORS[c].textures;
 
+        // offset each color slightly to try to avoid z-buffer fighting
+        var colorOffset = Vec3.multiply({ x: c, y: c, z: c }, 0.002);
+
+        // print("QQQQ aetherProps.position = " + JSON.stringify(aetherProps.position) +
+        //       ", localPosition = " + JSON.stringify(Vec3.sum(polyVoxLocalPosition, colorOffset)));
+
         var newPolyVoxID = Entities.addEntity({
             type: "PolyVox",
             name: "voxel paint",
-            // offset each color slightly to try to avoid z-buffer fighting
-            position: Vec3.sum(polyVoxPosition, Vec3.multiply({ x: c, y: c, z: c }, 0.002)),
+            localPosition: Vec3.sum(polyVoxLocalPosition, colorOffset),
+            parentID: aetherProps.id,
             dimensions: this.polyVoxSize,
             voxelVolumeSize: { x: this.voxelVolumeSize, y: this.voxelVolumeSize, z: this.voxelVolumeSize },
             voxelSurfaceStyle: 0,
@@ -254,7 +315,11 @@
             xTextureURL: xyzTextures[0],
             yTextureURL: xyzTextures[1],
             zTextureURL: xyzTextures[2],
-            userData: JSON.stringify({color: c}),
+            userData: JSON.stringify({
+                color: c,
+                grabbableKey: {grabbable: true},
+                index: { x: x, y: y, z: z }
+            }),
             lifetime: 10
         });
 
