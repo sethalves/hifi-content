@@ -33,7 +33,7 @@
         null); // stop
 
     brush.voxelVolumeSize = 16;
-    brush.sliceSize = {x: 0.01, y: 0.01, z: 0.01}; // dimensions of one voxel
+    brush.sliceSize = {x: 0.04, y: 0.04, z: 0.04}; // dimensions of one voxel
     brush.polyVoxSize = Vec3.multiply(brush.sliceSize, brush.voxelVolumeSize); // dimensions of one polyvox entity
     brush.showPolyVoxes = false;
     brush.previousBrushPosition = null;
@@ -59,7 +59,7 @@
         var colorAngleStep = (360.0 * (3/4)) / (colorCount - 1);
         var up = { x: 0, y: 1, z: 0 };
         var brushVec = Vec3.normalize(Vec3.subtract(brushProps.position, handleProps.position));
-        var initialMenuItemVec = Vec3.multiply(Vec3.cross(up, brushVec), 0.2);
+        var initialMenuItemVec = Vec3.multiply(Vec3.normalize(Vec3.cross(up, brushVec)), 0.2);
         var menuRotationVec = Vec3.normalize(Vec3.cross(initialMenuItemVec, up));
 
         for (var menuItemIndex = 0; menuItemIndex < colorCount; menuItemIndex++) {
