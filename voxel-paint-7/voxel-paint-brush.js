@@ -23,10 +23,22 @@
             var ids = this.addPolyVoxIfNeeded(brushProps.position, editSphereRadius);
 
             for (var i = 0; i < ids.length; i++) {
-                if (Entities.setVoxelCapsule(ids[i], this.previousBrushPosition, brushProps.position, editSphereRadius, 255)) {
-                    Entities.editEntity(ids[i], { lifetime: this.polyVoxLifetime });
-                }
+                Entities.setVoxelCapsule(ids[i], this.previousBrushPosition, brushProps.position, editSphereRadius, 255);
             }
+
+            // for (var i = 0; i < ids.length; i++) {
+            //     if (Entities.setVoxelCapsule(ids[i], this.previousBrushPosition, brushProps.position, editSphereRadius, 255)) {
+            //         this.editPolyVox(ids[i], { lifetime: this.polyVoxLifetime });
+            //         var keepPolyVoxProps = this.getPolyVoxProperties(ids[i]);
+            //         // keep the neighbors also
+            //         this.editPolyVox(keepPolyVoxProps.xNNeighborID, { lifetime: this.polyVoxLifetime });
+            //         this.editPolyVox(keepPolyVoxProps.xPNeighborID, { lifetime: this.polyVoxLifetime });
+            //         this.editPolyVox(keepPolyVoxProps.yNNeighborID, { lifetime: this.polyVoxLifetime });
+            //         this.editPolyVox(keepPolyVoxProps.yPNeighborID, { lifetime: this.polyVoxLifetime });
+            //         this.editPolyVox(keepPolyVoxProps.zNNeighborID, { lifetime: this.polyVoxLifetime });
+            //         this.editPolyVox(keepPolyVoxProps.zPNeighborID, { lifetime: this.polyVoxLifetime });
+            //     }
+            // }
 
             this.previousBrushPosition = brushProps.position;
         },
@@ -50,8 +62,8 @@
 
     brush.showMenu = function () {
         this.menuOpen = true;
-        var brushProps = Entities.getEntityProperties(this.brush, ["position", "rotation", "dimensions", "userData"]);
-        var handleProps = Entities.getEntityProperties(this.entityID, ["position", "rotation", "dimensions", "userData"]);
+        var brushProps = Entities.getEntityProperties(this.brush, ["position", "dimensions"]);
+        var handleProps = Entities.getEntityProperties(this.entityID, ["position"]);
 
         var colorCount = PALETTE_COLORS.length + 1; // +1 for erase
 
@@ -59,7 +71,8 @@
         var colorAngleStep = (360.0 * (3/4)) / (colorCount - 1);
         var up = { x: 0, y: 1, z: 0 };
         var brushVec = Vec3.normalize(Vec3.subtract(brushProps.position, handleProps.position));
-        var initialMenuItemVec = Vec3.multiply(Vec3.normalize(Vec3.cross(up, brushVec)), 0.2);
+        var menuRadius = brushProps.dimensions.x / 2 + 0.2;
+        var initialMenuItemVec = Vec3.multiply(Vec3.normalize(Vec3.cross(up, brushVec)), menuRadius);
         var menuRotationVec = Vec3.normalize(Vec3.cross(initialMenuItemVec, up));
 
         for (var menuItemIndex = 0; menuItemIndex < colorCount; menuItemIndex++) {
@@ -84,7 +97,7 @@
         }
 
         this.equipContinued = function (id, params) {
-            var brushProps = Entities.getEntityProperties(brush.brush, ["position", "rotation", "dimensions", "userData"]);
+            var brushProps = Entities.getEntityProperties(brush.brush, ["position", "userData"]);
             for (var j = 0; j < brush.menuItemWorldPosition.length; j++) {
                 var distanceFromMenuItem = Vec3.distance(brushProps.position, brush.menuItemWorldPosition[j]);
                 if (distanceFromMenuItem < 0.03) {
@@ -144,14 +157,45 @@
     };
 
 
+    brush.polyVoxCache = {};
+
     brush.getPolyVoxProperties = function (polyVoxID) {
-        var polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData",
-                                                                    "age", "lifetime", "parentID"]);
-        if (polyVoxProps.name != "voxel paint") {
+        var polyVoxProps = brush.polyVoxCache[polyVoxID];
+        if (!polyVoxProps) {
+            polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData",
+                                                                    "age", "lifetime", "parentID",
+                                                                    "xNNeighborID", "xPNeighborID", "yNNeighborID",
+                                                                    "yPNeighborID", "zNNeighborID", "zPNeighborID"]);
+            if (polyVoxProps.name != "voxel paint") {
+                return null;
+            }
+            brush.polyVoxCache[polyVoxID] = polyVoxProps;
+        }
+
+        var now = Date.now();
+        polyVoxProps.expires = now + polyVoxProps.lifetime - polyVoxProps.age;
+        if (polyVoxProps.expires - now < 2) {
+            // try to avoid races
+            delete brush.polyVoxProps[polyVoxID];
+            Entities.deleteEntity(polyVoxID);
             return null;
         }
-        polyVoxProps.expires = Date.now() + polyVoxProps.lifetime - polyVoxProps.age;
+
         return polyVoxProps;
+    };
+
+
+    brush.editPolyVox = function (polyVoxID, editProps) {
+        var polyVoxProps = brush.polyVoxCache[polyVoxID];
+        if (polyVoxProps) {
+            for (var editKey in editProps) {
+                if (editProps.hasOwnProperty(editKey)) {
+                    polyVoxProps[editKey] = editProps[editKey];
+                }
+            }
+            brush.polyVoxCache[polyVoxID] = polyVoxProps;
+        }
+        Entities.editEntity(polyVoxID, editProps);
     };
 
 
@@ -264,7 +308,7 @@
             if (zPNeighborID) {
                 neighborProperties.zPNeighborID = zPNeighborID;
             }
-            Entities.editEntity(polyVoxID, neighborProperties);
+            this.editPolyVox(polyVoxID, neighborProperties);
         }
     };
 
@@ -277,9 +321,7 @@
         var findCenter = Vec3.multiply(Vec3.sum(brushPosition, this.previousBrushPosition), 0.5);
         var findRadius = capsuleLength + sliceRadius + 0.05;
 
-        var ids = Entities.findEntities(findCenter, findRadius * 2);
-
-        var now = Date.now();
+        var ids = Entities.findEntities(findCenter, findRadius);
 
         // find all the current polyvox entities
         var withThisColorIDs = [];
@@ -289,12 +331,6 @@
 
             var polyVoxProps = this.getPolyVoxProperties(possiblePolyVoxID);
             if (!polyVoxProps) {
-                continue;
-            }
-
-            if (polyVoxProps.expires - now < 2) {
-                // this one is too close to expiring, avoid a race
-                Entities.deleteEntity(possiblePolyVoxID);
                 continue;
             }
 
@@ -417,7 +453,8 @@
                 grabbableKey: {grabbable: true},
                 index: { x: x, y: y, z: z }
             }),
-            lifetime: 10
+            // lifetime: 10
+            lifetime: this.polyVoxLifetime
         });
 
         this.setPolyVox(x, y, z, c, newPolyVoxID);
