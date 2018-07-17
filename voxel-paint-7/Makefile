@@ -25,12 +25,11 @@ textures/color-%.png:
 #	ppmmake rgb:0/0/0 1 1 |	/usr/bin/pnmtopng > $@
 
 
-upload: voxel-paint-brush.js voxel-paint-eraser.js unitBoxTransparent.fbx \
-		voxel-paint-shared.js voxel-paint-export.js ${TEXTURES}
+upload: voxel-paint-brush.js unitBoxTransparent.fbx voxel-paint-shared.js voxel-paint-export.js ${TEXTURES}
 	rm -rf voxel-paint
 	mkdir -p voxel-paint
 	cp voxel-paint-brush.js voxel-paint-export.js voxel-paint/
-	cp voxel-paint-eraser.js unitBoxTransparent.fbx voxel-paint-shared.js voxel-paint/
+	cp unitBoxTransparent.fbx voxel-paint-shared.js voxel-paint/
 	mkdir -p voxel-paint/textures
 	cp ${TEXTURES} voxel-paint/textures
 	rsync --delete -avP voxel-paint/ headache.hungry.com:public_html/hifi/voxel-paint-7/
