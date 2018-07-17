@@ -40,7 +40,7 @@
         null); // stop
 
     brush.voxelVolumeSize = 16;
-    brush.sliceSize = {x: 0.04, y: 0.04, z: 0.04}; // dimensions of one voxel
+    brush.sliceSize = {x: 0.02, y: 0.02, z: 0.02}; // dimensions of one voxel
     brush.polyVoxSize = Vec3.multiply(brush.sliceSize, brush.voxelVolumeSize); // dimensions of one polyvox entity
     brush.showPolyVoxes = false;
     brush.previousBrushPosition = null;
@@ -52,6 +52,7 @@
     brush.equipContinued = null;
     brush.eraserEnabled = false;
     brush.activatedMenuItem = null;
+    brush.menuItemActivationFuncs = [];
 
     brush.polyVoxLifetime = 200;
     // brush.polyVoxLifetime = 28800; // 8 hours
@@ -63,7 +64,7 @@
         var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions", "userData"]);
         var handleProps = Entities.getEntityProperties(this.entityID, ["position"]);
 
-        var menuItemCount = PALETTE_COLORS.length + 1; // +1 for erase
+        var menuItemCount = PALETTE_COLORS.length + 3; // +3 for erase, bigger, smaller
 
         // place menu-items around the circle
         var menuItemAngleStep = 360.0 / menuItemCount;
@@ -78,6 +79,7 @@
         this.menuActivateRadius = this.menuItemSize / 2;
 
         var menuItemCreationFuncs = [];
+        this.menuItemActivationFuncs = [];
         var menuItemIndex = 0;
 
         // color change menu items
@@ -91,23 +93,79 @@
                     color: PALETTE_COLORS[menuItemIndex].color,
                     ignoreRayIntersection: true
                 });
-
                 brush.menuOverlayIDs.push(colorOverlayID);
+            });
+            this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
+                var brushUserData = JSON.parse(brushProps.userData);
+                brushUserData.color = menuItemIndex;
+                Entities.editEntity(brush.brushHeadID, {
+                    userData: JSON.stringify(brushUserData),
+                    color: PALETTE_COLORS[menuItemIndex].color,
+                    alpha: 1.0
+                });
+                brush.eraserEnabled = false;
             });
         }
 
+        var baseTextOverlayProps = {
+            alpha: 0.9,
+            dimensions: { x: brush.menuItemSize, y: brush.menuItemSize },
+            lineHeight: brush.menuItemSize / 2,
+            leftMargin: 0,
+            topMargin: 0,
+            rightMargin: 0,
+            bottomMargin: 0,
+            isFacingAvatar: true,
+            ignoreRayIntersection: true
+        };
+
         // erase menu item
         menuItemCreationFuncs.push(function () {
-            var eraseOverlayID = Overlays.addOverlay("sphere", {
-                position: menuItemWorldPos,
-                alpha: 0.9,
-                dimensions: brush.menuItemSize,
-                solid: true,
-                color: { red: 0, green: 0, blue: 0 },
-                ignoreRayIntersection: true
-            });
+            var eraseOverlayProps = baseTextOverlayProps;
+            eraseOverlayProps.text = "del";
+            eraseOverlayProps.position = menuItemWorldPos;
+            var eraseOverlayID = Overlays.addOverlay("text3d", eraseOverlayProps);
             brush.menuOverlayIDs.push(eraseOverlayID);
         });
+        this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
+            brush.eraserEnabled = true;
+            Entities.editEntity(brush.brushHeadID, {
+                color: { red: 0, green: 0, blue: 0 },
+                alpha: 0.4
+            });
+        });
+        menuItemIndex++;
+
+        // bigger
+        menuItemCreationFuncs.push(function () {
+            var biggerOverlayProps = baseTextOverlayProps;
+            biggerOverlayProps.text = "big";
+            biggerOverlayProps.position = menuItemWorldPos;
+            var biggerOverlayID = Overlays.addOverlay("text3d", biggerOverlayProps);
+            brush.menuOverlayIDs.push(biggerOverlayID);
+        });
+        this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
+            Entities.editEntity(brush.brushHeadID, { dimensions: { x: brushProps.dimensions.x * 1.2,
+                                                                   y: brushProps.dimensions.y * 1.2,
+                                                                   z: brushProps.dimensions.z * 1.2 } });
+        });
+        menuItemIndex++;
+
+        // smaller
+        menuItemCreationFuncs.push(function () {
+            var smallerOverlayProps = baseTextOverlayProps;
+            smallerOverlayProps.text = "small";
+            smallerOverlayProps.position = menuItemWorldPos;
+            var smallerOverlayID = Overlays.addOverlay("text3d", smallerOverlayProps);
+            brush.menuOverlayIDs.push(smallerOverlayID);
+        });
+        this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
+            Entities.editEntity(brush.brushHeadID, { dimensions: { x: brushProps.dimensions.x * 0.8,
+                                                                   y: brushProps.dimensions.y * 0.8,
+                                                                   z: brushProps.dimensions.z * 0.8 } });
+        });
+        menuItemIndex++;
+
 
         for (menuItemIndex = 0; menuItemIndex < menuItemCount; menuItemIndex++) {
             var menuItemAngle = menuItemIndex * menuItemAngleStep;
@@ -117,43 +175,19 @@
             this.menuItemWorldPosition.push(menuItemWorldPos);
 
             menuItemCreationFuncs[menuItemIndex](menuItemIndex);
-
-            // if (menuItemIndex < PALETTE_COLORS.length) {
-            //     // color change menu items
-            //     var colorOverlayID = Overlays.addOverlay("sphere", {
-            //         position: menuItemWorldPos,
-            //         alpha: 0.9,
-            //         dimensions: this.menuItemSize,
-            //         solid: true,
-            //         color: PALETTE_COLORS[menuItemIndex].color,
-            //         ignoreRayIntersection: true
-            //     });
-
-            //     this.menuOverlayIDs.push(colorOverlayID);
-            // } else if (menuItemIndex < PALETTE_COLORS.length + 1) {
-            //     // voxel-eraser menu item
-            //     var eraseOverlayID = Overlays.addOverlay("sphere", {
-            //         position: menuItemWorldPos,
-            //         alpha: 0.9,
-            //         dimensions: this.menuItemSize,
-            //         solid: true,
-            //         color: { red: 0, green: 0, blue: 0 },
-            //         ignoreRayIntersection: true
-            //     });
-            //     this.menuOverlayIDs.push(eraseOverlayID);
-            // }
         }
 
 
         this.equipContinued = function (id, params) {
-            var brushProps = Entities.getEntityProperties(brush.brushHeadID, ["position", "userData"]);
+            var brushProps = Entities.getEntityProperties(brush.brushHeadID, ["position", "userData", "dimensions"]);
             for (var menuItemIndex = 0; menuItemIndex < brush.menuItemWorldPosition.length; menuItemIndex++) {
                 var distanceFromMenuItem = Vec3.distance(brushProps.position, brush.menuItemWorldPosition[menuItemIndex]);
                 if (distanceFromMenuItem < this.menuActivateRadius) {
                     if (brush.activatedMenuItem == menuItemIndex) {
                         continue;
                     } else {
-                        brush.activateMenuItem(menuItemIndex, brushProps);
+                        // brush.activateMenuItem(menuItemIndex, brushProps);
+                        this.menuItemActivationFuncs[menuItemIndex](menuItemIndex, brushProps);
                         brush.activatedMenuItem = menuItemIndex;
                     }
                 } else {
@@ -164,24 +198,6 @@
             }
         };
     };
-
-
-    brush.activateMenuItem = function (menuItemIndex, brushProps) {
-        if (menuItemIndex < PALETTE_COLORS.length) {
-            // change color
-            var brushUserData = JSON.parse(brushProps.userData);
-            brushUserData.color = menuItemIndex;
-            Entities.editEntity(this.brushHeadID, {
-                userData: JSON.stringify(brushUserData),
-                color: PALETTE_COLORS[menuItemIndex].color
-            });
-            this.eraserEnabled = false;
-        } else if (menuItemIndex < PALETTE_COLORS.length + 1) {
-            // eraser
-            this.eraserEnabled = true;
-        }
-    };
-
 
     brush.hideMenu = function () {
         this.equipContinued = null;
