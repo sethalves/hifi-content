@@ -1,5 +1,6 @@
 
 /* global Entities, Overlays, Script, Controller, Vec3, Quat, PALETTE_COLORS */
+/* jshint loopfunc:true */
 
 (function() {
     var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
@@ -7,11 +8,11 @@
 
     var brush = genericTool.genericTool(
         function() { // start
-            this.brushID = Entities.getChildrenIDs(this.entityID)[0];
+            this.brushHeadID = Entities.getChildrenIDs(this.entityID)[0];
             this.previousBrushPositionSet = false;
         },
         function() { // continue
-            var brushProps = Entities.getEntityProperties(this.brushID, ["position", "dimensions", "userData"]);
+            var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions", "userData"]);
             var editSphereRadius = brushProps.dimensions.x / 2.0;
 
             if (!this.previousBrushPositionSet) {
@@ -58,65 +59,94 @@
 
     brush.showMenu = function () {
         this.menuOpen = true;
-        // var brushProps = Entities.getEntityProperties(this.brushID, ["position", "dimensions"]);
-        var brushProps = Entities.getEntityProperties(this.brushID, ["position", "dimensions", "userData"]);
+        // var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions"]);
+        var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions", "userData"]);
         var handleProps = Entities.getEntityProperties(this.entityID, ["position"]);
 
-        var colorCount = PALETTE_COLORS.length + 1; // +1 for erase
+        var menuItemCount = PALETTE_COLORS.length + 1; // +1 for erase
 
-        // place colors around 3/4 of the circle
-        var colorAngleStep = (360.0 * (3/4)) / (colorCount - 1);
+        // place menu-items around the circle
+        var menuItemAngleStep = 360.0 / menuItemCount;
         var up = { x: 0, y: 1, z: 0 };
         var brushVec = Vec3.normalize(Vec3.subtract(brushProps.position, handleProps.position));
         var menuRadius = brushProps.dimensions.x / 2 + 0.2;
         var initialMenuItemVec = Vec3.multiply(Vec3.normalize(Vec3.cross(up, brushVec)), menuRadius);
         var menuRotationVec = Vec3.normalize(Vec3.cross(initialMenuItemVec, up));
-
-
         var menuCircumference = 2 * Math.PI * menuRadius;
-        var threeQuatersCirc = menuCircumference * (3/4);
 
-        // this.menuItemSize = 0.08;
-        this.menuItemSize = (threeQuatersCirc / PALETTE_COLORS.length) - 0.01;
+        this.menuItemSize = (menuCircumference / menuItemCount) - 0.01;
         this.menuActivateRadius = this.menuItemSize / 2;
 
-        for (var menuItemIndex = 0; menuItemIndex < colorCount; menuItemIndex++) {
-            var menuItemAngle = menuItemIndex * colorAngleStep;
-            var menuItemQuat = Quat.angleAxis(menuItemAngle, menuRotationVec);
-            var rotatedMenuItemVec = Vec3.multiplyQbyV(menuItemQuat, initialMenuItemVec);
-            var menuItemWorldPos = Vec3.sum(brushProps.position, rotatedMenuItemVec);
+        var menuItemCreationFuncs = [];
+        var menuItemIndex = 0;
 
-            if (menuItemIndex < PALETTE_COLORS.length) {
-                // color change menu items
+        // color change menu items
+        for (; menuItemIndex < PALETTE_COLORS.length; menuItemIndex++) {
+            menuItemCreationFuncs.push(function (menuItemIndex) {
                 var colorOverlayID = Overlays.addOverlay("sphere", {
                     position: menuItemWorldPos,
                     alpha: 0.9,
-                    dimensions: this.menuItemSize,
+                    dimensions: brush.menuItemSize,
                     solid: true,
                     color: PALETTE_COLORS[menuItemIndex].color,
                     ignoreRayIntersection: true
                 });
 
-                this.menuOverlayIDs.push(colorOverlayID);
-            } else if (menuItemIndex < PALETTE_COLORS.length + 1) {
-                // voxel-eraser menu item
-                var eraseOverlayID = Overlays.addOverlay("sphere", {
-                    position: menuItemWorldPos,
-                    alpha: 0.9,
-                    dimensions: this.menuItemSize,
-                    solid: true,
-                    color: { red: 0, green: 0, blue: 0 },
-                    ignoreRayIntersection: true
-                });
-                this.menuOverlayIDs.push(eraseOverlayID);
-            }
+                brush.menuOverlayIDs.push(colorOverlayID);
+            });
+        }
 
+        // erase menu item
+        menuItemCreationFuncs.push(function () {
+            var eraseOverlayID = Overlays.addOverlay("sphere", {
+                position: menuItemWorldPos,
+                alpha: 0.9,
+                dimensions: brush.menuItemSize,
+                solid: true,
+                color: { red: 0, green: 0, blue: 0 },
+                ignoreRayIntersection: true
+            });
+            brush.menuOverlayIDs.push(eraseOverlayID);
+        });
+
+        for (menuItemIndex = 0; menuItemIndex < menuItemCount; menuItemIndex++) {
+            var menuItemAngle = menuItemIndex * menuItemAngleStep;
+            var menuItemQuat = Quat.angleAxis(menuItemAngle, menuRotationVec);
+            var rotatedMenuItemVec = Vec3.multiplyQbyV(menuItemQuat, initialMenuItemVec);
+            var menuItemWorldPos = Vec3.sum(brushProps.position, rotatedMenuItemVec);
             this.menuItemWorldPosition.push(menuItemWorldPos);
+
+            menuItemCreationFuncs[menuItemIndex](menuItemIndex);
+
+            // if (menuItemIndex < PALETTE_COLORS.length) {
+            //     // color change menu items
+            //     var colorOverlayID = Overlays.addOverlay("sphere", {
+            //         position: menuItemWorldPos,
+            //         alpha: 0.9,
+            //         dimensions: this.menuItemSize,
+            //         solid: true,
+            //         color: PALETTE_COLORS[menuItemIndex].color,
+            //         ignoreRayIntersection: true
+            //     });
+
+            //     this.menuOverlayIDs.push(colorOverlayID);
+            // } else if (menuItemIndex < PALETTE_COLORS.length + 1) {
+            //     // voxel-eraser menu item
+            //     var eraseOverlayID = Overlays.addOverlay("sphere", {
+            //         position: menuItemWorldPos,
+            //         alpha: 0.9,
+            //         dimensions: this.menuItemSize,
+            //         solid: true,
+            //         color: { red: 0, green: 0, blue: 0 },
+            //         ignoreRayIntersection: true
+            //     });
+            //     this.menuOverlayIDs.push(eraseOverlayID);
+            // }
         }
 
 
         this.equipContinued = function (id, params) {
-            var brushProps = Entities.getEntityProperties(brush.brushID, ["position", "userData"]);
+            var brushProps = Entities.getEntityProperties(brush.brushHeadID, ["position", "userData"]);
             for (var menuItemIndex = 0; menuItemIndex < brush.menuItemWorldPosition.length; menuItemIndex++) {
                 var distanceFromMenuItem = Vec3.distance(brushProps.position, brush.menuItemWorldPosition[menuItemIndex]);
                 if (distanceFromMenuItem < this.menuActivateRadius) {
@@ -137,12 +167,11 @@
 
 
     brush.activateMenuItem = function (menuItemIndex, brushProps) {
-        print("QQQQ activate " + menuItemIndex);
         if (menuItemIndex < PALETTE_COLORS.length) {
             // change color
             var brushUserData = JSON.parse(brushProps.userData);
             brushUserData.color = menuItemIndex;
-            Entities.editEntity(this.brushID, {
+            Entities.editEntity(this.brushHeadID, {
                 userData: JSON.stringify(brushUserData),
                 color: PALETTE_COLORS[menuItemIndex].color
             });
@@ -292,60 +321,66 @@
     // };
 
 
-    brush.getPolyVox = function (x, y, z, c) {
-        if (!this.polyVoxes[x]) {
+    brush.getPolyVox = function (aetherID, x, y, z, c) {
+        if (!this.polyVoxes[aetherID]) {
             return null;
         }
-        if (!this.polyVoxes[x][y]) {
+        if (!this.polyVoxes[aetherID][x]) {
             return null;
         }
-        if (!this.polyVoxes[x][y][z]) {
+        if (!this.polyVoxes[aetherID][x][y]) {
             return null;
         }
-        return this.polyVoxes[x][y][z][c];
+        if (!this.polyVoxes[aetherID][x][y][z]) {
+            return null;
+        }
+        return this.polyVoxes[aetherID][x][y][z][c];
     };
 
 
-    brush.setPolyVox = function (x, y, z, c, polyVoxID) {
-        if (!this.polyVoxes[x]) {
-            this.polyVoxes[x] = {};
+    brush.setPolyVox = function (aetherID, x, y, z, c, polyVoxID) {
+        if (!this.polyVoxes[aetherID]) {
+            this.polyVoxes[aetherID] = {};
         }
-        if (!this.polyVoxes[x][y]) {
-            this.polyVoxes[x][y] = {};
+        if (!this.polyVoxes[aetherID][x]) {
+            this.polyVoxes[aetherID][x] = {};
         }
-        if (!this.polyVoxes[x][y][z]) {
-            this.polyVoxes[x][y][z] = {};
+        if (!this.polyVoxes[aetherID][x][y]) {
+            this.polyVoxes[aetherID][x][y] = {};
         }
-        this.polyVoxes[x][y][z][c] = polyVoxID;
+        if (!this.polyVoxes[aetherID][x][y][z]) {
+            this.polyVoxes[aetherID][x][y][z] = {};
+        }
+        this.polyVoxes[aetherID][x][y][z][c] = polyVoxID;
     };
 
 
-    brush.linkToNeighbors = function (x, y, z, c) {
+    brush.linkToNeighbors = function (aetherID, x, y, z, c) {
         // link all the polyVoxes to their neighbors
-        var polyVoxID = this.getPolyVox(x, y, z, c);
+        var polyVoxID = this.getPolyVox(aetherID, x, y, z, c);
         if (polyVoxID) {
             var neighborProperties = {};
-            var xNNeighborID = this.getPolyVox(x - 1, y, z, c);
+            var xNNeighborID = this.getPolyVox(aetherID, x - 1, y, z, c);
             if (xNNeighborID) {
                 neighborProperties.xNNeighborID = xNNeighborID;
             }
-            var xPNeighborID = this.getPolyVox(x + 1, y, z, c);
+            var xPNeighborID = this.getPolyVox(aetherID, x + 1, y, z, c);
             if (xPNeighborID) {
                 neighborProperties.xPNeighborID = xPNeighborID;
             }
-            var yNNeighborID = this.getPolyVox(x, y - 1, z, c);
+            var yNNeighborID = this.getPolyVox(aetherID, x, y - 1, z, c);
             if (yNNeighborID) {
                 neighborProperties.yNNeighborID = yNNeighborID;
             }
-            var yPNeighborID = this.getPolyVox(x, y + 1, z, c);
+            var yPNeighborID = this.getPolyVox(aetherID, x, y + 1, z, c);
             if (yPNeighborID) {
                 neighborProperties.yPNeighborID = yPNeighborID;
             }
-            var zNNeighborID = this.getPolyVox(x, y, z - 1, c);
+            var zNNeighborID = this.getPolyVox(aetherID, x, y, z - 1, c);
             if (zNNeighborID) {
                 neighborProperties.zNNeighborID = zNNeighborID;
             }
-            var zPNeighborID = this.getPolyVox(x, y, z + 1, c);
+            var zPNeighborID = this.getPolyVox(aetherID, x, y, z + 1, c);
             if (zPNeighborID) {
                 neighborProperties.zPNeighborID = zPNeighborID;
             }
@@ -391,7 +426,7 @@
             }
 
             var polyVoxIndex = userData.index;
-            this.setPolyVox(polyVoxIndex.x, polyVoxIndex.y, polyVoxIndex.z, cFind, possiblePolyVoxID);
+            this.setPolyVox(aetherID, polyVoxIndex.x, polyVoxIndex.y, polyVoxIndex.z, cFind, possiblePolyVoxID);
             withThisColorIDs.push(possiblePolyVoxID);
         }
 
@@ -452,7 +487,7 @@
                 var nX = parseInt(xyz[0]);
                 var nY = parseInt(xyz[1]);
                 var nZ = parseInt(xyz[2]);
-                this.linkToNeighbors(nX, nY, nZ, this.color);
+                this.linkToNeighbors(aetherID, nX, nY, nZ, this.color);
             }
         }
 
@@ -461,7 +496,7 @@
 
 
     brush.addPolyVox = function (x, y, z, aetherProps, c) {
-        if (this.getPolyVox(x, y, z, c)) {
+        if (this.getPolyVox(aetherProps.id, x, y, z, c)) {
             // we already have a polyvox for this position and color
             return null;
         }
@@ -477,7 +512,7 @@
         // offset each color slightly to try to avoid z-buffer fighting
         var colorOffset = Vec3.multiply({ x: c, y: c, z: c }, 0.002);
 
-        var newPolyVoxID = Entities.addEntity({
+        var props = {
             type: "PolyVox",
             name: "voxel paint",
             localPosition: Vec3.sum(polyVoxLocalPosition, colorOffset),
@@ -496,9 +531,11 @@
             }),
             // lifetime: 10
             lifetime: this.polyVoxLifetime
-        });
+        };
+        var newPolyVoxID = Entities.addEntity(props);
+        this.polyVoxCache[newPolyVoxID] = props;
 
-        this.setPolyVox(x, y, z, c, newPolyVoxID);
+        this.setPolyVox(aetherProps.id, x, y, z, c, newPolyVoxID);
 
         if (this.showPolyVoxes) {
             Entities.addEntity({
