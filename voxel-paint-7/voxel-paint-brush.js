@@ -3,12 +3,16 @@
 /* jshint loopfunc:true */
 
 (function() {
-    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    var genericTool = null;
+    while (!genericTool || !genericTool.genericTool) {
+        genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    }
+
     Script.include(Script.resolvePath('voxel-paint-shared.js'));
 
     var brush = genericTool.genericTool(
         function() { // start
-            this.brushHeadID = Entities.getChildrenIDs(this.entityID)[0];
+            this.getBrushHeadID();
             this.previousBrushPositionSet = false;
         },
         function() { // continue
@@ -21,7 +25,7 @@
             }
 
             if (this.eraserEnabled) {
-                var searchRadius = 2.0;
+                var searchRadius = brushProps.dimensions.x;
                 var eraseIDs = Entities.findEntities(brushProps.position, searchRadius);
                 for (var i = 0; i < eraseIDs.length; i++) {
                     Entities.setVoxelSphere(eraseIDs[i], brushProps.position, editSphereRadius, 0);
@@ -58,13 +62,92 @@
     // brush.polyVoxLifetime = 28800; // 8 hours
 
 
+    brush.debugDump = function () {
+        brush.getBrushHeadID();
+        var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions", "userData"]);
+        var searchRadius = 3;
+        var entityIDs = Entities.findEntities(brushProps.position, searchRadius);
+
+        print("--------- voxel-paint debug-dump, found " + entityIDs.length + " entities");
+
+        var polyVoxes = {};
+        var aethers = {};
+        var entityID;
+        for (var i = 0; i < entityIDs.length; i++) {
+            entityID = entityIDs[i];
+
+            var props = Entities.getEntityProperties(entityID, ["name", "position", "userData",
+                                                                "age", "lifetime", "parentID",
+                                                                "xNNeighborID", "xPNeighborID", "yNNeighborID",
+                                                                "yPNeighborID", "zNNeighborID", "zPNeighborID"]);
+            if (props.name == "voxel paint") {
+                polyVoxes[entityID] = props;
+            } else if (props.name == "voxel paint aether") {
+                aethers[entityID] = props;
+            }
+        }
+
+        // get a list of aether IDs
+        var aetherIDs = [];
+        for (entityID in aethers) {
+            if (aethers.hasOwnProperty(entityID)) {
+                aetherIDs.push(entityID);
+            }
+        }
+
+        // get a list of polyvox IDs
+        var polyVoxIDs = [];
+        for (entityID in polyVoxes) {
+            if (polyVoxes.hasOwnProperty(entityID)) {
+                polyVoxIDs.push(entityID);
+            }
+        }
+
+        print("found " + aetherIDs.length + " aethers and " + polyVoxIDs.length + " PolyVoxes");
+
+        var printAetherIDs = "";
+        for (var j = 0; j < aetherIDs.length; j++) {
+            printAetherIDs += aetherIDs[j] + " ";
+        }
+        print("aetherIDs: " + printAetherIDs);
+
+        for (var k = 0; k < polyVoxIDs.length; k++) {
+            var polyVoxID = polyVoxIDs[k];
+            var polyVoxProps = polyVoxes[polyVoxID];
+            print("-- polyvox " + polyVoxID + " parentID: " + polyVoxProps.parentID);
+
+        }
+
+
+    };
+
+
+    brush.getBrushHeadID = function () {
+        if (!this.brushHeadID) {
+            this.brushHeadID = Entities.getChildrenIDs(this.entityID)[0];
+        }
+        return this.brushHeadID;
+    };
+
+
+    brush.setBrushColorFromUserData = function () {
+        this.getBrushHeadID();
+        var brushProps = Entities.getEntityProperties(this.brushHeadID, ["userData"]);
+        var brushUserData = JSON.parse(brushProps.userData);
+        Entities.editEntity(brush.brushHeadID, {
+            color: PALETTE_COLORS[brushUserData.color].color,
+            alpha: 1.0
+        });
+    };
+
+
     brush.showMenu = function () {
         this.menuOpen = true;
-        // var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions"]);
+        this.getBrushHeadID();
         var brushProps = Entities.getEntityProperties(this.brushHeadID, ["position", "dimensions", "userData"]);
         var handleProps = Entities.getEntityProperties(this.entityID, ["position"]);
 
-        var menuItemCount = PALETTE_COLORS.length + 3; // +3 for erase, bigger, smaller
+        var menuItemCount = PALETTE_COLORS.length + 4; // +3 for erase, bigger, smaller, debug
 
         // place menu-items around the circle
         var menuItemAngleStep = 360.0 / menuItemCount;
@@ -80,52 +163,52 @@
 
         var menuItemCreationFuncs = [];
         this.menuItemActivationFuncs = [];
-        var menuItemIndex = 0;
 
         // color change menu items
-        for (; menuItemIndex < PALETTE_COLORS.length; menuItemIndex++) {
-            menuItemCreationFuncs.push(function (menuItemIndex) {
+        for (var colorIndex = 0; colorIndex < PALETTE_COLORS.length; colorIndex++) {
+            menuItemCreationFuncs.push(function (colorIndex) {
                 var colorOverlayID = Overlays.addOverlay("sphere", {
                     position: menuItemWorldPos,
                     alpha: 0.9,
                     dimensions: brush.menuItemSize,
                     solid: true,
-                    color: PALETTE_COLORS[menuItemIndex].color,
+                    color: PALETTE_COLORS[colorIndex].color,
                     ignoreRayIntersection: true
                 });
                 brush.menuOverlayIDs.push(colorOverlayID);
             });
-            this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
+            this.menuItemActivationFuncs.push(function (colorIndex, brushProps) {
                 var brushUserData = JSON.parse(brushProps.userData);
-                brushUserData.color = menuItemIndex;
+                brushUserData.color = colorIndex;
                 Entities.editEntity(brush.brushHeadID, {
                     userData: JSON.stringify(brushUserData),
-                    color: PALETTE_COLORS[menuItemIndex].color,
+                    color: PALETTE_COLORS[colorIndex].color,
                     alpha: 1.0
                 });
                 brush.eraserEnabled = false;
             });
         }
 
-        var baseTextOverlayProps = {
-            alpha: 0.9,
-            dimensions: { x: brush.menuItemSize, y: brush.menuItemSize },
-            lineHeight: brush.menuItemSize / 2,
-            leftMargin: 0,
-            topMargin: 0,
-            rightMargin: 0,
-            bottomMargin: 0,
-            isFacingAvatar: true,
-            ignoreRayIntersection: true
+        var baseTextOverlayProps = function (position) {
+            return {
+                position: position,
+                alpha: 0.9,
+                dimensions: { x: brush.menuItemSize, y: brush.menuItemSize },
+                lineHeight: brush.menuItemSize / 2,
+                leftMargin: 0,
+                topMargin: 0,
+                rightMargin: 0,
+                bottomMargin: 0,
+                isFacingAvatar: true,
+                ignoreRayIntersection: true
+            };
         };
 
         // erase menu item
         menuItemCreationFuncs.push(function () {
-            var eraseOverlayProps = baseTextOverlayProps;
+            var eraseOverlayProps = baseTextOverlayProps(menuItemWorldPos);
             eraseOverlayProps.text = "del";
-            eraseOverlayProps.position = menuItemWorldPos;
-            var eraseOverlayID = Overlays.addOverlay("text3d", eraseOverlayProps);
-            brush.menuOverlayIDs.push(eraseOverlayID);
+            brush.menuOverlayIDs.push(Overlays.addOverlay("text3d", eraseOverlayProps));
         });
         this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
             brush.eraserEnabled = true;
@@ -134,40 +217,42 @@
                 alpha: 0.4
             });
         });
-        menuItemIndex++;
 
         // bigger
         menuItemCreationFuncs.push(function () {
-            var biggerOverlayProps = baseTextOverlayProps;
+            var biggerOverlayProps = baseTextOverlayProps(menuItemWorldPos);
             biggerOverlayProps.text = "big";
-            biggerOverlayProps.position = menuItemWorldPos;
-            var biggerOverlayID = Overlays.addOverlay("text3d", biggerOverlayProps);
-            brush.menuOverlayIDs.push(biggerOverlayID);
+            brush.menuOverlayIDs.push(Overlays.addOverlay("text3d", biggerOverlayProps));
         });
         this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
             Entities.editEntity(brush.brushHeadID, { dimensions: { x: brushProps.dimensions.x * 1.2,
                                                                    y: brushProps.dimensions.y * 1.2,
                                                                    z: brushProps.dimensions.z * 1.2 } });
         });
-        menuItemIndex++;
 
         // smaller
         menuItemCreationFuncs.push(function () {
-            var smallerOverlayProps = baseTextOverlayProps;
+            var smallerOverlayProps = baseTextOverlayProps(menuItemWorldPos);
             smallerOverlayProps.text = "small";
-            smallerOverlayProps.position = menuItemWorldPos;
-            var smallerOverlayID = Overlays.addOverlay("text3d", smallerOverlayProps);
-            brush.menuOverlayIDs.push(smallerOverlayID);
+            brush.menuOverlayIDs.push(Overlays.addOverlay("text3d", smallerOverlayProps));
         });
         this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
             Entities.editEntity(brush.brushHeadID, { dimensions: { x: brushProps.dimensions.x * 0.8,
                                                                    y: brushProps.dimensions.y * 0.8,
                                                                    z: brushProps.dimensions.z * 0.8 } });
         });
-        menuItemIndex++;
 
+        // debug
+        menuItemCreationFuncs.push(function () {
+            var debugOverlayProps = baseTextOverlayProps(menuItemWorldPos);
+            debugOverlayProps.text = "debug";
+            brush.menuOverlayIDs.push(Overlays.addOverlay("text3d", debugOverlayProps));
+        });
+        this.menuItemActivationFuncs.push(function (menuItemIndex, brushProps) {
+            brush.debugDump();
+        });
 
-        for (menuItemIndex = 0; menuItemIndex < menuItemCount; menuItemIndex++) {
+        for (var menuItemIndex = 0; menuItemIndex < menuItemCount; menuItemIndex++) {
             var menuItemAngle = menuItemIndex * menuItemAngleStep;
             var menuItemQuat = Quat.angleAxis(menuItemAngle, menuRotationVec);
             var rotatedMenuItemVec = Vec3.multiplyQbyV(menuItemQuat, initialMenuItemVec);
@@ -176,7 +261,6 @@
 
             menuItemCreationFuncs[menuItemIndex](menuItemIndex);
         }
-
 
         this.equipContinued = function (id, params) {
             var brushProps = Entities.getEntityProperties(brush.brushHeadID, ["position", "userData", "dimensions"]);
@@ -220,6 +304,7 @@
 
 
     brush.equipStarted = function (id, params) {
+        this.setBrushColorFromUserData();
         var mappingName = 'Voxel-Paint-Mapping-' + this.hand + "-" + Math.random();
         if (this.menuMapping) {
             this.menuMapping.disable();
@@ -576,7 +661,6 @@
         this.menuMapping = null;
         this.hideMenu();
     };
-
 
     return brush;
 });
