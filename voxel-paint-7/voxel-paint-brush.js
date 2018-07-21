@@ -1,5 +1,5 @@
 
-/* global Entities, Overlays, Script, Controller, Vec3, Quat, PALETTE_COLORS */
+/* global Entities, Overlays, Script, Controller, Vec3, Quat, Uuid, PALETTE_COLORS */
 /* jshint loopfunc:true */
 
 (function() {
@@ -44,12 +44,13 @@
         null); // stop
 
     brush.voxelVolumeSize = 16;
-    brush.sliceSize = {x: 0.02, y: 0.02, z: 0.02}; // dimensions of one voxel
+    brush.sliceSize = {x: 0.03, y: 0.03, z: 0.03}; // dimensions of one voxel
     brush.polyVoxSize = Vec3.multiply(brush.sliceSize, brush.voxelVolumeSize); // dimensions of one polyvox entity
     brush.showPolyVoxes = false;
     brush.previousBrushPosition = null;
     brush.previousBrushPositionSet = false;
-    brush.polyVoxes = {};
+    brush.polyVoxIDsByIndex = {};
+    brush.polyVoxPropertyCache = {};
     brush.menuMapping = null;
     brush.menuOverlayIDs = [];
     brush.menuItemWorldPosition = [];
@@ -70,7 +71,7 @@
 
         print("--------- voxel-paint debug-dump, found " + entityIDs.length + " entities");
 
-        var polyVoxes = {};
+        var polyVoxProps = {};
         var aethers = {};
         var entityID;
         for (var i = 0; i < entityIDs.length; i++) {
@@ -81,7 +82,7 @@
                                                                 "xNNeighborID", "xPNeighborID", "yNNeighborID",
                                                                 "yPNeighborID", "zNNeighborID", "zPNeighborID"]);
             if (props.name == "voxel paint") {
-                polyVoxes[entityID] = props;
+                polyVoxProps[entityID] = props;
             } else if (props.name == "voxel paint aether") {
                 aethers[entityID] = props;
             }
@@ -97,8 +98,8 @@
 
         // get a list of polyvox IDs
         var polyVoxIDs = [];
-        for (entityID in polyVoxes) {
-            if (polyVoxes.hasOwnProperty(entityID)) {
+        for (entityID in polyVoxProps) {
+            if (polyVoxProps.hasOwnProperty(entityID)) {
                 polyVoxIDs.push(entityID);
             }
         }
@@ -113,18 +114,75 @@
 
         for (var k = 0; k < polyVoxIDs.length; k++) {
             var polyVoxID = polyVoxIDs[k];
-            var polyVoxProps = polyVoxes[polyVoxID];
-            print("-- polyvox " + polyVoxID + " parentID: " + polyVoxProps.parentID);
+            var kPolyVoxProps = Entities.getEntityProperties(polyVoxID);
+            var polyVoxUserData = JSON.parse(kPolyVoxProps.userData);
+            print("-- polyvox, " + polyVoxID + ", aetherID: " + kPolyVoxProps.parentID +
+                  ", index: " + JSON.stringify(polyVoxUserData.index));
+            if (aetherIDs.indexOf(kPolyVoxProps.parentID) === -1) {
+                print("WARNING, unknown aetherID");
+            }
 
+            if (this.polyVoxPropertyCache.hasOwnProperty(polyVoxID)) {
+                var polyVoxCachedProps = this.polyVoxPropertyCache[polyVoxID];
+                for (var propName in polyVoxCachedProps) {
+                    if (!polyVoxCachedProps.hasOwnProperty(propName)) {
+                        continue;
+                    }
+                    if (propName == "voxelVolumeSize") {
+                        // this is to counter a bug in how vectors are serialized.  we get x,y,z,red,green,blue.
+                        delete kPolyVoxProps[propName].red;
+                        delete kPolyVoxProps[propName].green;
+                        delete kPolyVoxProps[propName].blue;
+                    }
+                    if (propName == "expires") {
+                        continue;
+                    }
+                    if (JSON.stringify(polyVoxCachedProps[propName]) != JSON.stringify(kPolyVoxProps[propName])) {
+                        print("WARNING: cached prop mismatch for " + propName + ": " +
+                              JSON.stringify(polyVoxCachedProps[propName]) + " vs " +
+                              JSON.stringify(kPolyVoxProps[propName]));
+                    }
+                }
+            } else {
+                print("WARNING: missing from polyVoxPropertyCache");
+            }
+
+            // var polyVoxIDFromIndex = this.getPolyVox(kPolyVoxProps.parentID,
+            //                                        polyVoxUserData.index.x, polyVoxUserData.index.y, polyVoxUserData.index.z,
+            //                                        polyVoxUserData.color);
+            // if (polyVoxIDFromIndex != polyVoxID) {
+            //     print("WARNING: index mismatch -- " +
+            //           JSON.stringify(polyVoxIDFromIndex) + " vs " + JSON.stringify(polyVoxID));
+            //     print("-- " + JSON.stringify(kPolyVoxProps.parentID));
+            //     print("-- " + JSON.stringify(polyVoxUserData.index));
+            //     print("-- " + JSON.stringify(polyVoxUserData.color));
+            // }
         }
-
-
     };
 
 
     brush.getBrushHeadID = function () {
         if (!this.brushHeadID) {
-            this.brushHeadID = Entities.getChildrenIDs(this.entityID)[0];
+            var children = Entities.getChildrenIDs(this.entityID);
+            if (children.length > 0 && children[0]) {
+                this.brushHeadID = children[0];
+            } else {
+                // no brush-head found; create one
+                var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
+                var radius = 0.025;
+                var colorIndex = 1;
+                this.brushHeadID = Entities.addEntity({
+                    collidesWith: "",
+                    collisionMask: 0,
+                    color: PALETTE_COLORS[ colorIndex ].color,
+                    dimensions: { x: 2*radius, y: 2*radius, z: 2*radius },
+                    name: "voxel paint brush tip",
+                    parentID: this.entityID,
+                    localPosition: { x: 0, y: 0.16, z: 0 },
+                    type: "Sphere",
+                    userData: JSON.stringify({color: colorIndex})
+                }, avatarEntity);
+            }
         }
         return this.brushHeadID;
     };
@@ -328,10 +386,8 @@
     };
 
 
-    brush.polyVoxCache = {};
-
     brush.getPolyVoxProperties = function (polyVoxID) {
-        var polyVoxProps = this.polyVoxCache[polyVoxID];
+        var polyVoxProps = this.polyVoxPropertyCache[polyVoxID];
         if (!polyVoxProps) {
             polyVoxProps = Entities.getEntityProperties(polyVoxID, ["name", "position", "userData",
                                                                     "age", "lifetime", "parentID",
@@ -340,7 +396,7 @@
             if (polyVoxProps.name != "voxel paint") {
                 return null;
             }
-            this.polyVoxCache[polyVoxID] = polyVoxProps;
+            this.polyVoxPropertyCache[polyVoxID] = polyVoxProps;
         }
 
         var now = Date.now();
@@ -357,20 +413,24 @@
 
 
     brush.editPolyVox = function (polyVoxID, editProps) {
-        var polyVoxProps = this.polyVoxCache[polyVoxID];
-        if (polyVoxProps) {
-            for (var editKey in editProps) {
-                if (editProps.hasOwnProperty(editKey)) {
-                    polyVoxProps[editKey] = editProps[editKey];
+        if (Entities.editEntity(polyVoxID, editProps) == Uuid.NULL) {
+            print("WARNING: voxel-paint-brush -- edit of neighbors for polyvox " + polyVoxID + " failed.");
+        } else {
+            var polyVoxProps = this.polyVoxPropertyCache[polyVoxID];
+            if (polyVoxProps) {
+                for (var editKey in editProps) {
+                    if (editProps.hasOwnProperty(editKey)) {
+                        polyVoxProps[editKey] = editProps[editKey];
+                    }
                 }
+                this.polyVoxPropertyCache[polyVoxID] = polyVoxProps;
             }
-            this.polyVoxCache[polyVoxID] = polyVoxProps;
         }
-        Entities.editEntity(polyVoxID, editProps);
     };
 
 
     brush.addNewAether = function (worldAetherPosition) {
+        var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
         var aetherID = Entities.addEntity({
             color: { red: 0, green: 0, blue: 0 },
             dimensions: { x: 1, y: 1, z: 1 },
@@ -385,7 +445,7 @@
             visible: false,
             userData: JSON.stringify({ grabbableKey: {grabbable: true} }),
             lifetime: this.polyVoxLifetime
-        });
+        }, avatarEntity);
         return aetherID;
     };
 
@@ -423,41 +483,41 @@
 
 
     brush.getPolyVox = function (aetherID, x, y, z, c) {
-        if (!this.polyVoxes[aetherID]) {
+        if (!this.polyVoxIDsByIndex[aetherID]) {
             return null;
         }
-        if (!this.polyVoxes[aetherID][x]) {
+        if (!this.polyVoxIDsByIndex[aetherID][x]) {
             return null;
         }
-        if (!this.polyVoxes[aetherID][x][y]) {
+        if (!this.polyVoxIDsByIndex[aetherID][x][y]) {
             return null;
         }
-        if (!this.polyVoxes[aetherID][x][y][z]) {
+        if (!this.polyVoxIDsByIndex[aetherID][x][y][z]) {
             return null;
         }
-        return this.polyVoxes[aetherID][x][y][z][c];
+        return this.polyVoxIDsByIndex[aetherID][x][y][z][c];
     };
 
 
     brush.setPolyVox = function (aetherID, x, y, z, c, polyVoxID) {
-        if (!this.polyVoxes[aetherID]) {
-            this.polyVoxes[aetherID] = {};
+        if (!this.polyVoxIDsByIndex[aetherID]) {
+            this.polyVoxIDsByIndex[aetherID] = {};
         }
-        if (!this.polyVoxes[aetherID][x]) {
-            this.polyVoxes[aetherID][x] = {};
+        if (!this.polyVoxIDsByIndex[aetherID][x]) {
+            this.polyVoxIDsByIndex[aetherID][x] = {};
         }
-        if (!this.polyVoxes[aetherID][x][y]) {
-            this.polyVoxes[aetherID][x][y] = {};
+        if (!this.polyVoxIDsByIndex[aetherID][x][y]) {
+            this.polyVoxIDsByIndex[aetherID][x][y] = {};
         }
-        if (!this.polyVoxes[aetherID][x][y][z]) {
-            this.polyVoxes[aetherID][x][y][z] = {};
+        if (!this.polyVoxIDsByIndex[aetherID][x][y][z]) {
+            this.polyVoxIDsByIndex[aetherID][x][y][z] = {};
         }
-        this.polyVoxes[aetherID][x][y][z][c] = polyVoxID;
+        this.polyVoxIDsByIndex[aetherID][x][y][z][c] = polyVoxID;
     };
 
 
     brush.linkToNeighbors = function (aetherID, x, y, z, c) {
-        // link all the polyVoxes to their neighbors
+        // link all the PolyVoxs to their neighbors
         var polyVoxID = this.getPolyVox(aetherID, x, y, z, c);
         if (polyVoxID) {
             var neighborProperties = {};
@@ -491,7 +551,7 @@
 
 
     brush.addPolyVoxIfNeeded = function (brushPosition, editSphereRadius) {
-        this.polyVoxes = {};
+        this.polyVoxIDsByIndex = {};
         var halfSliceSize = Vec3.multiply(this.sliceSize, 0.5);
         var sliceRadius = Math.sqrt(Vec3.dot(halfSliceSize, halfSliceSize));
         var capsuleLength = 2 * editSphereRadius + Vec3.length(Vec3.subtract(brushPosition, this.previousBrushPosition));
@@ -589,6 +649,8 @@
                 var nY = parseInt(xyz[1]);
                 var nZ = parseInt(xyz[2]);
                 this.linkToNeighbors(aetherID, nX, nY, nZ, this.color);
+            } else {
+                print("WARNING voxel-paint-brush -- can't find neighbor at " + JSON.stringify(neighborKey));
             }
         }
 
@@ -633,8 +695,9 @@
             // lifetime: 10
             lifetime: this.polyVoxLifetime
         };
-        var newPolyVoxID = Entities.addEntity(props);
-        this.polyVoxCache[newPolyVoxID] = props;
+        var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
+        var newPolyVoxID = Entities.addEntity(props, avatarEntity);
+        this.polyVoxPropertyCache[newPolyVoxID] = props;
 
         this.setPolyVox(aetherProps.id, x, y, z, c, newPolyVoxID);
 
@@ -647,7 +710,7 @@
                 dimensions: this.polyVoxSize,
                 collisionless: true,
                 parentID: newPolyVoxID
-            });
+            }, avatarEntity);
         }
 
         return newPolyVoxID;
