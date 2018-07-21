@@ -1,14 +1,12 @@
-//
-//
-//
-
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 
-/*global Script, AvatarManager, Controller, Entities, MyAvatar, Overlays, Quat, SoundCache, Vec3 */
+/* global Script, module, AvatarManager, Controller, Entities, MyAvatar, Overlays, Quat, SoundCache, Vec3,
+   genericTool:true
+ */
 
 
-genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
+function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) {
     Script.include("/~/system/libraries/utils.js");
 
     var _this;
@@ -42,6 +40,9 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             this.targetEntity = null;
             this.active = false;
             this.canActivate = false; // to avoid firing right as the thing is equipped
+            if (this.equipStarted) {
+                this.equipStarted(id, params);
+            }
         },
 
         continueEquip: function(id, params) {
@@ -52,6 +53,10 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
             if (this.active && this.toolFunctionContinue) {
                 this.updateProps();
                 this.toolFunctionContinue();
+            }
+
+            if (this.equipContinued) {
+                this.equipContinued(id, params);
             }
         },
 
@@ -87,6 +92,9 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
         },
 
         releaseEquip: function(id, params) {
+            if (this.equipStopped) {
+                this.equipStopped(id, params);
+            }
             this.hand = null;
             this.equipped = false;
             Overlays.editOverlay(this.laser, {
@@ -212,4 +220,9 @@ genericTool = function (toolFunctionStart, toolFunctionContinue, toolFunctionSto
 
     // entity scripts always need to return a newly constructed object of our type
     return new Tool();
+}
+
+
+module.exports = {
+    genericTool: genericTool
 };
