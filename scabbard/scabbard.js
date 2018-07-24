@@ -100,6 +100,8 @@ Script.include("/~/system/libraries/controllers.js");
         var props = [];
         var actions = [];
 
+        print("entitiesIDsToProperties -- " + JSON.stringify(entityIDs));
+
         for (var i = 0; i < entityIDs.length; i++) {
             var entityID = entityIDs[i];
             var entityProps = Entities.getEntityProperties(entityID);
@@ -133,10 +135,19 @@ Script.include("/~/system/libraries/controllers.js");
             return null;
         }
 
+        print("--- before sort");
+        for (var m = 0; m < props.length; m++) {
+            var mProps = props[m];
+            print(mProps.id);
+        }
+
         props = sortPropertiesByParentage(props);
+
+        print("--- after sort");
 
         for (var j = 0; j < props.length; j++) {
             var jProps = props[j];
+            print(jProps.id);
             if (isNullID(jProps.parentID)) {
                 // for top-level (non-children) entities, delete a few more properties
                 delete jProps.parentID;
@@ -185,6 +196,8 @@ Script.include("/~/system/libraries/controllers.js");
 
             var originalID = entityProps.id;
             delete entityProps.id;
+            delete entityProps.locked;
+
             var entityID = Entities.addEntity(entityProps, clientOnly);
             entityIDMap[originalID] = entityID;
         }
@@ -219,61 +232,87 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function getRootIDOfParentingTree(origID) {
-        while (true) {
-            var entProps = Entities.getEntityProperties(origID);
-            if (entProps && entProps.parentID && !isNullID(entProps.parentID)) {
-                origID = entProps.parentID;
-            } else {
-                break;
-            }
-        }
-        return origID;
-    }
+    // function getRootIDOfParentingTree(origID) {
+    //     while (true) {
+    //         var entProps = Entities.getEntityProperties(origID);
+    //         if (entProps && entProps.parentID && !isNullID(entProps.parentID)) {
+    //             origID = entProps.parentID;
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //     return origID;
+    // }
 
 
     function getConnectedEntityIDs(origID) {
-        // get IDs of parents/descendants and of entities connected via dynamics (bullet constraints)
-        origID = getRootIDOfParentingTree(origID);
+        // recursively get IDs of parents/descendants and of entities connected via dynamics (bullet constraints)
+        var toCheck = {};
+        toCheck[origID] = false;
 
-        var found = {};
-        var toSearch = [origID];
-        while (toSearch.length > 0) {
-            var newToSearch = [];
-            for (var i = 0; i < toSearch.length; i++) {
-                var entityID = toSearch[i];
+        var done = false;
+        while (!done) {
+            done = true;
 
-                // look for children
-                var children = Entities.getChildrenIDs(entityID);
-                for (var c = 0; c < children.length; c++) {
-                    var child = children[c];
-                    if (!found.hasOwnProperty(child)) {
-                        found[child] = true;
-                        newToSearch.push(child);
-                    }
+            // XXX
+            print("----------------");
+            for (var entityIDX in toCheck) {
+                if (toCheck.hasOwnProperty(entityIDX)) {
+                    print(entityIDX + " : " + toCheck[entityIDX]);
                 }
+            }
+            // XXX
 
-                // look for actions (bullet contraints) that link to other entities
-                var actionIDs = Entities.getActionIDs(entityID);
-                for (var actionIndex = 0; actionIndex < actionIDs.length; actionIndex++) {
-                    var actionID = actionIDs[actionIndex];
-                    var actionArgs = Entities.getActionArguments(entityID, actionID);
-                    if (actionArgs.hasOwnProperty("otherEntityID")) {
-                        found[actionArgs.otherEntityID] = true;
-                        newToSearch.push(actionArgs.otherEntityID);
+            for (var entityID in toCheck) {
+                if (toCheck.hasOwnProperty(entityID)) {
+                    if (!toCheck[entityID]) {
+                        toCheck[entityID] = true;
+
+                        // look for a parent
+                        var parentIDProps = Entities.getEntityProperties(entityID, ["parentID"]);
+                        if (parentIDProps && !isNullID(parentIDProps.parentID)) {
+                            if (!toCheck.hasOwnProperty(parentIDProps.parentID)) {
+                                print("found parent: " + parentIDProps.parentID);
+                                toCheck[parentIDProps.parentID] = false;
+                                done = false;
+                            }
+                        }
+
+                        // look for children
+                        var children = Entities.getChildrenIDs(entityID);
+                        for (var c = 0; c < children.length; c++) {
+                            var childID = children[c];
+                            if (!toCheck.hasOwnProperty(childID)) {
+                                print("found child: " + childID);
+                                toCheck[childID] = false;
+                                done = false;
+                            }
+                        }
+
+                        // look for actions (bullet contraints) that link to other entities
+                        var actionIDs = Entities.getActionIDs(entityID);
+                        for (var actionIndex = 0; actionIndex < actionIDs.length; actionIndex++) {
+                            var actionID = actionIDs[actionIndex];
+                            var actionArgs = Entities.getActionArguments(entityID, actionID);
+                            if (actionArgs.hasOwnProperty("otherEntityID")) {
+                                if (!toCheck.hasOwnProperty(actionArgs.otherEntityID)) {
+                                    print("found contraint link: " + actionArgs.otherEntityID);
+                                    toCheck[actionArgs.otherEntityID] = false;
+                                    done = false;
+                                }
+                            }
+                        }
                     }
                 }
             }
-            toSearch = newToSearch;
         }
 
         var result = [];
-        for (var f in found) {
-            if (found.hasOwnProperty(f)) {
+        for (var f in toCheck) {
+            if (toCheck.hasOwnProperty(f)) {
                 result.push(f);
             }
         }
-
         return result;
     }
 
@@ -345,7 +384,7 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
-            var entityIDs = [targetEntityID].concat(getConnectedEntityIDs(targetEntityID));
+            var entityIDs = getConnectedEntityIDs(targetEntityID);
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position);
             this.entityInScabbardProps = props;
             Settings.setValue(SCABBARD_SETTINGS + "." + this.hand, JSON.stringify(props));
