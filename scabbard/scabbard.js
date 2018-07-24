@@ -161,7 +161,7 @@ Script.include("/~/system/libraries/controllers.js");
             props = [jsonDecoded];
             actions = [];
         }
-        var IDMap = {};
+        var entityIDMap = {};
         var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
 
         for (var j = 0; j < props.length; j++) {
@@ -171,17 +171,77 @@ Script.include("/~/system/libraries/controllers.js");
                 // TODO: set entityProps.localRotation from a baseRotation parameter
             }
 
-            if (props.parentID && IDMap.hasOwnProperty(props.parentID)) {
-                props.parentID = IDMap[props.parentID];
+            if (entityProps.parentID && entityIDMap.hasOwnProperty(entityProps.parentID)) {
+                entityProps.parentID = entityIDMap[entityProps.parentID];
                 // TODO: polyvox neighbors
-                // TODO: action otherIDs
             }
 
             var originalID = entityProps.id;
             delete entityProps.id;
             var entityID = Entities.addEntity(entityProps, clientOnly);
-            IDMap[originalID] = entityID;
+            entityIDMap[originalID] = entityID;
+            print("QQQQ IDMAP -- origin: " + originalID + ", now: " + entityID);
         }
+
+        for (var k = 0; k < actions.length; k++) {
+            // TODO: action otherIDs
+        }
+    }
+
+
+    function getRootIDOfParentingTree(origID) {
+        while (true) {
+            var entProps = Entities.getEntityProperties(origID);
+            if (entProps && entProps.parentID && !isNullID(entProps.parentID)) {
+                origID = entProps.parentID;
+            } else {
+                break;
+            }
+        }
+        return origID;
+    }
+
+
+    function getConnectedEntityIDs(origID) {
+        // get IDs of descendants and of entities connected via dynamics (bullet constraints)
+        origID = getRootIDOfParentingTree(origID);
+
+        var found = {};
+        var toSearch = [origID];
+        while (toSearch.length > 0) {
+            var newToSearch = [];
+            for (var i = 0; i < toSearch.length; i++) {
+                var entityID = toSearch[i];
+
+                // look for children
+                var children = Entities.getChildrenIDs(entityID);
+                for (var c = 0; c < children.length; c++) {
+                    var child = children[c];
+                    if (!found.hasOwnProperty(child)) {
+                        found[child] = true;
+                        newToSearch.push(child);
+                    }
+                }
+
+                // look for actions (bullet contraints) that link to other entities
+                var actionIDs = Entities.getActionIDs(entityID);
+                for (var actionIndex = 0; actionIndex < actionIDs.length; actionIndex++) {
+                    var actionID = actionIDs[actionIndex];
+                    var actionArgs = Entities.getActionArguments(entityID, actionID);
+                    print("QQQQ actions: " + JSON.stringify(actionArgs));
+                }
+            }
+            toSearch = newToSearch;
+        }
+
+        var result = [];
+        for (var f in found) {
+            if (found.hasOwnProperty(f)) {
+                result.push(f);
+            }
+        }
+
+        return result;
     }
 
 
@@ -252,10 +312,13 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
-            var props = entitiesIDsToProperties([targetEntityID], controllerLocation.position);
+            var entityIDs = [targetEntityID].concat(getConnectedEntityIDs(targetEntityID));
+            var props = entitiesIDsToProperties(entityIDs, controllerLocation.position);
             this.entityInScabbardProps = props;
             Settings.setValue(SCABBARD_SETTINGS + "." + this.hand, JSON.stringify(props));
-            Entities.deleteEntity(targetEntityID);
+            for (var i = 0; i < entityIDs.length; i++) {
+                Entities.deleteEntity(entityIDs[i]);
+            }
         };
 
 
@@ -297,7 +360,7 @@ Script.include("/~/system/libraries/controllers.js");
                         }
                     }
                 } catch (err) {
-                    print("WARNING: scabbard.js -- error parsing Hifi-Object-Manipulation message: " + message);
+                    print("WARNING: scabbard.js -- error reacting to Hifi-Object-Manipulation message: " + message);
                     print(err.message);
                 }
             }
