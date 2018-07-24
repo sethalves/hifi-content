@@ -100,8 +100,6 @@ Script.include("/~/system/libraries/controllers.js");
         var props = [];
         var actions = [];
 
-        print("entitiesIDsToProperties -- " + JSON.stringify(entityIDs));
-
         for (var i = 0; i < entityIDs.length; i++) {
             var entityID = entityIDs[i];
             var entityProps = Entities.getEntityProperties(entityID);
@@ -135,19 +133,10 @@ Script.include("/~/system/libraries/controllers.js");
             return null;
         }
 
-        print("--- before sort");
-        for (var m = 0; m < props.length; m++) {
-            var mProps = props[m];
-            print(mProps.id);
-        }
-
         props = sortPropertiesByParentage(props);
-
-        print("--- after sort");
 
         for (var j = 0; j < props.length; j++) {
             var jProps = props[j];
-            print(jProps.id);
             if (isNullID(jProps.parentID)) {
                 // for top-level (non-children) entities, delete a few more properties
                 delete jProps.parentID;
@@ -170,6 +159,7 @@ Script.include("/~/system/libraries/controllers.js");
     function propertiesToEntities(jsonDecoded, basePosition) {
         var props;
         var actions;
+        var patchUps = [];
 
         if (jsonDecoded.Entities) {
             props = jsonDecoded.Entities;
@@ -189,9 +179,22 @@ Script.include("/~/system/libraries/controllers.js");
                 // TODO: set entityProps.localRotation from a baseRotation parameter
             }
 
-            if (entityProps.parentID && entityIDMap.hasOwnProperty(entityProps.parentID)) {
-                entityProps.parentID = entityIDMap[entityProps.parentID];
-                // TODO: polyvox neighbors
+            var propsToAdjustWithMap = ["parentID",
+                                        "xNNeighborID", "yNNeighborID", "zNNeighborID",
+                                        "xPNeighborID", "yPNeighborID", "zPNeighborID"];
+            for (var t = 0; t < propsToAdjustWithMap.length; t++) {
+                var propName = propsToAdjustWithMap[t];
+                if (entityProps[propName]) {
+                    if (entityIDMap.hasOwnProperty(entityProps[propName])) {
+                        entityProps[propName] = entityIDMap[entityProps[propName]];
+                    } else {
+                        if (propName == "parentID") {
+                            print("Warning: propertiesToEntities -- parent sorting failed: " +
+                                  entityProps.id + " --> " + entityProps[propName]);
+                        }
+                        patchUps.push([entityProps.id, propName, entityProps[propName]]);
+                    }
+                }
             }
 
             var originalID = entityProps.id;
@@ -200,6 +203,24 @@ Script.include("/~/system/libraries/controllers.js");
 
             var entityID = Entities.addEntity(entityProps, clientOnly);
             entityIDMap[originalID] = entityID;
+        }
+
+        // in some cases, the order that the entities were rezzed in keeps us from correctly setting
+        // properties that refer to other entities
+        for (var p = 0; p < patchUps.length; p++) {
+            var patchUp = patchUps[p];
+            var patchUpEntityID = patchUp[0];
+            var patchUpPropName = patchUp[1];
+            var patchUpPropValue = patchUp[2];
+            if (patchUpPropValue && entityIDMap.hasOwnProperty(patchUpPropValue)) {
+                var patchUpProps = {};
+                patchUpProps[patchUpPropName] = entityIDMap[patchUpPropValue];
+                if (entityIDMap[patchUpEntityID]) {
+                    Entities.editEntity(entityIDMap[patchUpEntityID], patchUpProps);
+                } else {
+                    print("Warning: propertiesToEntities -- map doesn't contain entity: " + patchUpEntityID);
+                }
+            }
         }
 
         for (var k = 0; k < actions.length; k++) {
@@ -225,8 +246,6 @@ Script.include("/~/system/libraries/controllers.js");
             delete action.type;
             delete action.entityID;
             delete action.ttl;
-            // print("QQQQ adding action -- type:" + actionType + " actionEntityID:" + actionEntityID + " action:" +
-            //       JSON.stringify(action));
             Entities.addAction(actionType, actionEntityID, action);
         }
     }
@@ -254,15 +273,6 @@ Script.include("/~/system/libraries/controllers.js");
         while (!done) {
             done = true;
 
-            // XXX
-            print("----------------");
-            for (var entityIDX in toCheck) {
-                if (toCheck.hasOwnProperty(entityIDX)) {
-                    print(entityIDX + " : " + toCheck[entityIDX]);
-                }
-            }
-            // XXX
-
             for (var entityID in toCheck) {
                 if (toCheck.hasOwnProperty(entityID)) {
                     if (!toCheck[entityID]) {
@@ -272,7 +282,6 @@ Script.include("/~/system/libraries/controllers.js");
                         var parentIDProps = Entities.getEntityProperties(entityID, ["parentID"]);
                         if (parentIDProps && !isNullID(parentIDProps.parentID)) {
                             if (!toCheck.hasOwnProperty(parentIDProps.parentID)) {
-                                print("found parent: " + parentIDProps.parentID);
                                 toCheck[parentIDProps.parentID] = false;
                                 done = false;
                             }
@@ -283,7 +292,6 @@ Script.include("/~/system/libraries/controllers.js");
                         for (var c = 0; c < children.length; c++) {
                             var childID = children[c];
                             if (!toCheck.hasOwnProperty(childID)) {
-                                print("found child: " + childID);
                                 toCheck[childID] = false;
                                 done = false;
                             }
@@ -296,7 +304,6 @@ Script.include("/~/system/libraries/controllers.js");
                             var actionArgs = Entities.getActionArguments(entityID, actionID);
                             if (actionArgs.hasOwnProperty("otherEntityID")) {
                                 if (!toCheck.hasOwnProperty(actionArgs.otherEntityID)) {
-                                    print("found contraint link: " + actionArgs.otherEntityID);
                                     toCheck[actionArgs.otherEntityID] = false;
                                     done = false;
                                 }
@@ -366,11 +373,6 @@ Script.include("/~/system/libraries/controllers.js");
             if (detectScabbardGesture(controllerLocation, this.hand)) {
                 propertiesToEntities(this.entityInScabbardProps, controllerLocation.position);
                 this.entityInScabbardProps = null;
-
-                // var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
-                // this.entityInScabbardProps.position = controllerLocation.position;
-                // var entityID = Entities.addEntity(this.entityInScabbardProps, clientOnly);
-                // this.entityInScabbardProps = null;
             }
         };
 
