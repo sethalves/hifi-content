@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Script, Entities, MyAvatar, Messages, Controller, Settings, Vec3, getControllerWorldLocation */
+/* global Script, Entities, MyAvatar, Messages, Controller, Settings, Uuid, Vec3, getControllerWorldLocation */
 
 
 Script.include("/~/system/libraries/controllers.js");
@@ -17,7 +17,6 @@ Script.include("/~/system/libraries/controllers.js");
 
 
     function cleanProperties(props) {
-        delete props.id;
         delete props.clientOnly;
         delete props.created;
         delete props.lastEdited;
@@ -31,21 +30,158 @@ Script.include("/~/system/libraries/controllers.js");
         delete props.acceleration;
         delete props.scriptTimestamp;
         delete props.boundingBox;
-        delete props.position;
-        delete props.rotation;
         delete props.velocity;
         delete props.angularVelocity;
-        delete props.dimensions;
+        // delete props.dimensions;
         delete props.renderInfo;
-        delete props.parentID;
-        delete props.parentJointIndex;
-        delete props.localPosition;
-        delete props.localRotation;
         delete props.lifetime;
         delete props.actionData;
-        delete props.localVelocity;
-        delete props.localAngularVelocity;
+        delete props.position;
+        delete props.rotation;
         return props;
+    }
+
+
+    function isNullID(testID) {
+        if (!testID) {
+            return true;
+        } else if (testID == Uuid.NULL) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    function sortPropertiesByParentage(props) {
+        var parentIDs = {};
+        for (var i = 0; i < props.length; i++) {
+            parentIDs[props.id] = props.parentID;
+        }
+
+        function parentCompare(propsA, propsB) {
+            // search for a parenting chain from A to B
+            var parentID;
+            for (parentID = propsA.parentID;
+                 !isNullID(parentID);
+                 parentID = parentIDs[parentID]) {
+                if (parentID == propsB.id) {
+                    return 1;
+                }
+            }
+
+            // search for a parenting chain from B to A
+            for (parentID = propsB.parentID;
+                 !isNullID(parentID);
+                 parentID = parentIDs[parentID]) {
+                if (parentID == propsA.id) {
+                    return -1;
+                }
+            }
+
+            // push non-children to the front or the list
+            if (!isNullID(propsA.parentID) && isNullID(propsB.parentID)) {
+                return 1;
+            }
+            if (isNullID(propsA.parentID) && !isNullID(propsB.parentID)) {
+                return -1;
+            }
+
+            // otherwise just sort by id
+            return ((propsA.id == propsB.id) ? 0 : ((propsA.id > propsB.id) ? 1 : -1));
+        }
+
+        props.sort(parentCompare);
+        return props;
+    }
+
+
+    function entitiesIDsToProperties(entityIDs, basePosition) {
+        var props = [];
+        var actions = [];
+
+        for (var i = 0; i < entityIDs.length; i++) {
+            var entityID = entityIDs[i];
+            var entityProps = Entities.getEntityProperties(entityID);
+
+            if (!entityProps || !entityProps.localPosition) {
+                continue;
+            }
+
+            var actionIDs = Entities.getActionIDs(entityID);
+            for (var actionIndex = 0; actionIndex < actionIDs.length; actionIndex++) {
+                var actionID = actionIDs[actionIndex];
+                var actionArgs = Entities.getActionArguments(entityID, actionID);
+                actionArgs.id = actionID;
+                actionArgs.entityID = entityID;
+                actions.push(actionArgs);
+            }
+
+            entityProps.id = entityID;
+            cleanProperties(entityProps);
+            props.push(entityProps);
+        }
+
+        if (props.length === 0) {
+            return null;
+        }
+
+        props = sortPropertiesByParentage(props);
+
+        for (var j = 0; j < props.length; j++) {
+            var jProps = props[j];
+            if (isNullID(jProps.parentID)) {
+                // for top-level (non-children) entities, delete a few more properties
+                delete jProps.parentID;
+                delete jProps.parentJointIndex;
+                delete jProps.localVelocity;
+                delete jProps.localAngularVelocity;
+                jProps.localPosition = Vec3.subtract(jProps.localPosition, basePosition);
+                // TODO: set localRotation based on a baseRotation parameter
+            }
+        }
+
+        return {
+            Version: 89,
+            Entities: props,
+            Actions: actions
+        };
+    }
+
+
+    function propertiesToEntities(jsonDecoded, basePosition) {
+        var props;
+        var actions;
+
+        if (jsonDecoded.Entities) {
+            props = jsonDecoded.Entities;
+            actions = jsonDecoded.Actions;
+        } else {
+            // assume it's just the properties of one entity
+            props = [jsonDecoded];
+            actions = [];
+        }
+        var IDMap = {};
+        var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
+
+        for (var j = 0; j < props.length; j++) {
+            var entityProps = props[j];
+            if (isNullID(entityProps.parentID)) {
+                entityProps.localPosition = Vec3.sum(basePosition, entityProps.localPosition);
+                // TODO: set entityProps.localRotation from a baseRotation parameter
+            }
+
+            if (props.parentID && IDMap.hasOwnProperty(props.parentID)) {
+                props.parentID = IDMap[props.parentID];
+                // TODO: polyvox neighbors
+                // TODO: action otherIDs
+            }
+
+            var originalID = entityProps.id;
+            delete entityProps.id;
+            var entityID = Entities.addEntity(entityProps, clientOnly);
+            IDMap[originalID] = entityID;
+        }
     }
 
 
@@ -96,10 +232,13 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
             if (detectScabbardGesture(controllerLocation, this.hand)) {
-                var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
-                this.entityInScabbardProps.position = controllerLocation.position;
-                var entityID = Entities.addEntity(this.entityInScabbardProps, clientOnly);
+                propertiesToEntities(this.entityInScabbardProps, controllerLocation.position);
                 this.entityInScabbardProps = null;
+
+                // var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
+                // this.entityInScabbardProps.position = controllerLocation.position;
+                // var entityID = Entities.addEntity(this.entityInScabbardProps, clientOnly);
+                // this.entityInScabbardProps = null;
             }
         };
 
@@ -112,12 +251,8 @@ Script.include("/~/system/libraries/controllers.js");
         };
 
 
-        this.saveEntityInScabbard = function (targetEntityID) {
-            var props = Entities.getEntityProperties(targetEntityID);
-            if (!props || !props.localPosition) {
-                return;
-            }
-            cleanProperties(props);
+        this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
+            var props = entitiesIDsToProperties([targetEntityID], controllerLocation.position);
             this.entityInScabbardProps = props;
             Settings.setValue(SCABBARD_SETTINGS + "." + this.hand, JSON.stringify(props));
             Entities.deleteEntity(targetEntityID);
@@ -128,7 +263,7 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
             if (detectScabbardGesture(controllerLocation, this.hand)) {
-                this.saveEntityInScabbard(droppedEntityID);
+                this.saveEntityInScabbard(droppedEntityID, controllerLocation);
             }
         };
     }
@@ -161,8 +296,9 @@ Script.include("/~/system/libraries/controllers.js");
                             leftScabbard.checkRelease(data.grabbedEntity);
                         }
                     }
-                } catch (e) {
+                } catch (err) {
                     print("WARNING: scabbard.js -- error parsing Hifi-Object-Manipulation message: " + message);
+                    print(err.message);
                 }
             }
         }
