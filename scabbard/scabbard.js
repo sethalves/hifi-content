@@ -112,8 +112,15 @@ Script.include("/~/system/libraries/controllers.js");
             for (var actionIndex = 0; actionIndex < actionIDs.length; actionIndex++) {
                 var actionID = actionIDs[actionIndex];
                 var actionArgs = Entities.getActionArguments(entityID, actionID);
+                if (actionArgs.type == "hold" || actionArgs.type == "fargrab") {
+                    continue;
+                }
+
                 actionArgs.id = actionID;
                 actionArgs.entityID = entityID;
+                delete actionArgs["::active"];
+                delete actionArgs["::motion-type"];
+                delete actionArgs.isMine;
                 actions.push(actionArgs);
             }
 
@@ -180,11 +187,34 @@ Script.include("/~/system/libraries/controllers.js");
             delete entityProps.id;
             var entityID = Entities.addEntity(entityProps, clientOnly);
             entityIDMap[originalID] = entityID;
-            print("QQQQ IDMAP -- origin: " + originalID + ", now: " + entityID);
         }
 
         for (var k = 0; k < actions.length; k++) {
-            // TODO: action otherIDs
+            var action = actions[k];
+
+            if (!entityIDMap.hasOwnProperty(action.entityID)) {
+                print("Warning: propertiesToEntities -- action on unknown entity: " + action.entityID);
+                continue;
+            }
+            action.entityID = entityIDMap[action.entityID];
+
+            if (action.hasOwnProperty("otherEntityID")) {
+                if (!entityIDMap.hasOwnProperty(action.otherEntityID)) {
+                    print("Warning: propertiesToEntities -- action on unknown otherEntityID: " + action.otherEntityID);
+                    continue;
+                }
+                action.otherEntityID = entityIDMap[action.otherEntityID];
+            }
+
+            var actionEntityID = action.entityID;
+            var actionType = action.type;
+            delete action.id;
+            delete action.type;
+            delete action.entityID;
+            delete action.ttl;
+            // print("QQQQ adding action -- type:" + actionType + " actionEntityID:" + actionEntityID + " action:" +
+            //       JSON.stringify(action));
+            Entities.addAction(actionType, actionEntityID, action);
         }
     }
 
@@ -203,7 +233,7 @@ Script.include("/~/system/libraries/controllers.js");
 
 
     function getConnectedEntityIDs(origID) {
-        // get IDs of descendants and of entities connected via dynamics (bullet constraints)
+        // get IDs of parents/descendants and of entities connected via dynamics (bullet constraints)
         origID = getRootIDOfParentingTree(origID);
 
         var found = {};
@@ -228,7 +258,10 @@ Script.include("/~/system/libraries/controllers.js");
                 for (var actionIndex = 0; actionIndex < actionIDs.length; actionIndex++) {
                     var actionID = actionIDs[actionIndex];
                     var actionArgs = Entities.getActionArguments(entityID, actionID);
-                    print("QQQQ actions: " + JSON.stringify(actionArgs));
+                    if (actionArgs.hasOwnProperty("otherEntityID")) {
+                        found[actionArgs.otherEntityID] = true;
+                        newToSearch.push(actionArgs.otherEntityID);
+                    }
                 }
             }
             toSearch = newToSearch;
