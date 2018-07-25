@@ -3,11 +3,12 @@
 /* jshint loopfunc:true */
 
 (function() {
-    var genericTool = null;
-    while (!genericTool || !genericTool.genericTool) {
-        genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
-    }
+    // var genericTool = null;
+    // while (!genericTool || !genericTool.genericTool) {
+    //     genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    // }
 
+    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
     Script.include(Script.resolvePath('voxel-paint-shared.js'));
 
     var brush = genericTool.genericTool(
