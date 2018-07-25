@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Script, Entities, MyAvatar, Messages, Controller, Settings, Uuid, Vec3, getControllerWorldLocation */
+/* global Script, Entities, MyAvatar, Messages, Controller, Settings, Uuid, Mat4, Vec3, Quat, getControllerWorldLocation */
 
 
 Script.include("/~/system/libraries/controllers.js");
@@ -32,7 +32,6 @@ Script.include("/~/system/libraries/controllers.js");
         delete props.boundingBox;
         delete props.velocity;
         delete props.angularVelocity;
-        // delete props.dimensions;
         delete props.renderInfo;
         delete props.lifetime;
         delete props.actionData;
@@ -96,7 +95,10 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function entitiesIDsToProperties(entityIDs, basePosition) {
+    function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
+        var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
+        var baseMatInv = Mat4.inverse(baseMat);
+        var baseMatInvRot = Mat4.extractRotation(baseMatInv);
         var props = [];
         var actions = [];
 
@@ -143,8 +145,8 @@ Script.include("/~/system/libraries/controllers.js");
                 delete jProps.parentJointIndex;
                 delete jProps.localVelocity;
                 delete jProps.localAngularVelocity;
-                jProps.localPosition = Vec3.subtract(jProps.localPosition, basePosition);
-                // TODO: set localRotation based on a baseRotation parameter
+                jProps.localPosition = Mat4.transformPoint(baseMatInv, jProps.localPosition);
+                jProps.localRotation = Quat.multiply(baseMatInvRot, jProps.localRotation);
             }
         }
 
@@ -156,7 +158,9 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function propertiesToEntities(jsonDecoded, basePosition) {
+    function propertiesToEntities(jsonDecoded, basePosition, baseRotation) {
+        var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
+        var baseMatRot = Mat4.extractRotation(baseMat);
         var props;
         var actions;
         var patchUps = [];
@@ -175,8 +179,8 @@ Script.include("/~/system/libraries/controllers.js");
         for (var j = 0; j < props.length; j++) {
             var entityProps = props[j];
             if (isNullID(entityProps.parentID)) {
-                entityProps.localPosition = Vec3.sum(basePosition, entityProps.localPosition);
-                // TODO: set entityProps.localRotation from a baseRotation parameter
+                entityProps.localPosition = Mat4.transformPoint(baseMat, entityProps.localPosition);
+                entityProps.localRotation = Quat.multiply(baseMatRot, entityProps.localRotation);
             }
 
             var propsToAdjustWithMap = ["parentID",
@@ -371,8 +375,8 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
             if (detectScabbardGesture(controllerLocation, this.hand)) {
-                propertiesToEntities(this.entityInScabbardProps, controllerLocation.position);
-                this.entityInScabbardProps = null;
+                propertiesToEntities(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+                // this.entityInScabbardProps = null;
             }
         };
 
@@ -387,7 +391,7 @@ Script.include("/~/system/libraries/controllers.js");
 
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
             var entityIDs = getConnectedEntityIDs(targetEntityID);
-            var props = entitiesIDsToProperties(entityIDs, controllerLocation.position);
+            var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
             this.entityInScabbardProps = props;
             Settings.setValue(SCABBARD_SETTINGS + "." + this.hand, JSON.stringify(props));
             for (var i = 0; i < entityIDs.length; i++) {
