@@ -416,20 +416,6 @@
         if (Entities.editEntity(polyVoxID, editProps) == Uuid.NULL) {
             print("WARNING: voxel-paint-brush -- edit of neighbors for polyvox " + polyVoxID + " failed.");
         } else {
-
-            // XXX something keeps the edits from sticking, sometimes?
-            var changedProps = Object.keys(editProps);
-            var nowProps = Entities.getEntityProperties(polyVoxID, changedProps);
-            for (var propName in changedProps) {
-                if (editProps[propName] != nowProps[propName]) {
-                    print("QQQQ retrying polyvox edit because of " + propName + " " +
-                          JSON.stringify(editProps[propName]) + " != " + JSON.stringify(nowProps[propName]));
-                    this.editPolyVox(polyVoxID, editProps);
-                    return;
-                }
-            }
-
-
             var polyVoxProps = this.polyVoxPropertyCache[polyVoxID];
             if (polyVoxProps) {
                 for (var editKey in editProps) {
