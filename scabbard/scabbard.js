@@ -165,14 +165,10 @@ Script.include("/~/system/libraries/controllers.js");
         var actions;
         var patchUps = [];
 
-        if (jsonDecoded.Entities) {
-            props = jsonDecoded.Entities;
-            actions = jsonDecoded.Actions;
-        } else {
-            // assume it's just the properties of one entity
-            props = [jsonDecoded];
-            actions = [];
-        }
+        // deep copy
+        props = JSON.parse(JSON.stringify(jsonDecoded.Entities));
+        actions = JSON.parse(JSON.stringify(jsonDecoded.Actions));
+
         var entityIDMap = {};
         var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
 
@@ -376,6 +372,7 @@ Script.include("/~/system/libraries/controllers.js");
 
             if (detectScabbardGesture(controllerLocation, this.hand)) {
                 propertiesToEntities(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+                // this like would make the scabbard empty after an item is take out:
                 // this.entityInScabbardProps = null;
             }
         };
