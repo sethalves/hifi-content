@@ -416,6 +416,20 @@
         if (Entities.editEntity(polyVoxID, editProps) == Uuid.NULL) {
             print("WARNING: voxel-paint-brush -- edit of neighbors for polyvox " + polyVoxID + " failed.");
         } else {
+
+            // XXX something keeps the edits from sticking, sometimes?
+            var changedProps = Object.keys(editProps);
+            var nowProps = Entities.getEntityProperties(polyVoxID, changedProps);
+            for (var propName in changedProps) {
+                if (editProps[propName] != nowProps[propName]) {
+                    print("QQQQ retrying polyvox edit because of " + propName + " " +
+                          JSON.stringify(editProps[propName]) + " != " + JSON.stringify(nowProps[propName]));
+                    this.editPolyVox(polyVoxID, editProps);
+                    return;
+                }
+            }
+
+
             var polyVoxProps = this.polyVoxPropertyCache[polyVoxID];
             if (polyVoxProps) {
                 for (var editKey in editProps) {
@@ -552,11 +566,10 @@
 
     brush.addPolyVoxIfNeeded = function (brushPosition, editSphereRadius) {
         this.polyVoxIDsByIndex = {};
-        var halfSliceSize = Vec3.multiply(this.sliceSize, 0.5);
-        var sliceRadius = Math.sqrt(Vec3.dot(halfSliceSize, halfSliceSize));
+        var entityRadius = Math.sqrt(Vec3.dot(this.polyVoxSize, this.polyVoxSize));
         var capsuleLength = 2 * editSphereRadius + Vec3.length(Vec3.subtract(brushPosition, this.previousBrushPosition));
         var findCenter = Vec3.multiply(Vec3.sum(brushPosition, this.previousBrushPosition), 0.5);
-        var findRadius = capsuleLength + sliceRadius + 0.05;
+        var findRadius = capsuleLength + entityRadius + 0.05;
 
         var ids = Entities.findEntities(findCenter, findRadius);
 
