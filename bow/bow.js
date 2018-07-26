@@ -22,12 +22,14 @@ function getControllerLocation(controllerHand) {
     Script.include("/~/system/libraries/utils.js");
     Script.include("/~/system/libraries/controllers.js");
 
-    var NOTCH_ARROW_SOUND_URL = Script.resolvePath('notch.wav');
-    var SHOOT_ARROW_SOUND_URL = Script.resolvePath('String_release2.L.wav');
-    var STRING_PULL_SOUND_URL = Script.resolvePath('Bow_draw.1.L.wav');
-    var ARROW_HIT_SOUND_URL = Script.resolvePath('Arrow_impact1.L.wav');
+    var NOTCH_ARROW_SOUND_URL = Script.resolvePath("notch.wav");
+    var SHOOT_ARROW_SOUND_URL = Script.resolvePath("String_release2.L.wav");
+    var STRING_PULL_SOUND_URL = Script.resolvePath("Bow_draw.1.L.wav");
+    var ARROW_HIT_SOUND_URL = Script.resolvePath("Arrow_impact1.L.wav");
+    var ARROW_SPARKLE_TEXTURE = Script.resolvePath("arrow-sparkle.png");
 
-    var ARROW_MODEL_URL = Script.resolvePath('arrow.fbx');
+    var ARROW_MODEL_URL = Script.resolvePath("arrow.fbx");
+    // var ARROW_MODEL_URL = Script.resolvePath("newarrow_textured.fbx");
     var ARROW_DIMENSIONS = {
         x: 0.20,
         y: 0.19,
@@ -49,7 +51,7 @@ function getControllerLocation(controllerHand) {
     };
 
 
-    var ARROW_LIFETIME = 15; // seconds
+    var ARROW_LIFETIME = 30; // seconds
     var ARROW_PARTICLE_LIFESPAN = 2; // seconds
 
     var TOP_NOTCH_OFFSET = 0.6;
@@ -98,8 +100,8 @@ function getControllerLocation(controllerHand) {
         return;
     }
 
-    var STRING_NAME = 'Hifi-Bow-String';
-    var ARROW_NAME = 'Hifi-Arrow-projectile';
+    var STRING_NAME = "Hifi-Bow-String";
+    var ARROW_NAME = "Hifi-Arrow-projectile";
 
     var STATE_IDLE = 0;
     var STATE_ARROW_GRABBED = 1;
@@ -134,7 +136,7 @@ function getControllerLocation(controllerHand) {
         },
 
         unload: function() {
-            Messages.sendLocalMessage('Hifi-Hand-Disabler', "none");
+            Messages.sendLocalMessage("Hifi-Hand-Disabler", "none");
             Entities.deleteEntity(this.arrow);
         },
 
@@ -147,9 +149,9 @@ function getControllerLocation(controllerHand) {
                 collidesWith: "",
             });
 
-            var data = getEntityCustomData('grabbableKey', this.entityID, {});
+            var data = getEntityCustomData("grabbableKey", this.entityID, {});
             data.grabbable = false;
-            setEntityCustomData('grabbableKey', this.entityID, data);
+            setEntityCustomData("grabbableKey", this.entityID, data);
 
             this.initString();
 
@@ -165,11 +167,11 @@ function getControllerLocation(controllerHand) {
             Script.clearInterval(this.updateIntervalID);
             this.updateIntervalID = null;
 
-            Messages.sendLocalMessage('Hifi-Hand-Disabler', "none");
+            Messages.sendLocalMessage("Hifi-Hand-Disabler", "none");
 
-            var data = getEntityCustomData('grabbableKey', this.entityID, {});
+            var data = getEntityCustomData("grabbableKey", this.entityID, {});
             data.grabbable = true;
-            setEntityCustomData('grabbableKey', this.entityID, data);
+            setEntityCustomData("grabbableKey", this.entityID, data);
             Entities.deleteEntity(this.arrow);
             this.resetStringToIdlePosition();
             this.destroyArrow();
@@ -193,9 +195,9 @@ function getControllerLocation(controllerHand) {
             }
 
             //invert the hands because our string will be held with the opposite hand of the first one we pick up the bow with
-            this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[(this.hand === 'left') ? 1 : 0]);
+            this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[(this.hand === "left") ? 1 : 0]);
 
-            this.bowProperties = Entities.getEntityProperties(this.entityID, ['position', 'rotation']);
+            this.bowProperties = Entities.getEntityProperties(this.entityID, ["position", "rotation"]);
             var notchPosition = this.getNotchPosition(this.bowProperties);
             var stringHandPosition = this.getStringHandPosition();
             var handToNotch = Vec3.subtract(notchPosition, stringHandPosition);
@@ -216,8 +218,8 @@ function getControllerLocation(controllerHand) {
 
             if (this.state === STATE_ARROW_GRABBED) {
                 if (!this.arrow) {
-                    var handToDisable = (this.hand === 'right' ? 'left' : 'right');
-                    Messages.sendLocalMessage('Hifi-Hand-Disabler', handToDisable);
+                    var handToDisable = (this.hand === "right" ? "left" : "right");
+                    Messages.sendLocalMessage("Hifi-Hand-Disabler", handToDisable);
                     this.playArrowNotchSound();
                     this.arrow = this.createArrow();
                     this.playStringPullSound();
@@ -227,14 +229,14 @@ function getControllerLocation(controllerHand) {
                     // they let go without pulling
                     if (pullBackDistance >= (MIN_ARROW_DISTANCE_FROM_BOW_REST_TO_SHOOT + NEAR_TO_RELAXED_SCHMITT)) {
                         // The arrow has been pulled far enough back that we can release it
-                        Messages.sendLocalMessage('Hifi-Hand-Disabler', "none");
+                        Messages.sendLocalMessage("Hifi-Hand-Disabler", "none");
                         this.updateArrowPositionInNotch(true, true);
                         this.arrow = null;
                         this.state = STATE_IDLE;
                         this.resetStringToIdlePosition();
                     } else {
                         // The arrow has not been pulled far enough back so we just remove the arrow
-                        Messages.sendLocalMessage('Hifi-Hand-Disabler', "none");
+                        Messages.sendLocalMessage("Hifi-Hand-Disabler", "none");
                         Entities.deleteEntity(this.arrow);
                         this.arrow = null;
                         this.state = STATE_IDLE;
@@ -264,9 +266,9 @@ function getControllerLocation(controllerHand) {
 
             var arrow = Entities.addEntity({
                 name: ARROW_NAME,
-                type: 'Model',
+                type: "Model",
                 modelURL: ARROW_MODEL_URL,
-                shapeType: 'simple-compound',
+                shapeType: "simple-compound",
                 dimensions: ARROW_DIMENSIONS,
                 position: this.bowProperties.position,
                 parentID: this.entityID,
@@ -335,7 +337,7 @@ function getControllerLocation(controllerHand) {
                     parentID: this.entityID,
                     localPosition: { "x": 0, "y": 0.6, "z": 0.1 },
                     localRotation: { "w": 1, "x": 0, "y": 0, "z": 0 },
-                    type: 'Line',
+                    type: "Line",
                     userData: JSON.stringify({
                         grabbableKey: {
                             grabbable: false
@@ -369,7 +371,7 @@ function getControllerLocation(controllerHand) {
             var bottomStringPosition = Vec3.sum(this.bowProperties.position, downOffset);
             this.bottomStringPosition = Vec3.sum(bottomStringPosition, backOffset);
 
-            var stringProps = Entities.getEntityProperties(this.stringID, ['position', 'rotation']);
+            var stringProps = Entities.getEntityProperties(this.stringID, ["position", "rotation"]);
             var handPositionLocal = Vec3.subtract(this.arrowRearPosition, stringProps.position);
             //handPositionLocal = Vec3.subtract(handPositionLocal, { x: 0, y: 0.6, z: 0 });
             handPositionLocal = Vec3.multiplyQbyV(Quat.inverse(stringProps.rotation), handPositionLocal);
@@ -404,7 +406,7 @@ function getControllerLocation(controllerHand) {
             var handToNotch = Vec3.subtract(notchPosition, stringHandPosition);
             var arrowRotation = Quat.rotationBetween(Vec3.FRONT, handToNotch);
 
-            var backHand = this.hand === 'left' ? 1 : 0;
+            var backHand = this.hand === "left" ? 1 : 0;
             var pullBackDistance = Vec3.length(handToNotch);
             // pulse as arrow is drawn
             if (doHapticPulses &&
@@ -484,7 +486,7 @@ function getControllerLocation(controllerHand) {
                     lifespan: ARROW_PARTICLE_LIFESPAN,
                     lifetime: ARROW_PARTICLE_LIFESPAN + 1,
                     maxParticles: 1000,
-                    name: 'arrow-particles',
+                    name: "arrow-particles",
                     parentID: this.arrow,
                     particleRadius: 0.132,
                     polarFinish: 0,
@@ -493,8 +495,8 @@ function getControllerLocation(controllerHand) {
                     radiusSpread: 0,
                     radiusStart: 0.132,
                     speedSpread: 0,
-                    textures: Script.resolvePath('arrow-sparkle.png'),
-                    type: 'ParticleEffect'
+                    textures: ARROW_SPARKLE_TEXTURE,
+                    type: "ParticleEffect"
                 };
 
                 Entities.addEntity(arrowParticleProperties);
@@ -568,7 +570,7 @@ function getControllerLocation(controllerHand) {
             if (sender !== MyAvatar.sessionUUID) {
                 return;
             }
-            if (channel !== 'Hifi-Object-Manipulation') {
+            if (channel !== "Hifi-Object-Manipulation") {
                 return;
             }
             try {
@@ -591,7 +593,7 @@ function getControllerLocation(controllerHand) {
 
     var bow = new Bow();
 
-    Messages.subscribe('Hifi-Object-Manipulation');
+    Messages.subscribe("Hifi-Object-Manipulation");
     Messages.messageReceived.connect(bow.handleMessages);
 
     return bow;
