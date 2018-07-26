@@ -264,6 +264,7 @@ function getControllerLocation(controllerHand) {
         createArrow: function() {
             this.playArrowNotchSound();
 
+            var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
             var arrow = Entities.addEntity({
                 name: ARROW_NAME,
                 type: "Model",
@@ -282,7 +283,7 @@ function getControllerLocation(controllerHand) {
                     },
                     creatorSessionUUID: MyAvatar.sessionUUID
                 })
-            });
+            }, avatarEntity);
 
             var makeArrowStick = function(entityA, entityB, collision) {
                 Entities.editEntity(entityA, {
@@ -324,8 +325,9 @@ function getControllerLocation(controllerHand) {
                 }
             });
 
-            // If thie string wasn't found, create it
+            // If the string wasn't found, create it
             if (this.stringID === null) {
+                var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
                 this.stringID = Entities.addEntity({
                     collisionless: true,
                     dimensions: { "x": 5, "y": 5, "z": 5 },
@@ -343,7 +345,7 @@ function getControllerLocation(controllerHand) {
                             grabbable: false
                         }
                     })
-                });
+                }, avatarEntity);
             }
 
             this.resetStringToIdlePosition();
@@ -499,7 +501,8 @@ function getControllerLocation(controllerHand) {
                     type: "ParticleEffect"
                 };
 
-                Entities.addEntity(arrowParticleProperties);
+                var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
+                Entities.addEntity(arrowParticleProperties, avatarEntity);
 
                 // actually shoot the arrow
                 Entities.editEntity(this.arrow, arrowProperties);
