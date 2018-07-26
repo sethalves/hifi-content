@@ -7,158 +7,73 @@
 //
 //  Previous version by James B. Pollack @imgntn on 10/19/2015
 
-/* global MyAvatar, Vec3, Controller, Quat */
-
-var GRAB_COMMUNICATIONS_SETTING = "io.highfidelity.isFarGrabbing";
-setGrabCommunications = function setFarGrabCommunications(on) {
-    Settings.setValue(GRAB_COMMUNICATIONS_SETTING, on ? "on" : "");
-}
-getGrabCommunications = function getFarGrabCommunications() {
-    return !!Settings.getValue(GRAB_COMMUNICATIONS_SETTING, "");
-}
-
-// this offset needs to match the one in libraries/display-plugins/src/display-plugins/hmd/HmdDisplayPlugin.cpp:378
-var GRAB_POINT_SPHERE_OFFSET = { x: 0.04, y: 0.13, z: 0.039 };  // x = upward, y = forward, z = lateral
-
-getGrabPointSphereOffset = function(handController) {
-    if (handController === Controller.Standard.RightHand) {
-        return GRAB_POINT_SPHERE_OFFSET;
-    }
-    return {
-        x: GRAB_POINT_SPHERE_OFFSET.x * -1,
-        y: GRAB_POINT_SPHERE_OFFSET.y,
-        z: GRAB_POINT_SPHERE_OFFSET.z
-    };
-};
-
-// controllerWorldLocation is where the controller would be, in-world, with an added offset
-getControllerWorldLocation = function (handController, doOffset) {
-    var orientation;
-    var position;
-    var pose = Controller.getPoseValue(handController);
-    var valid = pose.valid;
-    var controllerJointIndex;
-    if (pose.valid) {
-        if (handController === Controller.Standard.RightHand) {
-            controllerJointIndex = MyAvatar.getJointIndex("_CAMERA_RELATIVE_CONTROLLER_RIGHTHAND");
-        } else {
-            controllerJointIndex = MyAvatar.getJointIndex("_CAMERA_RELATIVE_CONTROLLER_LEFTHAND");
-        }
-        orientation = Quat.multiply(MyAvatar.orientation, MyAvatar.getAbsoluteJointRotationInObjectFrame(controllerJointIndex));
-        position = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, MyAvatar.getAbsoluteJointTranslationInObjectFrame(controllerJointIndex)));
-
-        // add to the real position so the grab-point is out in front of the hand, a bit
-        if (doOffset) {
-            var offset = getGrabPointSphereOffset(handController);
-            position = Vec3.sum(position, Vec3.multiplyQbyV(orientation, offset));
-        }
-
-    } else if (!HMD.isHandControllerAvailable()) {
-        // NOTE: keep this offset in sync with scripts/system/controllers/handControllerPointer.js:493
-        var VERTICAL_HEAD_LASER_OFFSET = 0.1;
-        position = Vec3.sum(Camera.position, Vec3.multiplyQbyV(Camera.orientation, {x: 0, y: VERTICAL_HEAD_LASER_OFFSET, z: 0}));
-        orientation = Quat.multiply(Camera.orientation, Quat.angleAxis(-90, { x: 1, y: 0, z: 0 }));
-        valid = true;
-    }
-
-    return {position: position,
-            translation: position,
-            orientation: orientation,
-            rotation: orientation,
-            valid: valid};
-};
-
-
-
-//
-//
-//
-//
-//
-//
-//  bow.js
-//
-//  This script attaches to a bow that you can pick up with a hand controller.
-//  Created by James B. Pollack @imgntn on 10/19/2015
-//  Copyright 2015 High Fidelity, Inc.
-//
-//  Distributed under the Apache License, Version 2.0.
-//  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
-//
-
-/*global Script, Controller, SoundCache, Entities, getEntityCustomData, setEntityCustomData, MyAvatar, Vec3, Quat, Messages */
+/* global Script, MyAvatar, Vec3, Controller, Quat, Uuid, getControllerWorldLocation,
+   SoundCache, Entities, Messages, getEntityCustomData, setEntityCustomData */
 
 
 function getControllerLocation(controllerHand) {
     var standardControllerValue =
         (controllerHand === "right") ? Controller.Standard.RightHand : Controller.Standard.LeftHand;
     return getControllerWorldLocation(standardControllerValue, true);
-};
+}
 
 (function() {
 
     Script.include("/~/system/libraries/utils.js");
+    Script.include("/~/system/libraries/controllers.js");
 
-    const NULL_UUID = "{00000000-0000-0000-0000-000000000000}";
+    var NOTCH_ARROW_SOUND_URL = Script.resolvePath('notch.wav');
+    var SHOOT_ARROW_SOUND_URL = Script.resolvePath('String_release2.L.wav');
+    var STRING_PULL_SOUND_URL = Script.resolvePath('Bow_draw.1.L.wav');
+    var ARROW_HIT_SOUND_URL = Script.resolvePath('Arrow_impact1.L.wav');
 
-    const NOTCH_ARROW_SOUND_URL = Script.resolvePath('notch.wav');
-    const SHOOT_ARROW_SOUND_URL = Script.resolvePath('String_release2.L.wav');
-    const STRING_PULL_SOUND_URL = Script.resolvePath('Bow_draw.1.L.wav');
-    const ARROW_HIT_SOUND_URL = Script.resolvePath('Arrow_impact1.L.wav');
-
-    const ARROW_MODEL_URL = Script.resolvePath('arrow.fbx');
-    const ARROW_DIMENSIONS = {
+    var ARROW_MODEL_URL = Script.resolvePath('arrow.fbx');
+    var ARROW_DIMENSIONS = {
         x: 0.20,
         y: 0.19,
         z: 0.93
     };
 
-    const MIN_ARROW_DISTANCE_FROM_BOW_REST = 0.2;
-    const MAX_ARROW_DISTANCE_FROM_BOW_REST = ARROW_DIMENSIONS.z - 0.2;
-    const MIN_ARROW_DISTANCE_FROM_BOW_REST_TO_SHOOT = 0.2;
+    var MIN_ARROW_DISTANCE_FROM_BOW_REST = 0.2;
+    var MAX_ARROW_DISTANCE_FROM_BOW_REST = ARROW_DIMENSIONS.z - 0.2;
+    var MIN_ARROW_DISTANCE_FROM_BOW_REST_TO_SHOOT = 0.2;
 
-    const MIN_ARROW_SPEED = 3;
-    const MAX_ARROW_SPEED = 30;
+    var MIN_ARROW_SPEED = 3;
+    var MAX_ARROW_SPEED = 30;
 
-    const ARROW_TIP_OFFSET = 0.47;
-    const ARROW_GRAVITY = {
+    var ARROW_TIP_OFFSET = 0.47;
+    var ARROW_GRAVITY = {
         x: 0,
         y: -9.8,
         z: 0
     };
 
 
-    const ARROW_LIFETIME = 15; // seconds
-    const ARROW_PARTICLE_LIFESPAN = 2; // seconds
+    var ARROW_LIFETIME = 15; // seconds
+    var ARROW_PARTICLE_LIFESPAN = 2; // seconds
 
-    const TOP_NOTCH_OFFSET = 0.6;
-    const BOTTOM_NOTCH_OFFSET = 0.6;
+    var TOP_NOTCH_OFFSET = 0.6;
+    var BOTTOM_NOTCH_OFFSET = 0.6;
 
-    const LINE_DIMENSIONS = {
-        x: 5,
-        y: 5,
-        z: 5
-    };
+    var DRAW_STRING_THRESHOLD = 0.80;
+    var DRAW_STRING_PULL_DELTA_HAPTIC_PULSE = 0.09;
+    var DRAW_STRING_MAX_DRAW = 0.7;
+    var NEAR_TO_RELAXED_KNOCK_DISTANCE = 0.5; // if the hand is this close, rez the arrow
+    var NEAR_TO_RELAXED_SCHMITT = 0.05;
 
-    const DRAW_STRING_THRESHOLD = 0.80;
-    const DRAW_STRING_PULL_DELTA_HAPTIC_PULSE = 0.09;
-    const DRAW_STRING_MAX_DRAW = 0.7;
-    const NEAR_TO_RELAXED_KNOCK_DISTANCE = 0.5; // if the hand is this close, rez the arrow
-    const NEAR_TO_RELAXED_SCHMITT = 0.05;
+    var NOTCH_OFFSET_FORWARD = 0.08;
+    var NOTCH_OFFSET_UP = 0.035;
 
-    const NOTCH_OFFSET_FORWARD = 0.08;
-    const NOTCH_OFFSET_UP = 0.035;
-
-    const SHOT_SCALE = {
+    var SHOT_SCALE = {
         min1: 0,
         max1: 0.6,
         min2: 1,
         max2: 15
     };
 
-    const USE_DEBOUNCE = false;
+    var USE_DEBOUNCE = false;
 
-    const TRIGGER_CONTROLS = [
+    var TRIGGER_CONTROLS = [
         Controller.Standard.LT,
         Controller.Standard.RT,
     ];
@@ -183,11 +98,11 @@ function getControllerLocation(controllerHand) {
         return;
     }
 
-    const STRING_NAME = 'Hifi-Bow-String';
-    const ARROW_NAME = 'Hifi-Arrow-projectile';
+    var STRING_NAME = 'Hifi-Bow-String';
+    var ARROW_NAME = 'Hifi-Arrow-projectile';
 
-    const STATE_IDLE = 0;
-    const STATE_ARROW_GRABBED = 1;
+    var STATE_IDLE = 0;
+    var STATE_ARROW_GRABBED = 1;
 
     Bow.prototype = {
         topString: null,
@@ -291,9 +206,10 @@ function getControllerLocation(controllerHand) {
 
                 this.resetStringToIdlePosition();
                 //this.deleteStrings();
-                if (this.triggerValue >= DRAW_STRING_THRESHOLD && pullBackDistance < (NEAR_TO_RELAXED_KNOCK_DISTANCE - NEAR_TO_RELAXED_SCHMITT) && !this.backHandBusy) {
+                if (this.triggerValue >= DRAW_STRING_THRESHOLD &&
+                    pullBackDistance < (NEAR_TO_RELAXED_KNOCK_DISTANCE - NEAR_TO_RELAXED_SCHMITT) &&
+                    !this.backHandBusy) {
                     //the first time aiming the arrow
-                    var handToDisable = (this.hand === 'right' ? 'left' : 'right');
                     this.state = STATE_ARROW_GRABBED;
                 }
             }
@@ -503,9 +419,11 @@ function getControllerLocation(controllerHand) {
             }
 
             var handToNotchDistance = Vec3.length(handToNotch);
-            var stringToNotchDistance = Math.max(MIN_ARROW_DISTANCE_FROM_BOW_REST, Math.min(MAX_ARROW_DISTANCE_FROM_BOW_REST, handToNotchDistance));
-            var halfArrowVec = Vec3.multiply(Vec3.normalize(handToNotch), ARROW_DIMENSIONS.z / 2.0);
-            var offset = Vec3.subtract(notchPosition, Vec3.multiply(Vec3.normalize(handToNotch), stringToNotchDistance - ARROW_DIMENSIONS.z / 2.0));
+            var stringToNotchDistance = Math.max(MIN_ARROW_DISTANCE_FROM_BOW_REST,
+                                                 Math.min(MAX_ARROW_DISTANCE_FROM_BOW_REST, handToNotchDistance));
+            var offset = Vec3.subtract(notchPosition,
+                                       Vec3.multiply(Vec3.normalize(handToNotch),
+                                                     stringToNotchDistance - ARROW_DIMENSIONS.z / 2.0));
 
             var arrowPosition = offset;
 
@@ -538,7 +456,7 @@ function getControllerLocation(controllerHand) {
                     collisionless: false,
                     collidesWith: "static,dynamic,otherAvatar", // workaround: not with kinematic --> no collision with bow
                     velocity: releaseVelocity,
-                    parentID: NULL_UUID,
+                    parentID: Uuid.NULL,
                     gravity: ARROW_GRAVITY,
                     lifetime: arrowAge + ARROW_LIFETIME,
                 };
