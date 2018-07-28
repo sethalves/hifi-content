@@ -12,6 +12,7 @@ Script.include("/~/system/libraries/controllers.js");
     var entitiesIDsToProperties = EUs.entitiesIDsToProperties;
     var propertiesToEntities = EUs.propertiesToEntities;
     var getConnectedEntityIDs = EUs.getConnectedEntityIDs;
+    var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
 
     var SCABBARD_SETTINGS = "io.highfidelity.scabbard";
@@ -52,6 +53,7 @@ Script.include("/~/system/libraries/controllers.js");
         this.hand = hand;
         this.entityInScabbardProps = null;
         this.previousTriggerValue = 0;
+        this.inHandID = null;
 
         try {
             this.entityInScabbardProps = JSON.parse(Settings.getValue(SCABBARD_SETTINGS + "." + this.hand));
@@ -61,7 +63,7 @@ Script.include("/~/system/libraries/controllers.js");
         }
 
 
-        this.activate = function () {
+        this.takeEntityFromScabbard = function () {
             if (!this.entityInScabbardProps) {
                 return;
             }
@@ -78,8 +80,12 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.handleTriggerValue = function (value) {
+            if (this.inHandID) {
+                return;
+            }
+
             if (this.previousTriggerValue < TRIGGER_ON_VALUE && value >= TRIGGER_ON_VALUE) {
-                this.activate();
+                this.takeEntityFromScabbard();
             }
             this.previousTriggerValue = value;
         };
@@ -88,6 +94,13 @@ Script.include("/~/system/libraries/controllers.js");
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
             var entityIDs = getConnectedEntityIDs(targetEntityID);
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
+
+            if (this.entityInScabbardProps && !propertySetsAreSimilar(this.entityInScabbardProps, props)) {
+                // the scabbard already had something in it.  if they don't mostly match, kick the old thing
+                // out into the world.
+                propertiesToEntities(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+            }
+
             this.entityInScabbardProps = props;
             Settings.setValue(SCABBARD_SETTINGS + "." + this.hand, JSON.stringify(props));
             for (var i = 0; i < entityIDs.length; i++) {
@@ -97,11 +110,17 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.checkRelease = function (droppedEntityID) {
+            this.inHandID = null;
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
             if (detectScabbardGesture(controllerLocation, this.hand)) {
                 this.saveEntityInScabbard(droppedEntityID, controllerLocation);
             }
+        };
+
+
+        this.noteGrab = function (grabbedEntityID) {
+            this.inHandID = grabbedEntityID;
         };
     }
 
@@ -131,6 +150,12 @@ Script.include("/~/system/libraries/controllers.js");
                             rightScabbard.checkRelease(data.grabbedEntity);
                         } else {
                             leftScabbard.checkRelease(data.grabbedEntity);
+                        }
+                    } else if (data.action == "grab" || data.action == "equip") {
+                        if (data.joint == "RightHand") {
+                            rightScabbard.noteGrab(data.grabbedEntity);
+                        } else {
+                            leftScabbard.noteGrab(data.grabbedEntity);
                         }
                     }
                 } catch (err) {
