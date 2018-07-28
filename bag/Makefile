@@ -5,7 +5,7 @@
 all:
 
 
-upload: bag.js bagES.js
+upload: bagES.js bag.fbx
 	rm -rf bag
 	mkdir -p bag
 	cp $^ bag/
