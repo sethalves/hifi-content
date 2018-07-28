@@ -34,6 +34,7 @@
             _this.entityID = entityID;
             _this.previousTriggerValue = 0;
             _this.inOtherHandID = null;
+            _this.equipped = false;
 
             try {
                 _this.entitiesInBagProps = JSON.parse(Settings.getValue(BAG_SETTINGS));
@@ -57,10 +58,13 @@
             }
 
             Controller.enableMapping(mappingName);
+
+            _this.equipped = true;
         },
 
 
         releaseEquip: function (id, params) {
+            _this.equipped = false;
             _this.menuMapping.disable();
         },
 
@@ -70,11 +74,22 @@
             // store a new entity in the bag
             var entityIDs = getConnectedEntityIDs(targetEntityID);
 
+            for (var k = 0; k < entityIDs.length; k++) {
+                if (entityIDs[k] == this.entityID) {
+                    // just... no.
+                    print("WARNING: bagES.js -- refusing to store bag in itself");
+                    return;
+                }
+            }
+
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.RightHand : Controller.Standard.LeftHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
-
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
+            if (!props) {
+                print("WARNING: bagES.js -- got null properties for IDs: " + JSON.stringify(entityIDs));
+                return;
+            }
 
             var dup = false;
             for (var j = 0; j < this.entitiesInBagProps.length; j++) {
@@ -158,7 +173,7 @@
 
         checkRelease: function (targetEntityID) {
             this.inOtherHandID = null;
-            if (this.checkForGesture()) {
+            if (this.equipped && this.checkForGesture()) {
                 this.saveEntityInBag(targetEntityID);
             }
         },
