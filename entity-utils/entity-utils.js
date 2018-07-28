@@ -2,7 +2,6 @@
 
 /* global module, Entities, Uuid, Mat4, Quat */
 
-
 function cleanProperties(props) {
     delete props.clientOnly;
     delete props.created;
@@ -310,6 +309,74 @@ function getConnectedEntityIDs(origID) {
     return result;
 }
 
+
+function propertySetsAreSimilar(propsA, propsB) {
+    // propsA and propsB should both be the sort of thing returned by entitiesIDsToProperties:
+    // { Entities: [ ... ], Actions: [ ... ] }
+    // TODO -- examine the parent/child and neighbor relationships and the actions
+
+
+    if (propsA.Entities.length != propsB.Entities.length) {
+        // print("QQQQ not similar due to length, " + propsA.Entities.length + " vs " + propsB.Entities.length);
+
+        for (var i = 0; i < propsA.Entities.length || i < propsB.Entities.length; i++) {
+            var aName = "None";
+            if (i < propsA.Entities.length) {
+                aName = propsA.Entities[i].name;
+            }
+            var bName = "None";
+            if (i < propsB.Entities.length) {
+                bName = propsB.Entities[i].name;
+            }
+            // print(i + ": " + aName + " vs " + bName);
+        }
+
+        return false;
+    }
+
+    var entityPropsACopy = JSON.parse(JSON.stringify(propsA.Entities));
+    var entityPropsBCopy = JSON.parse(JSON.stringify(propsB.Entities));
+
+    // print("QQQQ before scrub -- entityPropsACopy = " + JSON.stringify(entityPropsACopy));
+    // print("QQQQ before scrub -- entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+
+    var scrubPropsList = function(lst) {
+        var propsToDelete = ["id", "parentID", "localVelocity", "localAngularVelocity",
+                             "xNNeighborID", "yNNeighborID", "zNNeighborID",
+                             "xPNeighborID", "yPNeighborID", "zPNeighborID"];
+
+        for (var i = 0; i < lst.length; i++) {
+            cleanProperties(lst[i]);
+        }
+
+        sortPropertiesByParentage(lst);
+
+        for (var j = 0; j < lst.length; j++) {
+            if (isNullID(lst[j].parentID)) {
+                delete lst[j].localPosition;
+                delete lst[j].localRotation;
+            }
+
+            for (var t = 0; t < propsToDelete.length; t++) {
+                var propName = propsToDelete[t];
+                delete lst[j][propName];
+            }
+        }
+    };
+
+    scrubPropsList(entityPropsACopy);
+    scrubPropsList(entityPropsBCopy);
+
+    // print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
+    // print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+
+    var result = (JSON.stringify(entityPropsACopy) == JSON.stringify(entityPropsBCopy));
+
+    // print("QQQQ similar result = " + result);
+    return result;
+}
+
+
 module.exports = {
     cleanProperties: cleanProperties,
     isNullID: isNullID,
@@ -317,5 +384,6 @@ module.exports = {
     entitiesIDsToProperties: entitiesIDsToProperties,
     propertiesToEntities: propertiesToEntities,
     getRootIDOfParentingTree: getRootIDOfParentingTree,
-    getConnectedEntityIDs: getConnectedEntityIDs
+    getConnectedEntityIDs: getConnectedEntityIDs,
+    propertySetsAreSimilar: propertySetsAreSimilar
 };
