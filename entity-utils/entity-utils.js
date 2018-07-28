@@ -355,6 +355,9 @@ function propertySetsAreSimilar(propsA, propsB) {
             if (isNullID(lst[j].parentID)) {
                 delete lst[j].localPosition;
                 delete lst[j].localRotation;
+                delete lst[j].parentJointIndex;
+                delete lst[j].localVelocity;
+                delete lst[j].localAngularVelocity;
             }
 
             for (var t = 0; t < propsToDelete.length; t++) {
