@@ -129,9 +129,6 @@ function getControllerLocation(controllerHand) {
             this.shootArrowSound = SoundCache.getSound(SHOOT_ARROW_SOUND_URL);
             this.arrowHitSound = SoundCache.getSound(ARROW_HIT_SOUND_URL);
             this.arrowNotchSound = SoundCache.getSound(NOTCH_ARROW_SOUND_URL);
-            var userData = Entities.getEntityProperties(this.entityID, ["userData"]).userData;
-            print(userData);
-            this.userData = JSON.parse(userData);
             this.stringID = null;
         },
 
@@ -316,37 +313,31 @@ function getControllerLocation(controllerHand) {
         },
 
         initString: function() {
-            // Check for existence of string
+            // Delete any left-over strings
             var children = Entities.getChildrenIDs(this.entityID);
             children.forEach(function(childID) {
-                var childName = Entities.getEntityProperties(childID, ["name"]).name;
-                if (childName == STRING_NAME) {
-                    this.stringID = childID;
-                }
+                Entities.deleteEntity(childID);
             });
 
-            // If the string wasn't found, create it
-            if (this.stringID === null) {
-                var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
-                this.stringID = Entities.addEntity({
-                    collisionless: true,
-                    dimensions: { "x": 5, "y": 5, "z": 5 },
-                    ignoreForCollisions: 1,
-                    linePoints: [ { "x": 0, "y": 0, "z": 0 }, { "x": 0, "y": -1.2, "z": 0 } ],
-                    lineWidth: 5,
-                    color: { red: 153, green: 102, blue: 51 },
-                    name: STRING_NAME,
-                    parentID: this.entityID,
-                    localPosition: { "x": 0, "y": 0.6, "z": 0.1 },
-                    localRotation: { "w": 1, "x": 0, "y": 0, "z": 0 },
-                    type: "Line",
-                    userData: JSON.stringify({
-                        grabbableKey: {
-                            grabbable: false
-                        }
-                    })
-                }, avatarEntity);
-            }
+            var avatarEntity = !(Entities.canRez() || Entities.canRezTmp());
+            this.stringID = Entities.addEntity({
+                collisionless: true,
+                dimensions: { "x": 5, "y": 5, "z": 5 },
+                ignoreForCollisions: 1,
+                linePoints: [ { "x": 0, "y": 0, "z": 0 }, { "x": 0, "y": -1.2, "z": 0 } ],
+                lineWidth: 5,
+                color: { red: 153, green: 102, blue: 51 },
+                name: STRING_NAME,
+                parentID: this.entityID,
+                localPosition: { "x": 0, "y": 0.6, "z": 0.1 },
+                localRotation: { "w": 1, "x": 0, "y": 0, "z": 0 },
+                type: "Line",
+                userData: JSON.stringify({
+                    grabbableKey: {
+                        grabbable: false
+                    }
+                })
+            }, avatarEntity);
 
             this.resetStringToIdlePosition();
         },
