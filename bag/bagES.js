@@ -7,7 +7,7 @@
 
     var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
     var entitiesIDsToProperties = EUs.entitiesIDsToProperties;
-    var propertiesToEntities = EUs.propertiesToEntities;
+    var propertiesToEntitiesAuto = EUs.propertiesToEntitiesAuto;
     var getConnectedEntityIDs = EUs.getConnectedEntityIDs;
     var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
@@ -126,7 +126,7 @@
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.RightHand : Controller.Standard.LeftHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
-            propertiesToEntities(fromBagEntityProps, controllerLocation.position, controllerLocation.rotation);
+            propertiesToEntitiesAuto(fromBagEntityProps, controllerLocation.position, controllerLocation.rotation);
         },
 
 
