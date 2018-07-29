@@ -201,19 +201,7 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
         delete entityProps.id;
         delete entityProps.locked;
 
-        print("trying Entities.addEntity(" + JSON.stringify(entityProps) + ", " + makeAvatarEntities + ");");
-
         var entityID = Entities.addEntity(entityProps, makeAvatarEntities);
-
-        // print("--> " + JSON.stringify(entityID));
-        // var posCheck = Entities.getEntityProperties(entityID, ["localPosition"]).localPosition;
-        // print("posCheck: " + JSON.stringify(posCheck));
-        // if (!posCheck || !posCheck.x) {
-        //     print("failed, retrying with makeAvatarEntities=true");
-        //     makeAvatarEntities = true;
-        //     entityID = Entities.addEntity(entityProps, makeAvatarEntities);
-        // }
-        // print("rezzed, ID=" + JSON.stringify(entityID));
 
         newEntityIDs.push(entityID);
         entityIDMap[originalID] = entityID;
@@ -314,11 +302,15 @@ function getConnectedEntityIDs(origID) {
                 if (!toCheck[entityID]) {
                     toCheck[entityID] = true;
 
+                    var props = Entities.getEntityProperties(entityID, ["parentID", "position"]);
+                    if (!props) {
+                        continue;
+                    }
+
                     // look for a parent
-                    var parentIDProps = Entities.getEntityProperties(entityID, ["parentID"]);
-                    if (parentIDProps && !isNullID(parentIDProps.parentID)) {
-                        if (!toCheck.hasOwnProperty(parentIDProps.parentID)) {
-                            toCheck[parentIDProps.parentID] = false;
+                    if (!isNullID(props.parentID)) {
+                        if (!toCheck.hasOwnProperty(props.parentID)) {
+                            toCheck[props.parentID] = false;
                             done = false;
                         }
                     }
@@ -345,6 +337,25 @@ function getConnectedEntityIDs(origID) {
                             }
                         }
                     }
+
+                    // look for actions that link from other entities
+                    var REVERSE_CONSTRAINT_SEARCH_RADIUS = 3.0;
+                    var nearByEntityIDs = Entities.findEntities(props.position, REVERSE_CONSTRAINT_SEARCH_RADIUS);
+                    for (var i = 0; i < nearByEntityIDs.length; i++) {
+                        var nearByEntityID = nearByEntityIDs[i];
+                        var nearbyActionIDs = Entities.getActionIDs(nearByEntityID);
+                        for (var nbActionIndex = 0; nbActionIndex < nearbyActionIDs.length; nbActionIndex++) {
+                            var nbActionID = nearbyActionIDs[nbActionIndex];
+                            var nbActionArgs = Entities.getActionArguments(nearByEntityID, nbActionID);
+                            if (nbActionArgs.hasOwnProperty("otherEntityID") &&
+                                nbActionArgs.otherEntityID == entityID) {
+                                if (!toCheck.hasOwnProperty(nearByEntityID)) {
+                                    toCheck[nearByEntityID] = false;
+                                    done = false;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -365,33 +376,12 @@ function propertySetsAreSimilar(propsA, propsB) {
     // { Entities: [ ... ], Actions: [ ... ] }
     // TODO -- examine the parent/child and neighbor relationships and the actions
 
-
     if (propsA.Entities.length != propsB.Entities.length) {
-
-
-        // XXX
-        print("QQQQ not similar due to length, " + propsA.Entities.length + " vs " + propsB.Entities.length);
-        for (var i = 0; i < propsA.Entities.length || i < propsB.Entities.length; i++) {
-            var aName = "None";
-            if (i < propsA.Entities.length) {
-                aName = propsA.Entities[i].name;
-            }
-            var bName = "None";
-            if (i < propsB.Entities.length) {
-                bName = propsB.Entities[i].name;
-            }
-            print(i + ": " + aName + " vs " + bName);
-        }
-        // XXX
-
         return false;
     }
 
     var entityPropsACopy = JSON.parse(JSON.stringify(propsA.Entities));
     var entityPropsBCopy = JSON.parse(JSON.stringify(propsB.Entities));
-
-    // print("QQQQ before scrub -- entityPropsACopy = " + JSON.stringify(entityPropsACopy));
-    // print("QQQQ before scrub -- entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
 
     var scrubPropsList = function(lst) {
         var propsToDelete = ["id", "parentID", "localVelocity", "localAngularVelocity", "actionData",
@@ -428,39 +418,12 @@ function propertySetsAreSimilar(propsA, propsB) {
     scrubPropsList(entityPropsACopy);
     scrubPropsList(entityPropsBCopy);
 
-    print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
-    print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+    // print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
+    // print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
 
     var result = (JSON.stringify(entityPropsACopy) == JSON.stringify(entityPropsBCopy));
 
-
-    // // XXX
-    // if (!result) {
-    //     for (var idx = 0; idx < entityPropsACopy.length; idx++) {
-    //         var ePropsA = entityPropsACopy[ idx ];
-    //         var ePropsB = entityPropsBCopy[ idx ];
-    //         for (var k in Object.keys(ePropsA)) {
-    //             if (ePropsA.hasOwnProperty(k)) {
-    //                 if (JSON.stringify(ePropsA[k]) != JSON.stringify(ePropsB[k])) {
-    //                     print("QQQQ idx=" + idx + " mismatch on a->b " + k + ": " +
-    //                           JSON.stringify(ePropsA[k]) + " vs " + JSON.stringify(ePropsB[k]));
-    //                 }
-    //             }
-    //         }
-    //         for (k in Object.keys(ePropsB)) {
-    //             if (ePropsB.hasOwnProperty(k)) {
-    //                 if (JSON.stringify(ePropsA[k]) != JSON.stringify(ePropsB[k])) {
-    //                     print("QQQQ idx=" + idx + " mismatch on b->a " + k + ": " +
-    //                           JSON.stringify(ePropsA[k]) + " vs " + JSON.stringify(ePropsB[k]));
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-    // // XXX
-
-
-    print("QQQQ similar result = " + result);
+    // print("QQQQ similar result = " + result);
     return result;
 }
 
