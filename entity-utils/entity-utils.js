@@ -1,6 +1,6 @@
 "use strict";
 
-/* global module, Entities, Uuid, Mat4, Quat */
+/* global module, Script, print, Entities, Uuid, Mat4, Quat */
 
 function cleanProperties(props) {
     delete props.clientOnly;
@@ -23,6 +23,7 @@ function cleanProperties(props) {
     delete props.actionData;
     delete props.position;
     delete props.rotation;
+    delete props.dimensions;
     return props;
 }
 
@@ -44,36 +45,36 @@ function sortPropertiesByParentage(props) {
         parentIDs[props.id] = props.parentID;
     }
 
-    function parentCompare(propsA, propsB) {
+    function parentCompare(sortPropsA, sortPropsB) {
         // search for a parenting chain from A to B
         var parentID;
-        for (parentID = propsA.parentID;
+        for (parentID = sortPropsA.parentID;
              !isNullID(parentID);
              parentID = parentIDs[parentID]) {
-            if (parentID == propsB.id) {
+            if (parentID == sortPropsB.id) {
                 return 1;
             }
         }
 
         // search for a parenting chain from B to A
-        for (parentID = propsB.parentID;
+        for (parentID = sortPropsB.parentID;
              !isNullID(parentID);
              parentID = parentIDs[parentID]) {
-            if (parentID == propsA.id) {
+            if (parentID == sortPropsA.id) {
                 return -1;
             }
         }
 
         // push non-children to the front or the list
-        if (!isNullID(propsA.parentID) && isNullID(propsB.parentID)) {
+        if (!isNullID(sortPropsA.parentID) && isNullID(sortPropsB.parentID)) {
             return 1;
         }
-        if (isNullID(propsA.parentID) && !isNullID(propsB.parentID)) {
+        if (isNullID(sortPropsA.parentID) && !isNullID(sortPropsB.parentID)) {
             return -1;
         }
 
         // otherwise just sort by id
-        return ((propsA.id == propsB.id) ? 0 : ((propsA.id > propsB.id) ? 1 : -1));
+        return ((sortPropsA.id == sortPropsB.id) ? 0 : ((sortPropsA.id > sortPropsB.id) ? 1 : -1));
     }
 
     props.sort(parentCompare);
@@ -144,7 +145,19 @@ function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
 }
 
 
-function propertiesToEntities(jsonDecoded, basePosition, baseRotation) {
+function checkRezSuccess(entityIDs) {
+    for (var i = 0; i < entityIDs.length; i++) {
+        var entityID = entityIDs[i];
+        var posCheck = Entities.getEntityProperties(entityID, ["localPosition"]).localPosition;
+        if (!posCheck || !posCheck.x) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvatarEntities) {
     var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
     var baseMatRot = Mat4.extractRotation(baseMat);
     var props;
@@ -155,8 +168,9 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation) {
     props = JSON.parse(JSON.stringify(jsonDecoded.Entities));
     actions = JSON.parse(JSON.stringify(jsonDecoded.Actions));
 
+    var newEntityIDs = [];
     var entityIDMap = {};
-    var clientOnly = !(Entities.canRez() || Entities.canRezTmp());
+    // var makeAvatarEntities = !(Entities.canRez() || Entities.canRezTmp());
 
     for (var j = 0; j < props.length; j++) {
         var entityProps = props[j];
@@ -187,7 +201,21 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation) {
         delete entityProps.id;
         delete entityProps.locked;
 
-        var entityID = Entities.addEntity(entityProps, clientOnly);
+        print("trying Entities.addEntity(" + JSON.stringify(entityProps) + ", " + makeAvatarEntities + ");");
+
+        var entityID = Entities.addEntity(entityProps, makeAvatarEntities);
+
+        // print("--> " + JSON.stringify(entityID));
+        // var posCheck = Entities.getEntityProperties(entityID, ["localPosition"]).localPosition;
+        // print("posCheck: " + JSON.stringify(posCheck));
+        // if (!posCheck || !posCheck.x) {
+        //     print("failed, retrying with makeAvatarEntities=true");
+        //     makeAvatarEntities = true;
+        //     entityID = Entities.addEntity(entityProps, makeAvatarEntities);
+        // }
+        // print("rezzed, ID=" + JSON.stringify(entityID));
+
+        newEntityIDs.push(entityID);
         entityIDMap[originalID] = entityID;
     }
 
@@ -233,6 +261,28 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation) {
         delete action.entityID;
         delete action.ttl;
         Entities.addAction(actionType, actionEntityID, action);
+    }
+
+    return newEntityIDs;
+}
+
+
+function propertiesToEntitiesAuto(jsonDecoded, basePosition, baseRotation) {
+    // attempt to rez domain-entities (perhaps tmp), and if that fails, use avatar-entities
+    var makeAvatarEntities = !(Entities.canRez() || Entities.canRezTmp());
+    var newEntityIDs = propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvatarEntities);
+    if (!makeAvatarEntities) {
+        // some domains allow rezzing but then block it with server-side filters.
+        // wait 1/5 of a second and make sure the entities made it.
+        Script.setTimeout(function() {
+            var success = checkRezSuccess(newEntityIDs);
+            if (!success) {
+                for (var i = 0; i < newEntityIDs.length; i++) {
+                    Entities.deleteEntity(newEntityIDs[i]);
+                }
+                propertiesToEntities(jsonDecoded, basePosition, baseRotation, true);
+            }
+        }, 200);
     }
 }
 
@@ -317,8 +367,10 @@ function propertySetsAreSimilar(propsA, propsB) {
 
 
     if (propsA.Entities.length != propsB.Entities.length) {
-        // print("QQQQ not similar due to length, " + propsA.Entities.length + " vs " + propsB.Entities.length);
 
+
+        // XXX
+        print("QQQQ not similar due to length, " + propsA.Entities.length + " vs " + propsB.Entities.length);
         for (var i = 0; i < propsA.Entities.length || i < propsB.Entities.length; i++) {
             var aName = "None";
             if (i < propsA.Entities.length) {
@@ -328,8 +380,9 @@ function propertySetsAreSimilar(propsA, propsB) {
             if (i < propsB.Entities.length) {
                 bName = propsB.Entities[i].name;
             }
-            // print(i + ": " + aName + " vs " + bName);
+            print(i + ": " + aName + " vs " + bName);
         }
+        // XXX
 
         return false;
     }
@@ -341,7 +394,7 @@ function propertySetsAreSimilar(propsA, propsB) {
     // print("QQQQ before scrub -- entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
 
     var scrubPropsList = function(lst) {
-        var propsToDelete = ["id", "parentID", "localVelocity", "localAngularVelocity",
+        var propsToDelete = ["id", "parentID", "localVelocity", "localAngularVelocity", "actionData",
                              "xNNeighborID", "yNNeighborID", "zNNeighborID",
                              "xPNeighborID", "yPNeighborID", "zPNeighborID"];
 
@@ -360,6 +413,11 @@ function propertySetsAreSimilar(propsA, propsB) {
                 delete lst[j].localAngularVelocity;
             }
 
+            if (lst[j].type == "Line") {
+                // line dimensions seem to change a lot
+                delete lst[j].localDimensions;
+            }
+
             for (var t = 0; t < propsToDelete.length; t++) {
                 var propName = propsToDelete[t];
                 delete lst[j][propName];
@@ -370,12 +428,39 @@ function propertySetsAreSimilar(propsA, propsB) {
     scrubPropsList(entityPropsACopy);
     scrubPropsList(entityPropsBCopy);
 
-    // print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
-    // print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+    print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
+    print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
 
     var result = (JSON.stringify(entityPropsACopy) == JSON.stringify(entityPropsBCopy));
 
-    // print("QQQQ similar result = " + result);
+
+    // // XXX
+    // if (!result) {
+    //     for (var idx = 0; idx < entityPropsACopy.length; idx++) {
+    //         var ePropsA = entityPropsACopy[ idx ];
+    //         var ePropsB = entityPropsBCopy[ idx ];
+    //         for (var k in Object.keys(ePropsA)) {
+    //             if (ePropsA.hasOwnProperty(k)) {
+    //                 if (JSON.stringify(ePropsA[k]) != JSON.stringify(ePropsB[k])) {
+    //                     print("QQQQ idx=" + idx + " mismatch on a->b " + k + ": " +
+    //                           JSON.stringify(ePropsA[k]) + " vs " + JSON.stringify(ePropsB[k]));
+    //                 }
+    //             }
+    //         }
+    //         for (k in Object.keys(ePropsB)) {
+    //             if (ePropsB.hasOwnProperty(k)) {
+    //                 if (JSON.stringify(ePropsA[k]) != JSON.stringify(ePropsB[k])) {
+    //                     print("QQQQ idx=" + idx + " mismatch on b->a " + k + ": " +
+    //                           JSON.stringify(ePropsA[k]) + " vs " + JSON.stringify(ePropsB[k]));
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // // XXX
+
+
+    print("QQQQ similar result = " + result);
     return result;
 }
 
@@ -385,7 +470,9 @@ module.exports = {
     isNullID: isNullID,
     sortPropertiesByParentage: sortPropertiesByParentage,
     entitiesIDsToProperties: entitiesIDsToProperties,
+    checkRezSuccess: checkRezSuccess,
     propertiesToEntities: propertiesToEntities,
+    propertiesToEntitiesAuto: propertiesToEntitiesAuto,
     getRootIDOfParentingTree: getRootIDOfParentingTree,
     getConnectedEntityIDs: getConnectedEntityIDs,
     propertySetsAreSimilar: propertySetsAreSimilar
