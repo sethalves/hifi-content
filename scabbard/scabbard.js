@@ -10,7 +10,7 @@ Script.include("/~/system/libraries/controllers.js");
     var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
     var cleanProperties = EUs.cleanProperties;
     var entitiesIDsToProperties = EUs.entitiesIDsToProperties;
-    var propertiesToEntities = EUs.propertiesToEntities;
+    var propertiesToEntitiesAuto = EUs.propertiesToEntitiesAuto;
     var getConnectedEntityIDs = EUs.getConnectedEntityIDs;
     var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
@@ -72,7 +72,8 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
             if (detectScabbardGesture(controllerLocation, this.hand)) {
-                propertiesToEntities(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+                propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+
                 // this line would make the scabbard empty after an item is take out:
                 // this.entityInScabbardProps = null;
             }
@@ -94,11 +95,16 @@ Script.include("/~/system/libraries/controllers.js");
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
             var entityIDs = getConnectedEntityIDs(targetEntityID);
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
+            if (!props) {
+                print("WARNING: scabbard.js -- got null properties for IDs: " + JSON.stringify(entityIDs));
+                return;
+            }
 
             if (this.entityInScabbardProps && !propertySetsAreSimilar(this.entityInScabbardProps, props)) {
                 // the scabbard already had something in it.  if they don't mostly match, kick the old thing
                 // out into the world.
-                propertiesToEntities(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+                print("QQQQ doing kick-out");
+                propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
             }
 
             this.entityInScabbardProps = props;
