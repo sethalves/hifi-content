@@ -36,12 +36,12 @@
             _this.inOtherHandID = null;
             _this.equipped = false;
 
-            try {
-                _this.entitiesInBagProps = JSON.parse(Settings.getValue(BAG_SETTINGS));
-            } catch (err) {
-                // don't spam the logs
-                _this.entitiesInBagProps = [];
-            }
+            // try {
+            //     _this.entitiesInBagProps = JSON.parse(Settings.getValue(BAG_SETTINGS));
+            // } catch (err) {
+            //     // don't spam the logs
+            //     _this.entitiesInBagProps = [];
+            // }
         },
 
 
@@ -69,6 +69,17 @@
         },
 
 
+        getPropsFromSettings: function () {
+            var entitiesInBagProps;
+            try {
+                entitiesInBagProps = JSON.parse(Settings.getValue(BAG_SETTINGS));
+            } catch (err) {
+                // don't spam the logs
+                entitiesInBagProps = [];
+            }
+        },
+
+
         saveEntityInBag: function (targetEntityID) {
 
             // store a new entity in the bag
@@ -91,9 +102,10 @@
                 return;
             }
 
+            var entitiesInBagProps = this.getPropsFromSettings();
             var dup = false;
-            for (var j = 0; j < this.entitiesInBagProps.length; j++) {
-                var alreadyInBagProps = this.entitiesInBagProps[j];
+            for (var j = 0; j < entitiesInBagProps.length; j++) {
+                var alreadyInBagProps = entitiesInBagProps[j];
                 if (propertySetsAreSimilar(alreadyInBagProps, props)) {
                     // don't put duplicates into the bag
                     dup = true;
@@ -102,8 +114,8 @@
             }
 
             if (!dup) {
-                this.entitiesInBagProps.push(props);
-                Settings.setValue(BAG_SETTINGS, JSON.stringify(this.entitiesInBagProps));
+                entitiesInBagProps.push(props);
+                Settings.setValue(BAG_SETTINGS, JSON.stringify(entitiesInBagProps));
             }
 
             for (var i = 0; i < entityIDs.length; i++) {
@@ -113,7 +125,8 @@
 
 
         takeEntityFromBag: function () {
-            if (this.entitiesInBagProps.length < 1) {
+            var entitiesInBagProps = this.getPropsFromSettings();
+            if (entitiesInBagProps.length < 1) {
                 return;
             }
 
@@ -121,12 +134,14 @@
                 return;
             }
 
-            var fromBagEntityProps = this.entitiesInBagProps.pop();
+            var fromBagEntityProps = entitiesInBagProps.pop();
 
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.RightHand : Controller.Standard.LeftHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
             propertiesToEntitiesAuto(fromBagEntityProps, controllerLocation.position, controllerLocation.rotation);
+
+            Settings.setValue(BAG_SETTINGS, JSON.stringify(entitiesInBagProps));
         },
 
 
