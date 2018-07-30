@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Script, Entities, MyAvatar, Messages, Controller, Settings, Vec3, getControllerWorldLocation */
+/* global Script, print, Entities, MyAvatar, Messages, Controller, Settings, Vec3, getControllerWorldLocation */
 
 
 Script.include("/~/system/libraries/controllers.js");
@@ -103,7 +103,6 @@ Script.include("/~/system/libraries/controllers.js");
             if (this.entityInScabbardProps && !propertySetsAreSimilar(this.entityInScabbardProps, props)) {
                 // the scabbard already had something in it.  if they don't mostly match, kick the old thing
                 // out into the world.
-                print("QQQQ doing kick-out");
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
             }
 
