@@ -80,6 +80,11 @@
         },
 
 
+        savePropsToSettings: function (entitiesInBagProps) {
+            Settings.setValue(BAG_SETTINGS, JSON.stringify(entitiesInBagProps));
+        },
+
+
         saveEntityInBag: function (targetEntityID) {
 
             // store a new entity in the bag
@@ -115,7 +120,7 @@
 
             if (!dup) {
                 entitiesInBagProps.push(props);
-                Settings.setValue(BAG_SETTINGS, JSON.stringify(entitiesInBagProps));
+                savePropsToSettings(entitiesInBagProps);
             }
 
             for (var i = 0; i < entityIDs.length; i++) {
