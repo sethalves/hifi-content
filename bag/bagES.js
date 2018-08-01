@@ -77,6 +77,8 @@
                 // don't spam the logs
                 entitiesInBagProps = [];
             }
+
+            return entitiesInBagProps;
         },
 
 
@@ -120,7 +122,7 @@
 
             if (!dup) {
                 entitiesInBagProps.push(props);
-                savePropsToSettings(entitiesInBagProps);
+                this.savePropsToSettings(entitiesInBagProps);
             }
 
             for (var i = 0; i < entityIDs.length; i++) {
