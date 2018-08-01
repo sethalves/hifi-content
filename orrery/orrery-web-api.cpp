@@ -25,10 +25,9 @@ int main (int argc, char *argv[]) {
     SpiceDouble et;
     utc2et_c(utc, &et);
 
-    SpiceDouble ptarg[3];
-    SpiceDouble lt;
+    // "MOON"
 
-    const char* bodies[] { "SUN", "MERCURY", "VENUS", "MOON", "EARTH", "MARS BARYCENTER", "JUPITER BARYCENTER",
+    const char* bodies[] { "SUN", "MERCURY", "VENUS", "EARTH", "MARS BARYCENTER", "JUPITER BARYCENTER",
             "SATURN BARYCENTER", "URANUS BARYCENTER", "NEPTUNE BARYCENTER", "PLUTO BARYCENTER", "" };
 
     float SCALE = 0.0000001;
@@ -36,6 +35,9 @@ int main (int argc, char *argv[]) {
     cout << "{";
     for (int i = 0; ; i++) {
         if (strlen(bodies[i]) == 0) break;
+
+        SpiceDouble ptarg[3];
+        SpiceDouble lt;
         spkpos_c("SUN", et, "IAU_SUN", "NONE", bodies[i], ptarg, &lt);
 
         float x = ptarg[0] * SCALE;

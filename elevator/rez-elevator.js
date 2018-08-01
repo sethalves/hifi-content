@@ -4,7 +4,7 @@
 
 (function() { // BEGIN LOCAL_SCOPE
 
-    var lifetime = 120;
+    var lifetime = -1;
 
     function rezElevator(elevatorBasePosition) {
         var zoneHeight = 10;

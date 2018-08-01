@@ -44,10 +44,10 @@ exec gosh \
 
 (let loop ((n 1))
   (cond ((<= n (+ 32 16 8 4 2 1))
-         (cout "models/wires-" n ".stl: wires.scad\n")
+         (cout "models/wires-" n ".stl: wires.scad common.scad\n")
          (cout "\tmkdir -p models\n")
          (cout "\topenscad ")
          (for-each (lambda (bit) (cout "-Dsegment_" bit "=1 ")) (n->bits n))
          (if (vector-ref centers n) (cout "-Dcenter=1 "))
-         (cout "-o $@ $^\n\n")
+         (cout "-o $@ $<\n\n")
          (loop (+ n 1)))))

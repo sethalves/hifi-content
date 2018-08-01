@@ -404,7 +404,7 @@
         polyVoxProps.expires = now + polyVoxProps.lifetime - polyVoxProps.age;
         if (polyVoxProps.expires - now < 2) {
             // try to avoid races
-            delete this.polyVoxProps[polyVoxID];
+            delete polyVoxProps[polyVoxID];
             Entities.deleteEntity(polyVoxID);
             return null;
         }

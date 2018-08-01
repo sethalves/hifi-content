@@ -137,7 +137,7 @@ module main_hull() {
 module cabin_cut() {
     // take a sample of the top of rail so it can be extended to be the cabin
     projection(cut = true) {
-        rotate([-90, 0 ,0]) { // cut looks at z = 0
+        rotate([-90, 0, 0]) { // cut looks at z = 0
             translate([0, -hull_rail_height + 0.000001, 0]) { // almost the very top
                 intersection() {
                     main_hull();
