@@ -452,8 +452,8 @@ function propertySetsAreSimilar(propsA, propsB) {
     scrubPropsList(entityPropsACopy);
     scrubPropsList(entityPropsBCopy);
 
-    print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
-    print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+    // print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
+    // print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
 
     // var result = (JSON.stringify(entityPropsACopy) == JSON.stringify(entityPropsBCopy));
     // they are sorted by IDs, and these have changed, so the above line can fail.
@@ -472,13 +472,13 @@ function propertySetsAreSimilar(propsA, propsB) {
             }
         }
         if (!foundMatch) {
-            print("QQQQ no match for " + JSON.stringify(aCopy));
-            print("QQQQ similar result = false");
+            // print("QQQQ no match for " + JSON.stringify(aCopy));
+            // print("QQQQ similar result = false");
             return false;
         }
     }
 
-    print("QQQQ similar result = true");
+    // print("QQQQ similar result = true");
     return true;
 }
 
