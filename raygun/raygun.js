@@ -49,6 +49,11 @@
     );
 
     rayGun.createRay = function(distance) {
+        var children = Entities.getChildrenIDs(this.getEntityID());
+        children.forEach(function(childID) {
+            Entities.deleteEntity(childID);
+        });
+
         this.rayCreatedTime = Date.now();
         this.rayID = Entities.addEntity({
             name: "raygun beam",
