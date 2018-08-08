@@ -28,11 +28,10 @@
 
     (define (main-program)
       (cerr "loading...\n")
-      (let* (
-             (tree-count 800)
+      (let* ((tree-count 900)
              ;; (tree-count 10)
              (tree-y-fudge (vector 0 -0.5 0)) ;; try to keep trunks in the ground on steep hills
-             (water-level -26) ;; no trees below here
+             (water-level -7) ;; no trees below here
              (random-i 12) ;; arbitrary, done for repeatability
              (random-j 3) ;; same as i
              (random-source (make-random-source))
@@ -96,7 +95,9 @@
         (translate-model terrain-model terrain-center)
 
         (let* ((aa-box (model-aa-box terrain-model))
-               (octree (model->octree terrain-model aa-box)))
+               (octree (model->octree terrain-model aa-box))
+               (x-random-range (exact (- (round (vector3-x dimensions)) 6)))
+               (z-random-range (exact (- (round (vector3-z dimensions)) 6))))
 
           (cerr "aa-box=" (aa-box-low-corner aa-box) " " (aa-box-high-corner aa-box) "\n")
           (cerr "half-dimensions=" half-dimensions "\n")
@@ -104,14 +105,12 @@
           (let loop ((count 0))
             (cond ((>= count tree-count) #t)
                   (else
-                   (let* ((xrnd-on-mdl (- (random-integer (exact (round (vector3-x dimensions))))
-                                          (vector3-x half-dimensions)))
-                          (zrnd-on-mdl (- (random-integer (exact (round (vector3-z dimensions))))
-                                          (vector3-z half-dimensions)))
+                   (let* ((xrnd-on-mdl (- (random-integer x-random-range) (vector3-x half-dimensions)))
+                          (zrnd-on-mdl (- (random-integer z-random-range) (vector3-z half-dimensions)))
                           (p (vector3-sum (vector xrnd-on-mdl 0 zrnd-on-mdl) terrain-center))
                           (distance-from-tower (vector3-length (vector3-diff p tower-center))))
                      (cond
-                      ((< distance-from-tower 100)
+                      ((< distance-from-tower 150)
                        ;; don't put random trees near tower
                        (loop count))
                       (else

@@ -2,17 +2,27 @@
 #
 #
 
-WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 L_SYSTEM_TREE=../L-system-tree/L-system-tree
 OPENSCAD_FN=10
 COMBINE_DISTANCE=0.2
 
+SKYBOX_WIDTH=640
+SKYBOX_HEIGTH=640
 
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
 
 
 %.obj.gz: %.obj
 	cat $< | gzip -9 - > $@
+
+%.pnm: %.png
+	pngtopnm $^ > $@
+
+%.png: %.pnm
+	pnmtopng $^ > $@
+
 
 
 TERRAIN_TARGETS= \
@@ -28,7 +38,7 @@ TERRAIN_TARGETS= \
 		combined-trees-4-3.obj.gz combined-trees-4-4.obj.gz combined-trees-4-5.obj.gz \
 		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
 		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz \
-		terrain-textured.obj terrain-texture.png terrain.mtl rez-combined-trees.js
+		terrain-textured.obj terrain-texture.png terrain.mtl rez-combined-trees.js blue-green-transparent-cube.fbx
 
 
 all: $(TERRAIN_TARGETS)
@@ -93,10 +103,33 @@ tree-locations.png: tree-locations.dat
 
 
 
+### skybox
+
+skybox0.png skybox1.png skybox2.png skybox3.png skybox4.png skybox5.png: skybox.pov skybox.ini
+	povray +W${SKYBOX_WIDTH} +H${SKYBOX_HEIGTH} skybox.ini
+
+blank.pnm:
+	pbmmake -black ${SKYBOX_WIDTH} ${SKYBOX_HEIGTH} > $@
+
+skybox-row0.pnm: skybox0.pnm blank.pnm
+	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+skybox-row1.pnm: skybox1.pnm skybox2.pnm skybox3.pnm skybox4.pnm
+	pnmcat -lr $^ > $@
+
+skybox-row2.pnm: skybox5.pnm blank.pnm
+	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+skybox.pnm: skybox-row0.pnm skybox-row1.pnm skybox-row2.pnm
+	pnmcat -tb $^ > $@
+
+
+
 ###
 
 
-upload: $(TERRAIN_TARGETS)
+
+upload: $(TERRAIN_TARGETS) skybox.png
 	mkdir -p wm-terrain
 	cp $^ wm-terrain/
 	rsync --delete -avP wm-terrain/ headache.hungry.com:public_html/hifi/wm-terrain/
