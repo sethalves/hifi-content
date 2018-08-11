@@ -328,6 +328,9 @@ function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
         var action = actions[ k ];
         if (action.type == "offset") {
             action.pointToOffsetFrom = Mat4.transformPoint(baseMatInv, action.pointToOffsetFrom);
+            delete action.pointToOffsetFrom.red;
+            delete action.pointToOffsetFrom.green;
+            delete action.pointToOffsetFrom.blue;
         }
     }
 
