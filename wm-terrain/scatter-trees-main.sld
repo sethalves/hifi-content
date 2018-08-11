@@ -28,10 +28,10 @@
 
     (define (main-program)
       (cerr "loading...\n")
-      (let* ((tree-count 900)
+      (let* ((tree-count 700)
              ;; (tree-count 10)
              (tree-y-fudge (vector 0 -0.5 0)) ;; try to keep trunks in the ground on steep hills
-             (water-level -7) ;; no trees below here
+             (water-level -7.5) ;; no trees below here
              (random-i 12) ;; arbitrary, done for repeatability
              (random-j 3) ;; same as i
              (random-source (make-random-source))

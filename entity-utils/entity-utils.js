@@ -493,16 +493,16 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
             action.otherEntityID = entityIDMap[action.otherEntityID];
         }
 
+        if (action.type == "offset") {
+            action.pointToOffsetFrom = Mat4.transformPoint(baseMat, action.pointToOffsetFrom);
+        }
+
         var actionEntityID = action.entityID;
         var actionType = action.type;
         delete action.id;
         delete action.type;
         delete action.entityID;
         delete action.ttl;
-
-        if (action.type == "offset") {
-            action.pointToOffsetFrom = Mat4.transformPoint(baseMat, action.pointToOffsetFrom);
-        }
 
        Entities.addAction(actionType, actionEntityID, action);
     }

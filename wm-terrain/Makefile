@@ -137,41 +137,36 @@ upload: $(TERRAIN_TARGETS) skybox.png
 
 clean:
 	rm -f *~
-	rm -rf lines points terrain.scad
-	rm -rf wm-terrain
-	rm -rf terrain-underground-floor-textured.obj
-	rm -rf terrain-underground-textured.obj
-	rm -f terrain-lines.png terrain-lines.pnm
-	rm -f tree-locations.png
-	rm -f terrain-hull.obj
-	rm -f terrain-textured.obj
-	rm -f combined-trees-0-0.obj combined-trees-0-1.obj combined-trees-0-2.obj \
-		combined-trees-0-3.obj combined-trees-0-4.obj combined-trees-0-5.obj \
-		combined-trees-1-0.obj combined-trees-1-1.obj combined-trees-1-2.obj \
-		combined-trees-1-3.obj combined-trees-1-4.obj combined-trees-1-5.obj \
-		combined-trees-2-0.obj combined-trees-2-1.obj combined-trees-2-2.obj \
-		combined-trees-2-3.obj combined-trees-2-4.obj combined-trees-2-5.obj \
-		combined-trees-3-0.obj combined-trees-3-1.obj combined-trees-3-2.obj \
-		combined-trees-3-3.obj combined-trees-3-4.obj combined-trees-3-5.obj \
-		combined-trees-4-0.obj combined-trees-4-1.obj combined-trees-4-2.obj \
-		combined-trees-4-3.obj combined-trees-4-4.obj combined-trees-4-5.obj \
-		combined-trees-5-0.obj combined-trees-5-1.obj combined-trees-5-2.obj \
-		combined-trees-5-3.obj combined-trees-5-4.obj combined-trees-5-5.obj \
-		tree-locations.dat
-	rm -f combined-trees-0-0.obj.gz combined-trees-0-1.obj.gz combined-trees-0-2.obj.gz \
-		combined-trees-0-3.obj.gz combined-trees-0-4.obj.gz combined-trees-0-5.obj.gz \
-		combined-trees-1-0.obj.gz combined-trees-1-1.obj.gz combined-trees-1-2.obj.gz \
-		combined-trees-1-3.obj.gz combined-trees-1-4.obj.gz combined-trees-1-5.obj.gz \
-		combined-trees-2-0.obj.gz combined-trees-2-1.obj.gz combined-trees-2-2.obj.gz \
-		combined-trees-2-3.obj.gz combined-trees-2-4.obj.gz combined-trees-2-5.obj.gz \
-		combined-trees-3-0.obj.gz combined-trees-3-1.obj.gz combined-trees-3-2.obj.gz \
-		combined-trees-3-3.obj.gz combined-trees-3-4.obj.gz combined-trees-3-5.obj.gz \
-		combined-trees-4-0.obj.gz combined-trees-4-1.obj.gz combined-trees-4-2.obj.gz \
-		combined-trees-4-3.obj.gz combined-trees-4-4.obj.gz combined-trees-4-5.obj.gz \
-		combined-trees-5-0.obj.gz combined-trees-5-1.obj.gz combined-trees-5-2.obj.gz \
-		combined-trees-5-3.obj.gz combined-trees-5-4.obj.gz combined-trees-5-5.obj.gz
+	rm -f blank.pnm
+	rm -f combined-trees-0-0.obj combined-trees-0-0.obj.gz combined-trees-0-1.obj combined-trees-0-1.obj.gz
+	rm -f combined-trees-0-2.obj combined-trees-0-2.obj.gz combined-trees-0-3.obj combined-trees-0-3.obj.gz
+	rm -f combined-trees-0-4.obj combined-trees-0-4.obj.gz combined-trees-0-5.obj combined-trees-0-5.obj.gz
+	rm -f combined-trees-1-0.obj combined-trees-1-0.obj.gz combined-trees-1-1.obj combined-trees-1-1.obj.gz
+	rm -f combined-trees-1-2.obj combined-trees-1-2.obj.gz combined-trees-1-3.obj combined-trees-1-3.obj.gz
+	rm -f combined-trees-1-4.obj combined-trees-1-4.obj.gz combined-trees-1-5.obj combined-trees-1-5.obj.gz
+	rm -f combined-trees-2-0.obj combined-trees-2-0.obj.gz combined-trees-2-1.obj combined-trees-2-1.obj.gz
+	rm -f combined-trees-2-2.obj combined-trees-2-2.obj.gz combined-trees-2-3.obj combined-trees-2-3.obj.gz
+	rm -f combined-trees-2-4.obj combined-trees-2-4.obj.gz combined-trees-2-5.obj combined-trees-2-5.obj.gz
+	rm -f combined-trees-3-0.obj combined-trees-3-0.obj.gz combined-trees-3-1.obj combined-trees-3-1.obj.gz
+	rm -f combined-trees-3-2.obj combined-trees-3-2.obj.gz combined-trees-3-3.obj combined-trees-3-3.obj.gz
+	rm -f combined-trees-3-4.obj combined-trees-3-4.obj.gz combined-trees-3-5.obj combined-trees-3-5.obj.gz
+	rm -f combined-trees-4-0.obj combined-trees-4-0.obj.gz combined-trees-4-1.obj combined-trees-4-1.obj.gz
+	rm -f combined-trees-4-2.obj combined-trees-4-2.obj.gz combined-trees-4-3.obj combined-trees-4-3.obj.gz
+	rm -f combined-trees-4-4.obj combined-trees-4-4.obj.gz combined-trees-4-5.obj combined-trees-4-5.obj.gz
+	rm -f combined-trees-5-0.obj combined-trees-5-0.obj.gz combined-trees-5-1.obj combined-trees-5-1.obj.gz
+	rm -f combined-trees-5-2.obj combined-trees-5-2.obj.gz combined-trees-5-3.obj combined-trees-5-3.obj.gz
+	rm -f combined-trees-5-4.obj combined-trees-5-4.obj.gz combined-trees-5-5.obj combined-trees-5-5.obj.gz
 	rm -f rez-combined-trees.js
-
+	rm -f skybox-row0.pnm skybox-row1.pnm skybox-row2.pnm skybox.png skybox.pnm
+	rm -f skybox0.png skybox0.pnm
+	rm -f skybox1.png skybox1.pnm
+	rm -f skybox2.png skybox2.pnm
+	rm -f skybox3.png skybox3.pnm
+	rm -f skybox4.png skybox4.pnm
+	rm -f skybox5.png skybox5.pnm
+	rm -f terrain-textured.obj
+	rm -f tree-locations.dat
+	rm -rf wm-terrain
 
 
 very-clean: clean

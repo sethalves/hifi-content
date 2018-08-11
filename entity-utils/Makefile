@@ -5,7 +5,7 @@
 all:
 
 
-upload: entity-utils.js exact-import.js
+upload: entity-utils.js
 	rm -rf entity-utils
 	mkdir -p entity-utils
 	cp $^ entity-utils/
