@@ -16,8 +16,8 @@ function cleanProperties(props) {
     delete props.acceleration;
     delete props.scriptTimestamp;
     delete props.boundingBox;
-    delete props.velocity;
-    delete props.angularVelocity;
+    // delete props.velocity;
+    // delete props.angularVelocity;
     delete props.renderInfo;
     delete props.lifetime;
     delete props.actionData;
@@ -137,6 +137,13 @@ function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
         }
     }
 
+    for (var k = 0; k < actions.length; k++) {
+        var action = actions[ k ];
+        if (action.type == "offset") {
+            action.pointToOffsetFrom = Mat4.transformPoint(baseMatInv, action.pointToOffsetFrom);
+        }
+    }
+
     return {
         Version: 89,
         Entities: props,
@@ -161,67 +168,121 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
     var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
     var baseMatRot = Mat4.extractRotation(baseMat);
     var props;
-    var actions;
+    var actions = [];
     var patchUps = [];
 
     // deep copy
     props = JSON.parse(JSON.stringify(jsonDecoded.Entities));
-    actions = JSON.parse(JSON.stringify(jsonDecoded.Actions));
+    try {
+        actions = JSON.parse(JSON.stringify(jsonDecoded.Actions));
+    } catch (err) {
+        // may not be an Actions section
+    }
 
     var newEntityIDs = [];
     var entityIDMap = {};
-    // var makeAvatarEntities = !(Entities.canRez() || Entities.canRezTmp());
 
+    var propsToAdjustWithMap = ["parentID",
+                                "xNNeighborID", "yNNeighborID", "zNNeighborID",
+                                "xPNeighborID", "yPNeighborID", "zPNeighborID"];
+
+    var failed = [];
     for (var j = 0; j < props.length; j++) {
         var entityProps = props[j];
+
+        if (!entityProps.hasOwnProperty("localPosition")) {
+            entityProps.localPosition = entityProps.position;
+            delete entityProps.position;
+        }
+        if (!entityProps.hasOwnProperty("localRotation")) {
+            entityProps.localRotation = entityProps.rotation;
+            delete entityProps.rotation;
+        }
+        if (!entityProps.hasOwnProperty("localDimensions")) {
+            entityProps.localDimensions = entityProps.dimensions;
+            delete entityProps.dimensions;
+        }
+
         if (isNullID(entityProps.parentID)) {
             entityProps.localPosition = Mat4.transformPoint(baseMat, entityProps.localPosition);
             entityProps.localRotation = Quat.multiply(baseMatRot, entityProps.localRotation);
         }
 
-        var propsToAdjustWithMap = ["parentID",
-                                    "xNNeighborID", "yNNeighborID", "zNNeighborID",
-                                    "xPNeighborID", "yPNeighborID", "zPNeighborID"];
+        var originalID = entityProps.id;
+        delete entityProps.id;
+
         for (var t = 0; t < propsToAdjustWithMap.length; t++) {
             var propName = propsToAdjustWithMap[t];
-            if (entityProps[propName]) {
+            if (entityProps[propName] && !isNullID(entityProps[propName])) {
                 if (entityIDMap.hasOwnProperty(entityProps[propName])) {
                     entityProps[propName] = entityIDMap[entityProps[propName]];
                 } else {
+                    var patch = { id: originalID };
+                    patch[propName] = entityProps[propName];
                     if (propName == "parentID") {
                         print("Warning: propertiesToEntities -- parent sorting failed: " +
-                              entityProps.id + " --> " + entityProps[propName]);
+                              originalID + " --> " + entityProps[propName]);
+                        // if we patch just the parentID, the positions will end up wrong.  include local offsets:
+                        patch.localPosition = entityProps.localPosition;
+                        patch.localRotation = entityProps.localRotation;
                     }
-                    patchUps.push([entityProps.id, propName, entityProps[propName]]);
+                    patchUps.push(patch);
                 }
             }
         }
 
-        var originalID = entityProps.id;
-        delete entityProps.id;
         delete entityProps.locked;
 
         var entityID = Entities.addEntity(entityProps, makeAvatarEntities);
+        if (isNullID(entityID)) {
+            print("Warning: propertiesToEntities -- addEntity failed: " + JSON.stringify(entityProps));
+            entityProps.id = originalID;
+            failed.push(entityProps);
+        } else {
+            newEntityIDs.push(entityID);
+            entityIDMap[originalID] = entityID;
+        }
+    }
 
-        newEntityIDs.push(entityID);
-        entityIDMap[originalID] = entityID;
+    for (var f = 0; f < failed.length; f++) {
+        var retryProps = failed[f];
+        var retryOriginalID = retryProps.id;
+        delete retryProps.id;
+
+        var retryID = Entities.addEntity(retryProps, makeAvatarEntities);
+        if (isNullID(retryID)) {
+            print("Warning: propertiesToEntities -- addEntity failed again: " + JSON.stringify(retryProps));
+        } else {
+            newEntityIDs.push(retryID);
+            entityIDMap[retryOriginalID] = retryID;
+        }
     }
 
     // in some cases, the order that the entities were rezzed in keeps us from correctly setting
     // properties that refer to other entities
     for (var p = 0; p < patchUps.length; p++) {
         var patchUp = patchUps[p];
-        var patchUpEntityID = patchUp[0];
-        var patchUpPropName = patchUp[1];
-        var patchUpPropValue = patchUp[2];
-        if (patchUpPropValue && entityIDMap.hasOwnProperty(patchUpPropValue)) {
-            var patchUpProps = {};
-            patchUpProps[patchUpPropName] = entityIDMap[patchUpPropValue];
-            if (entityIDMap[patchUpEntityID]) {
-                Entities.editEntity(entityIDMap[patchUpEntityID], patchUpProps);
-            } else {
-                print("Warning: propertiesToEntities -- map doesn't contain entity: " + patchUpEntityID);
+        var patchOrigID = patchUp.id;
+        delete patchUp.id;
+
+        if (entityIDMap[patchOrigID]) {
+            var patchUpEntityID = entityIDMap[patchOrigID];
+
+            for (var patchKey in patchUp) {
+                if (patchUp.hasOwnProperty(patchKey) && propsToAdjustWithMap.indexOf(patchKey) >= 0) {
+                    var oldIDValue = patchUp[patchKey];
+                    if (entityIDMap[oldIDValue]) {
+                        patchUp[patchKey] = entityIDMap[oldIDValue];
+                    } else {
+                        print("Warning: propertiesToEntities -- map doesn't contain entity: " + oldIDValue);
+                    }
+                }
             }
+
+            Entities.editEntity(patchUpEntityID, patchUp);
+        } else {
+            print("Warning: propertiesToEntities -- map doesn't contain this entity: " + patchOrigID + " -- " +
+                  JSON.stringify(patchUp));
         }
     }
 
@@ -248,7 +309,12 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
         delete action.type;
         delete action.entityID;
         delete action.ttl;
-        Entities.addAction(actionType, actionEntityID, action);
+
+        if (action.type == "offset") {
+            action.pointToOffsetFrom = Mat4.transformPoint(baseMat, action.pointToOffsetFrom);
+        }
+
+       Entities.addAction(actionType, actionEntityID, action);
     }
 
     return newEntityIDs;
@@ -409,8 +475,8 @@ function propertySetsAreSimilar(propsA, propsB) {
     // TODO -- examine the parent/child and neighbor relationships and the actions
 
     if (propsA.Entities.length != propsB.Entities.length) {
-        print("QQQQ propsA.Entities.length != propsB.Entities.length -- " +
-              propsA.Entities.length + " " + propsB.Entities.length);
+        // print("QQQQ propsA.Entities.length != propsB.Entities.length -- " +
+        //       propsA.Entities.length + " " + propsB.Entities.length);
         return false;
     }
 

@@ -5,10 +5,10 @@
 all:
 
 
-upload:
+upload: entity-utils.js exact-import.js
 	rm -rf entity-utils
 	mkdir -p entity-utils
-	cp entity-utils.js entity-utils/
+	cp $^ entity-utils/
 	rsync --delete -avP entity-utils/ headache.hungry.com:public_html/hifi/entity-utils/
 
 
