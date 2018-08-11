@@ -2,7 +2,180 @@
 
 /* global module, Script, print, Entities, Uuid, Mat4, Quat */
 
-function cleanProperties(props) {
+
+function isNullID(testID) {
+    if (!testID) {
+        return true;
+    } else if (testID == Uuid.NULL) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+// https://stackoverflow.com/questions/201183/how-to-determine-equality-for-two-javascript-objects#16788517
+function objectsAlmostEqual(x, y, tolerance) {
+    if (!tolerance) {
+        tolerance = 0.003;
+    }
+
+    // test for deep equality, but allow some slack in numbers
+    if (x === null || x === undefined || y === null || y === undefined) { return x === y; }
+    // after this just checking type of one would be enough
+    if (x.constructor !== y.constructor) { return false; }
+    // if they are functions, they should exactly refer to same one (because of closures)
+    if (x instanceof Function) { return x === y; }
+    // if they are regexps, they should exactly refer to same one (it is hard to better equality check on current ES)
+    if (x instanceof RegExp) { return x === y; }
+
+    if (typeof x == typeof 5 && typeof y == typeof 5) {
+        return Math.abs(x - y) < tolerance;
+    }
+
+    if (x === y || x.valueOf() === y.valueOf()) { return true; }
+    if (Array.isArray(x) && x.length !== y.length) { return false; }
+
+    // if they are dates, they must had equal valueOf
+    if (x instanceof Date) { return false; }
+
+    // if they are strictly equal, they both need to be object at least
+    if (!(x instanceof Object)) { return false; }
+    if (!(y instanceof Object)) { return false; }
+
+    // recursive object equality check
+    var p = Object.keys(x);
+    return Object.keys(y).every(function (i) { return p.indexOf(i) !== -1; }) &&
+        p.every(function (i) { return objectsAlmostEqual(x[i], y[i]); });
+}
+
+
+var defaultProperties = {
+    // "id": "{4fceaa8e-3dbf-4be6-a47d-80d1739340f9}",
+    // "type": "Box",
+    // "created": "2018-08-11T16:20:28Z",
+    // "age": 36.048988342285156,
+    // "ageAsText": "0 hours 0 minutes 36 seconds",
+    // "lastEdited": 1534004501633529,
+    // "lastEditedBy": "{5954f0e8-a28f-44aa-89f3-3dccf721e934}",
+    "position": { "x": 0, "y": 0, "z": 0 },
+    // "dimensions": { "x": 0.1, "y": 0.1, "z": 0.1 },
+    // "naturalDimensions": { "x": 1, "y": 1, "z": 1 },
+    // "naturalPosition": { "x": 0, "y": 0, "z": 0 },
+    "rotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "velocity": { "x": 0, "y": 0, "z": 0 },
+    "gravity": { "x": 0, "y": 0, "z": 0 },
+    // "acceleration": { "x": 0, "y": 0, "z": 0 },
+    "damping": 0.39346998929977417, // actually 0.39347, but ieee
+    "restitution": 0.5,
+    "friction": 0.5,
+    "density": 1000,
+    "lifetime": -1,
+    "script": "",
+    // "scriptTimestamp": 0,
+    "serverScripts": "",
+    "registrationPoint": { "x": 0.5, "y": 0.5, "z": 0.5 },
+    "angularVelocity": { "x": 0, "y": 0, "z": 0 },
+    "angularDamping": 0.39346998929977417, // actually 0.39347, but ieee
+    "visible": true,
+    "canCastShadow": true,
+    "collisionless": false,
+    // "ignoreForCollisions": false, // ? XXX
+    // "collisionMask": 31,
+    "collidesWith": "static,dynamic,kinematic,myAvatar,otherAvatar,",
+    "dynamic": false,
+    "collisionsWillMove": false,
+    "href": "",
+    "description": "",
+    "actionData": "",
+    "locked": false,
+    "userData": "",
+    "alpha": 1,
+    "itemName": "",
+    "itemDescription": "",
+    "itemCategories": "",
+    "itemArtist": "",
+    "itemLicense": "",
+    "limitedRun": 4294967295,
+    "marketplaceID": "",
+    "editionNumber": 0,
+    "entityInstanceNumber": 0,
+    "certificateID": "",
+    "staticCertificateVersion": 0,
+    "name": "",
+    "collisionSoundURL": "",
+    // "color": { "red": 255, "green": 255, "blue": 255 },
+    // "shape": "Cube",
+    // "boundingBox": {...},
+    "originalTextures": "{\n}\n",
+    "parentID": "{00000000-0000-0000-0000-000000000000}",
+    "parentJointIndex": 65535,
+    // "queryAACube": { "x": 0, "y": 0, "z": 0, "scale": 1 },
+    "localPosition": { "x": 0, "y": 0, "z": 0 },
+    "localRotation": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "localVelocity": { "x": 0, "y": 0, "z": 0 },
+    "localAngularVelocity": { "x": 0, "y": 0, "z": 0 },
+    "localDimensions": { "x": 0.2, "y": 0.2, "z": 0.2 },
+    "clientOnly": false,
+    "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
+    // "renderInfo": null,
+    "cloneable": false,
+    "cloneLifetime": 300,
+    "cloneLimit": 0,
+    "cloneDynamic": false,
+    "cloneAvatarEntity": false,
+    "cloneOriginID": "{00000000-0000-0000-0000-000000000000}",
+    "animation": {
+        "url": "",
+        "allowTranslation": true,
+        "fps": 30,
+        "currentFrame": 0,
+        "running": false,
+        "loop": true,
+        "firstFrame": 0,
+        "lastFrame": 100000,
+        "hold": false
+    },
+    "jointRotationsSet": [],
+    "jointRotations": [],
+    "jointTranslationsSet": [],
+    "jointTranslations": [],
+    "relayParentJoints": false,
+    "shapeType": "none",
+    "compoundShapeURL": "",
+    "textures": "",
+    "xNNeighborID": "{00000000-0000-0000-0000-000000000000}",
+    "yNNeighborID": "{00000000-0000-0000-0000-000000000000}",
+    "zNNeighborID": "{00000000-0000-0000-0000-000000000000}",
+    "xPNeighborID": "{00000000-0000-0000-0000-000000000000}",
+    "yPNeighborID": "{00000000-0000-0000-0000-000000000000}",
+    "zPNeighborID": "{00000000-0000-0000-0000-000000000000}",
+
+};
+
+
+function cleanProperties(props, removeDefaults) {
+
+    // if there's no parent, localX properties are in world-frame.  move any of these over for consistency
+    if (isNullID(props.parentID)) {
+        if (props.position && !props.localPosition) {
+            props.localPosition = props.position;
+        }
+        if (props.rotation && !props.localRotation) {
+            props.localRotation = props.rotation;
+        }
+        if (props.velocity && !props.localVelocity) {
+            props.localVelocity = props.velocity;
+        }
+        if (props.angularVelocity && !props.localAngularVelocity) {
+            props.localAngularVelocity = props.angularVelocity;
+        }
+        if (props.dimensions && !props.localDimensions) {
+            props.localDimensions = props.dimensions;
+        }
+    }
+
+    // remove redundant and read-only properties.
     delete props.clientOnly;
     delete props.created;
     delete props.lastEdited;
@@ -16,30 +189,43 @@ function cleanProperties(props) {
     delete props.acceleration;
     delete props.scriptTimestamp;
     delete props.boundingBox;
-    // delete props.velocity;
-    // delete props.angularVelocity;
+    delete props.velocity;
+    delete props.angularVelocity;
     delete props.renderInfo;
-    delete props.lifetime;
+    delete props.lifetime; // ?
     delete props.actionData;
     delete props.position;
     delete props.rotation;
     delete props.dimensions;
+
+    // due to a quirk / bug in the exporter, these get stray red, green, blue members
+    var vec3sWithStrayColorStuff = ["gravity", "registrationPoint", "localPosition", "localVelocity", "localAngularVelocity",
+                                    "localDimensions", "pPosition", "velocity", "angularVelocity", "dimensions",
+                                    "voxelVolumeSize"];
+    for (var i = 0; i < vec3sWithStrayColorStuff.length; i++) {
+        var wStrayPropName = vec3sWithStrayColorStuff[i];
+        if (props.hasOwnProperty(wStrayPropName)) {
+            delete props[wStrayPropName].red;
+            delete props[wStrayPropName].green;
+            delete props[wStrayPropName].blue;
+        }
+    }
+
+    if (removeDefaults) {
+        for (var key in props) {
+            if (props.hasOwnProperty(key)) {
+                if (objectsAlmostEqual(props[key], defaultProperties[key], 0.0003)) {
+                    delete props[key];
+                }
+            }
+        }
+    }
+
     return props;
 }
 
 
-function isNullID(testID) {
-    if (!testID) {
-        return true;
-    } else if (testID == Uuid.NULL) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-
-function sortPropertiesByParentage(props) {
+function sortPropertiesByParentChainOrder(props) {
     var parentIDs = {};
     for (var i = 0; i < props.length; i++) {
         parentIDs[props.id] = props.parentID;
@@ -114,7 +300,7 @@ function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
         }
 
         entityProps.id = entityID;
-        cleanProperties(entityProps);
+        cleanProperties(entityProps, true);
         props.push(entityProps);
     }
 
@@ -122,7 +308,7 @@ function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
         return null;
     }
 
-    props = sortPropertiesByParentage(props);
+    props = sortPropertiesByParentChainOrder(props);
 
     for (var j = 0; j < props.length; j++) {
         var jProps = props[j];
@@ -134,6 +320,7 @@ function entitiesIDsToProperties(entityIDs, basePosition, baseRotation) {
             delete jProps.localAngularVelocity;
             jProps.localPosition = Mat4.transformPoint(baseMatInv, jProps.localPosition);
             jProps.localRotation = Quat.multiply(baseMatInvRot, jProps.localRotation);
+            cleanProperties(jProps, true);
         }
     }
 
@@ -437,38 +624,6 @@ function getConnectedEntityIDs(origID) {
 }
 
 
-// https://stackoverflow.com/questions/201183/how-to-determine-equality-for-two-javascript-objects#16788517
-function objectsAlmostEqual(x, y) {
-    // test for deep equality, but allow some slack in numbers
-    if (x === null || x === undefined || y === null || y === undefined) { return x === y; }
-    // after this just checking type of one would be enough
-    if (x.constructor !== y.constructor) { return false; }
-    // if they are functions, they should exactly refer to same one (because of closures)
-    if (x instanceof Function) { return x === y; }
-    // if they are regexps, they should exactly refer to same one (it is hard to better equality check on current ES)
-    if (x instanceof RegExp) { return x === y; }
-
-    if (typeof x == typeof 5 && typeof y == typeof 5) {
-        return Math.abs(x - y) < 0.003;
-    }
-
-    if (x === y || x.valueOf() === y.valueOf()) { return true; }
-    if (Array.isArray(x) && x.length !== y.length) { return false; }
-
-    // if they are dates, they must had equal valueOf
-    if (x instanceof Date) { return false; }
-
-    // if they are strictly equal, they both need to be object at least
-    if (!(x instanceof Object)) { return false; }
-    if (!(y instanceof Object)) { return false; }
-
-    // recursive object equality check
-    var p = Object.keys(x);
-    return Object.keys(y).every(function (i) { return p.indexOf(i) !== -1; }) &&
-        p.every(function (i) { return objectsAlmostEqual(x[i], y[i]); });
-}
-
-
 function propertySetsAreSimilar(propsA, propsB) {
     // propsA and propsB should both be the sort of thing returned by entitiesIDsToProperties:
     // { Entities: [ ... ], Actions: [ ... ] }
@@ -489,10 +644,10 @@ function propertySetsAreSimilar(propsA, propsB) {
                              "xPNeighborID", "yPNeighborID", "zPNeighborID"];
 
         for (var i = 0; i < lst.length; i++) {
-            cleanProperties(lst[i]);
+            cleanProperties(lst[i], true);
         }
 
-        sortPropertiesByParentage(lst);
+        sortPropertiesByParentChainOrder(lst);
 
         for (var j = 0; j < lst.length; j++) {
             if (isNullID(lst[j].parentID)) {
@@ -552,7 +707,7 @@ function propertySetsAreSimilar(propsA, propsB) {
 module.exports = {
     cleanProperties: cleanProperties,
     isNullID: isNullID,
-    sortPropertiesByParentage: sortPropertiesByParentage,
+    sortPropertiesByParentChainOrder: sortPropertiesByParentChainOrder,
     entitiesIDsToProperties: entitiesIDsToProperties,
     checkRezSuccess: checkRezSuccess,
     propertiesToEntities: propertiesToEntities,
