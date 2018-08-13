@@ -29,7 +29,7 @@ platform.obj: platform.stl
 # ---
 
 tower-third-floor.obj: platform.obj
-	wavefront-obj-tool -m 0.2 -n -L tower-third-floor.mtl -c $^ -o $@
+	wavefront-obj-tool -m 0.2 -n -L tower-third-floor.mtl -C 0.05 -c $^ -o $@
 
 tower-third-floor-collision-hull.obj: $(COLLISION_HULL_PARTS)
 	wavefront-obj-tool -c -o $@ $^

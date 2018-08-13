@@ -59,7 +59,10 @@ module make_third_floor() {
             polyhedron(points=section_points,
                        faces=[[0, 5, 2], // bottom
                               [1, 3, 4], // top
-                              [2, 5, 4, 3]]); // outside
+                              [2, 5, 4, 3], // outside
+                              [0, 2, 3, 1], // hidden face
+                              [0, 1, 4, 5] // hidden face
+                           ]);
         }
     }
 }
