@@ -50,7 +50,8 @@ for building High Fidelity's servers.
     sudo apt-get update
     sudo apt-get upgrade
     sudo apt-get install build-essential libssl-dev cmake
-    sudo apt-get install qt*5-dev libqt5quick5 libqt5websockets5-dev
+    sudo apt-get install qt*5-dev libqt5quick5 libqt5websockets5-dev libqt5xmlpatterns5-dev libqt5svg5-dev libqt5opengl5-dev
+    sudo apt-get install qt5-default
 
 # Checkout High Fidelity's Source and Build<a id="sec-4" name="sec-4"></a>
 
