@@ -492,6 +492,13 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
             }
             action.otherEntityID = entityIDMap[action.otherEntityID];
         }
+        if (action.hasOwnProperty("otherID")) {
+            if (!entityIDMap.hasOwnProperty(action.otherID)) {
+                print("Warning: propertiesToEntities -- action on unknown otherID: " + action.otherID);
+                continue;
+            }
+            action.otherID = entityIDMap[action.otherID];
+        }
 
         if (action.type == "offset") {
             action.pointToOffsetFrom = Mat4.transformPoint(baseMat, action.pointToOffsetFrom);
@@ -592,6 +599,12 @@ function getConnectedEntityIDs(origID) {
                                 done = false;
                             }
                         }
+                        if (actionArgs.hasOwnProperty("otherID")) {
+                            if (!toCheck.hasOwnProperty(actionArgs.otherID)) {
+                                toCheck[actionArgs.otherID] = false;
+                                done = false;
+                            }
+                        }
                     }
 
                     // look for actions that link from other entities
@@ -605,6 +618,13 @@ function getConnectedEntityIDs(origID) {
                             var nbActionArgs = Entities.getActionArguments(nearByEntityID, nbActionID);
                             if (nbActionArgs.hasOwnProperty("otherEntityID") &&
                                 nbActionArgs.otherEntityID == entityID) {
+                                if (!toCheck.hasOwnProperty(nearByEntityID)) {
+                                    toCheck[nearByEntityID] = false;
+                                    done = false;
+                                }
+                            }
+                            if (nbActionArgs.hasOwnProperty("otherID") &&
+                                nbActionArgs.otherID == entityID) {
                                 if (!toCheck.hasOwnProperty(nearByEntityID)) {
                                     toCheck[nearByEntityID] = false;
                                     done = false;

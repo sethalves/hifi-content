@@ -8,7 +8,7 @@
 
     var req = new XMLHttpRequest();
     req.responseType = 'json';
-    req.open("GET", "http://headache.hungry.com/~seth/junk/x.json", false);
+    req.open("GET", "http://headache.hungry.com/~seth/junk/models.json", false);
     req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
     req.send();
     if (req.status == 200) {

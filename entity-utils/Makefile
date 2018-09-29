@@ -5,7 +5,7 @@
 all:
 
 
-upload: entity-utils.js
+upload: entity-utils.js import-domain.js export-domain.js
 	rm -rf entity-utils
 	mkdir -p entity-utils
 	cp $^ entity-utils/
