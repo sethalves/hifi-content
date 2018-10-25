@@ -12,3 +12,7 @@ orrery-web-api: orrery-web-api.o
 
 
 orrery-web-api.o: orrery-web-api.cpp
+
+
+clean:
+	rm -f *~ orrery-web-api.o
