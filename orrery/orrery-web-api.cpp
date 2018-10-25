@@ -92,7 +92,6 @@ int main (int argc, char *argv[]) {
     SpiceDouble et;
     utc2et_c(utc, &et);
 
-
     std::vector<body> bodies = {
         { "Sun", "SUN", "SUN", "SUN" },
         { "Mercury", "MERCURY", "MERCURY", "SUN" },
@@ -107,11 +106,7 @@ int main (int argc, char *argv[]) {
         { "Pluto", "PLUTO", "PLUTO BARYCENTER", "SUN" },
     };
 
-
-    // "MOON"
-
     std::stringstream output;
-
     output << "{";
     // for (int i = 0; ; i++) {
     bool first = true;
@@ -140,14 +135,18 @@ int main (int argc, char *argv[]) {
 
         char buffer[1024];
         snprintf(buffer, sizeof(buffer), "\"%s\": {\n"
-                 "        \"position\": { x: %f, y: %f, z: %f },\n"
+                 "        \"name\": \"%s\",\n"
+                 "        \"position\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
                  "        \"distance\": %f,\n"
-                 "        \"size\": { x: %f, y: %f, z: %f },\n"
-                 "        \"orientation\": { w: %f, x: %f, y: %f, z: %f }",
+                 "        \"size\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
+                 "        \"orbits\": \"%s\",\n"
+                 "        \"orientation\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f }",
+                 body.getName(),
                  body.getReadableName(),
-                 x, y, z, sqrt(x*x + y*y + z+z),
-                 radiusX, radiusY, radiusZ,
-                 orientation[0], orientation[1], orientation[2], orientation[3]
+                 x, z, y, sqrt(x*x + y*y + z+z),
+                 radiusX, radiusZ, radiusY,
+                 body.getOrbitsAround(),
+                 orientation[0], orientation[1], orientation[3], orientation[2]
             );
         output << (first ? "" : ",") << endl << "    " << buffer;
         output << endl << "    }";
