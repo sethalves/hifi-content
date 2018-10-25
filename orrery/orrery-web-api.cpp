@@ -8,6 +8,7 @@ using namespace std;
 #include <map>
 #include <vector>
 #include <sstream>
+#include <cstdlib>
 
 extern "C" {
 #include "cspice/include/SpiceCK.h"
@@ -50,24 +51,27 @@ void matrixToQuaternion(SpiceDouble a[][3], float q[]) {
 
 class body {
 public:
-    body(std::string readableName, std::string name, std::string barycenterName, std::string orbitsAround) :
+    body(string readableName, string name, string barycenterName, string orbitsAround) :
         _readableName(readableName),
         _name(name),
         _barycenterName(barycenterName),
         _orbitsAround(orbitsAround)
         {
+            _frameName = string("IAU_") + _name;
         }
 
     const char* getReadableName() { return _readableName.c_str(); }
     const char* getName() { return _name.c_str(); }
     const char* getBarycenterName() { return _barycenterName.c_str(); }
     const char* getOrbitsAround() { return _orbitsAround.c_str(); }
+    const char* getFrameName() { return _frameName.c_str(); }
 
 private:
-    std::string _readableName;
-    std::string _name;
-    std::string _barycenterName;
-    std::string _orbitsAround;
+    string _readableName;
+    string _name;
+    string _barycenterName;
+    string _orbitsAround;
+    string _frameName; // this body's own frame
 };
 
 
@@ -81,18 +85,36 @@ int main (int argc, char *argv[]) {
     erract_c("SET", 0, erractAction);
 
     time_t now = time(0);
+
+    char* queryString = getenv("QUERY_STRING");
+    if (queryString && strlen(queryString) > 0) {
+        vector<string> queryArgs;
+        istringstream f(queryString);
+        string s;
+        while (getline(f, s, '&')) {
+            queryArgs.push_back(s);
+        }
+        if (queryArgs.size() > 0) {
+            string arg = queryArgs[0];
+            int eqPos = arg.find('=');
+            if (eqPos > 0) {
+                string var = arg.substr(0, eqPos);
+                string val = arg.substr(eqPos+1);
+                if (var == "time") {
+                    now = stoi(val);
+                }
+            }
+        }
+    }
+
     tm *gmtm = gmtime(&now);
     char utc[128];
     strftime(utc, sizeof(utc), "%a %b %d %H:%M:%S UTC %Y", gmtm);
 
-    for (std::string line; std::getline(std::cin, line);) {
-        std::cout << line << std::endl;
-    }
-
     SpiceDouble et;
     utc2et_c(utc, &et);
 
-    std::vector<body> bodies = {
+    vector<body> bodies = {
         { "Sun", "SUN", "SUN", "SUN" },
         { "Mercury", "MERCURY", "MERCURY", "SUN" },
         { "Venus", "VENUS", "VENUS", "SUN" },
@@ -106,9 +128,11 @@ int main (int argc, char *argv[]) {
         { "Pluto", "PLUTO", "PLUTO BARYCENTER", "SUN" },
     };
 
-    std::stringstream output;
-    output << "{";
-    // for (int i = 0; ; i++) {
+    stringstream output;
+    output << "{\n";
+
+    output << "    \"bodies\": {\n";
+
     bool first = true;
     for (auto& body : bodies) {
 
@@ -129,18 +153,24 @@ int main (int argc, char *argv[]) {
         radiusZ = radii[2];
 
         SpiceDouble orientationMatrix[3][3];
-        pxform_c("IAU_SUN", "IAU_MARS", et, orientationMatrix);
+        pxform_c("IAU_SUN", body.getFrameName(), et, orientationMatrix);
         float orientation[4];
         matrixToQuaternion(orientationMatrix, orientation);
 
-        char buffer[1024];
-        snprintf(buffer, sizeof(buffer), "\"%s\": {\n"
-                 "        \"name\": \"%s\",\n"
-                 "        \"position\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
-                 "        \"distance\": %f,\n"
-                 "        \"size\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
-                 "        \"orbits\": \"%s\",\n"
-                 "        \"orientation\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f }",
+        if (first) {
+            first = false;
+        } else {
+            output << ",\n";
+        }
+
+        char buffer[4096];
+        snprintf(buffer, sizeof(buffer), "    \"%s\": {\n"
+                 "            \"name\": \"%s\",\n"
+                 "            \"position\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
+                 "            \"distance\": %f,\n"
+                 "            \"size\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
+                 "            \"orbits\": \"%s\",\n"
+                 "            \"orientation\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f }\n",
                  body.getName(),
                  body.getReadableName(),
                  x, z, y, sqrt(x*x + y*y + z+z),
@@ -148,11 +178,14 @@ int main (int argc, char *argv[]) {
                  body.getOrbitsAround(),
                  orientation[0], orientation[1], orientation[3], orientation[2]
             );
-        output << (first ? "" : ",") << endl << "    " << buffer;
-        output << endl << "    }";
-        first = false;
+        output << "    " << buffer << "        }";
     }
-    output << endl << "}" << endl;
+
+    output << "\n    },\n";
+
+    output << "    \"time\": " << now << "\n";
+
+    output << "}" << endl;
 
     cout << "Content-Type: application/json\r\n";
     cout << "Content-Length: " << output.tellp() << "\r\n";
