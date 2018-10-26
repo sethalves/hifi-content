@@ -110,9 +110,18 @@ int main (int argc, char *argv[]) {
     tm *gmtm = gmtime(&now);
     char utc[128];
     strftime(utc, sizeof(utc), "%a %b %d %H:%M:%S UTC %Y", gmtm);
-
     SpiceDouble et;
     utc2et_c(utc, &et);
+
+
+    // also create a Observer epoch one minute in the future
+    time_t future = now + 3600;
+    tm *gmtmFuture = gmtime(&future);
+    char utcFuture[128];
+    strftime(utcFuture, sizeof(utcFuture), "%a %b %d %H:%M:%S UTC %Y", gmtmFuture);
+    SpiceDouble etFuture;
+    utc2et_c(utcFuture, &etFuture);
+
 
     vector<body> bodies = {
         { "Sun", "SUN", "SUN", "SUN" },
@@ -136,26 +145,41 @@ int main (int argc, char *argv[]) {
     bool first = true;
     for (auto& body : bodies) {
 
-        SpiceDouble ptarg[3];
-        SpiceDouble lt;
-        spkpos_c(body.getBarycenterName(), et, "IAU_SUN", "NONE", body.getOrbitsAround(), ptarg, &lt);
+        // SpiceDouble ptarg[3];
+        // SpiceDouble lt;
+        // spkpos_c(body.getBarycenterName(), et, "IAU_SUN", "NONE", body.getOrbitsAround(), ptarg, &lt);
+        // float x = ptarg[0];
+        // float y = ptarg[1];
+        // float z = ptarg[2];
 
-        float x = ptarg[0];
-        float y = ptarg[1];
-        float z = ptarg[2];
+
+
+        SpiceDouble state[6];
+        SpiceDouble lt;
+        spkezr_c(body.getBarycenterName(), et, "IAU_SUN", "NONE", body.getOrbitsAround(), state, &lt);
+        vector<float> position { (float)state[0], (float)state[1], (float)state[2] };
+        vector<float> velocity { (float)state[3], (float)state[4], (float)state[5] };
+
+
 
         float radiusX, radiusY, radiusZ;
         SpiceDouble radii[3];
         SpiceInt n;
         bodvrd_c(body.getName(), "RADII", 3, &n, radii);
-        radiusX = radii[0];
-        radiusY = radii[1];
-        radiusZ = radii[2];
+
 
         SpiceDouble orientationMatrix[3][3];
         pxform_c("IAU_SUN", body.getFrameName(), et, orientationMatrix);
         float orientation[4];
         matrixToQuaternion(orientationMatrix, orientation);
+
+
+        SpiceDouble orientationMatrixFuture[3][3];
+        pxform_c("IAU_SUN", body.getFrameName(), etFuture, orientationMatrixFuture);
+        float orientationFuture[4];
+        matrixToQuaternion(orientationMatrixFuture, orientationFuture);
+
+
 
         if (first) {
             first = false;
@@ -168,15 +192,20 @@ int main (int argc, char *argv[]) {
                  "            \"name\": \"%s\",\n"
                  "            \"position\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
                  "            \"distance\": %f,\n"
+                 "            \"velocity\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
                  "            \"size\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
                  "            \"orbits\": \"%s\",\n"
-                 "            \"orientation\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f }\n",
+                 "            \"orientation\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f },\n"
+                 "            \"orientationInOneHour\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f }\n",
                  body.getName(),
                  body.getReadableName(),
-                 x, z, y, sqrt(x*x + y*y + z+z),
-                 radiusX, radiusZ, radiusY,
+                 position[0], position[1], position[2],
+                 sqrt(position[0]*position[0] + position[1]*position[1] + position[2]+position[2]),
+                 velocity[0], velocity[1], velocity[2],
+                 radii[0], radii[1], radii[2],
                  body.getOrbitsAround(),
-                 orientation[0], orientation[1], orientation[3], orientation[2]
+                 orientation[0], orientation[1], orientation[2], orientation[3],
+                 orientationFuture[0], orientationFuture[1], orientationFuture[2], orientationFuture[3]
             );
         output << "    " << buffer << "        }";
     }
@@ -197,6 +226,7 @@ int main (int argc, char *argv[]) {
 
 /*
   https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/info/mostused.html
+  https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/
   https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/erract_c.html
   https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodvar_c.html
  */
