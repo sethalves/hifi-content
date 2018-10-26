@@ -5,6 +5,7 @@
 (function() {
 
     var orreryBaseLocation = { x: 8000, y: 7999, z: 8000 };
+    var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
 
     var bodyEntityIDs = {};
 
@@ -97,36 +98,37 @@
         var distanceScaleForOrbit = {
             "NONE": 1,
             "SUN": 5100000000,
-            "EARTH": 1200000000
+            "EARTH": 5100000000
         };
 
         var modelRadius = 250;
 
         var bodyData = bodies[bodyKey];
         var distanceScale = modelRadius / distanceScaleForOrbit[bodyData.orbits];
-        var position = Vec3.multiply(bodyData.position, distanceScale);
-        var result = Vec3.sum(getBodyPosition(bodies, bodyData.orbits), position);
-        return { x: result.x, y: result.z, z: result.y };  // fix axis style
+        var position = Vec3.multiply(Vec3.multiplyQbyV(toHifiAxis, bodyData.position), distanceScale);
+        return Vec3.sum(getBodyPosition(bodies, bodyData.orbits), position);
     }
 
     function getBodySize(bodies, bodyKey) {
         // sizes range from 1188 to 695700
         var bodyData = bodies[bodyKey];
+        // var bodySize = Vec3.multiplyQbyV(toHifiAxis, bodyData.size);
+        var bodySize = { x: bodyData.size.x, y: bodyData.size.z, z: bodyData.size.y };
         var expValue = 0.65;
         var expSize = {
-            x: Math.pow(bodyData.size.x, expValue),
-            y: Math.pow(bodyData.size.y, expValue),
-            z: Math.pow(bodyData.size.z, expValue)
+            x: Math.pow(bodySize.x, expValue),
+            y: Math.pow(bodySize.y, expValue),
+            z: Math.pow(bodySize.z, expValue)
         };
         var sizeScaleForBody = {
-            "SUN": 1 / 1600
+            "SUN": 1 / 1600,
+            "MOON": 1 / 600
         };
         var sizeScale = 1.0 / 400.0;
         if (sizeScaleForBody[bodyKey]) {
             sizeScale = sizeScaleForBody[bodyKey];
         }
-        var result = Vec3.multiply(expSize, sizeScale);
-        return { x: result.x, y: result.z, z: result.y };  // fix axis style
+        return Vec3.multiply(expSize, sizeScale);
     }
 
     function updateBodies() {
@@ -145,6 +147,7 @@
                         var bodyData = bodies[bodyKey];
 
                         var position = getBodyPosition(bodies, bodyKey);
+                        var rotation = Quat.multiply(toHifiAxis, bodyData.orientation);
                         var size = getBodySize(bodies, bodyKey);
 
                         var surface = getSurface(bodyKey);
@@ -156,7 +159,7 @@
                             type: "Sphere",
                             color: color,
                             position: position,
-                            rotation: Quat.fromVec3Degrees({ x: 0, y: 0, z: 0 }),
+                            rotation: rotation,
                             dimensions: size,
                             collisionless: true,
                             userData: userData,

@@ -12,7 +12,7 @@ float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float s
     cameraOffset = normalize(cameraOffset);
 
     // float cameraSpin = atan(cameraOffset.z, cameraOffset.x);
-    float theta = atan(v.z, v.x); // - cameraSpin + PI;
+    float theta = atan(v.z, -v.x); // - cameraSpin + PI;
     while (theta < 0.0) {
         theta += TAU;
     }
