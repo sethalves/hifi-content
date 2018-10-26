@@ -1,11 +1,81 @@
 "use strict";
 
-/* global Script, Messages, print, Vec3, Math, Entities */
+/* global Script, Messages, print, Vec3, Math, Entities, Quat, MyAvatar */
 
 (function() {
 
-    var orreryBaseLocation = { x: 8000, y: 7998, z: 8000 };
-    // var bodyOverlays = [];
+    var orreryBaseLocation = { x: 8000, y: 7999, z: 8000 };
+
+    var bodyEntityIDs = {};
+
+    function notYet() {
+        return [ { red: 90, green: 90, blue: 90 },
+                 JSON.stringify({
+                     grabbableKey: {
+                         grabbable: false
+                     }
+                 })];
+    }
+
+    function getSunSurface() {
+        // return [ { red: 255, green: 255, blue: 0 }, "" ];
+        return [{ red: 255, green: 255, blue: 255 },
+                JSON.stringify({
+                    grabbableKey: {
+                        grabbable: false
+                    },
+                    ProceduralEntity: {
+                        version: 2,
+                        shaderUrl: Script.resolvePath("sun.fs")
+                    }
+                })];
+    }
+
+    function getEarthSurface() {
+        return [{ red: 255, green: 255, blue: 255 },
+                JSON.stringify({
+                    grabbableKey: {
+                        grabbable: false
+                    },
+                    ProceduralEntity: {
+                        version: 2,
+                        shaderUrl: Script.resolvePath("spheremap.fs"),
+                        channels: [Script.resolvePath("models/Earth/Albedo.jpg")]
+                    }
+                })];
+    }
+
+    function getSimpleTextureSurface(texturePath) {
+        return [{ red: 255, green: 255, blue: 255 },
+                JSON.stringify({
+                    grabbableKey: {
+                        grabbable: false
+                    },
+                    ProceduralEntity: {
+                        version: 2,
+                        shaderUrl: Script.resolvePath("spheremap.fs"),
+                        channels: [Script.resolvePath(texturePath)]
+                    }
+                })];
+    }
+
+    var surfaceFunctions = {
+        "SUN": getSunSurface,
+        "MERCURY": function() { return getSimpleTextureSurface("models/Mercury/mercurymap.jpg"); },
+        "VENUS": function() { return getSimpleTextureSurface("models/Venus/venusmap.jpg"); },
+        "EARTH": getEarthSurface,
+        "MOON": function() { return getSimpleTextureSurface("models/Moon/MoonColorMap.png"); },
+        "MARS": function() { return getSimpleTextureSurface("models/Mars/mars_1k_color.jpg"); },
+        "JUPITER": function() { return getSimpleTextureSurface("models/Jupiter/jupitermap.jpg"); },
+        "SATURN": function() { return getSimpleTextureSurface("models/Saturn/saturnmap.jpg"); },
+        "URANUS": function() { return getSimpleTextureSurface("models/Uranus/uranusmap.jpg"); },
+        "NEPTUNE": function() { return getSimpleTextureSurface("models/Neptune/neptunemap.jpg"); },
+        "PLUTO": function() { return getSimpleTextureSurface("models/Pluto/plutomap2k.jpg"); }
+    };
+
+    function getSurface(bodyKey) {
+        return surfaceFunctions[bodyKey]();
+    }
 
     function cleanupOverlays() {
         // for (var i = 0; i < bodyOverlays.length; i++) {
@@ -19,15 +89,45 @@
     }
 
     function getBodyPosition(bodies, bodyKey) {
+        // distances from sun range from 376632 to 5023876112
         if (bodyKey == "SUN") {
             return orreryBaseLocation;
         }
+
+        var distanceScaleForOrbit = {
+            "NONE": 1,
+            "SUN": 5100000000,
+            "EARTH": 1200000000
+        };
+
+        var modelRadius = 250;
+
         var bodyData = bodies[bodyKey];
-        var distanceScale = 200.0 / 5100000000.0;
+        var distanceScale = modelRadius / distanceScaleForOrbit[bodyData.orbits];
         var position = Vec3.multiply(bodyData.position, distanceScale);
-        return Vec3.sum(getBodyPosition(bodies, bodyData.orbits), position);
+        var result = Vec3.sum(getBodyPosition(bodies, bodyData.orbits), position);
+        return { x: result.x, y: result.z, z: result.y };  // fix axis style
     }
 
+    function getBodySize(bodies, bodyKey) {
+        // sizes range from 1188 to 695700
+        var bodyData = bodies[bodyKey];
+        var expValue = 0.65;
+        var expSize = {
+            x: Math.pow(bodyData.size.x, expValue),
+            y: Math.pow(bodyData.size.y, expValue),
+            z: Math.pow(bodyData.size.z, expValue)
+        };
+        var sizeScaleForBody = {
+            "SUN": 1 / 1600
+        };
+        var sizeScale = 1.0 / 400.0;
+        if (sizeScaleForBody[bodyKey]) {
+            sizeScale = sizeScaleForBody[bodyKey];
+        }
+        var result = Vec3.multiply(expSize, sizeScale);
+        return { x: result.x, y: result.z, z: result.y };  // fix axis style
+    }
 
     function updateBodies() {
         var orreryWebAPI = "http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi";
@@ -38,124 +138,32 @@
                 var response = JSON.parse(request.responseText);
                 var bodies = response.bodies;
 
-
-                // var mindx = null;
-                // var maxdx = null;
-
                 cleanupOverlays();
 
                 for (var bodyKey in bodies) {
                     if (bodies.hasOwnProperty(bodyKey)) {
                         var bodyData = bodies[bodyKey];
 
-                        // if (!mindx || mindx > bodyData.size.x) {
-                        //     mindx = bodyData.size.x;
-                        // }
-                        // if (!maxdx || maxdx < bodyData.size.x) {
-                        //     maxdx = bodyData.size.x;
-                        // }
-
-
-                        // positions range from 376632 to 5023876112
-                        // var distanceScale = 200.0 / 5100000000.0;
-                        // var position = Vec3.multiply(bodyData.position, distanceScale);
-                        // position = { x: position.x, y: position.z, z: position.y };
-                        // print("position for " + bodyData.name + " = " + JSON.stringify(position));
-
-
                         var position = getBodyPosition(bodies, bodyKey);
-                        position = { x: position.x, y: position.z, z: position.y }; // fix axis style
-                        print("position for " + bodyData.name + " = " + JSON.stringify(position));
+                        var size = getBodySize(bodies, bodyKey);
 
-                        // sizes range from 1188 to 695700
+                        var surface = getSurface(bodyKey);
+                        var color = surface[0];
+                        var userData = surface[1];
 
-                        // var sizeScale = 1.0 / 250000.0;
-                        // var sizeScale = 1.0 / 4.8;
-                        // var logSize = {
-                        //     x: Math.log(bodyData.size.x),
-                        //     y: Math.log(bodyData.size.y),
-                        //     z: Math.log(bodyData.size.z)
-                        // };
-                        // var expSize = {
-                        //     x: Math.pow(bodyData.size.x, 0.1),
-                        //     y: Math.pow(bodyData.size.y, 0.1),
-                        //     z: Math.pow(bodyData.size.z, 0.1)
-                        // };
-                        // var size = Vec3.multiply(logSize, sizeScale);
-
-
-                        var expValue = 0.6;
-                        var expSize = {
-                            x: Math.pow(bodyData.size.x, expValue),
-                            y: Math.pow(bodyData.size.y, expValue),
-                            z: Math.pow(bodyData.size.z, expValue)
-                        };
-                        var sizeScale = 1.0 / 834.0;
-                        var size = Vec3.multiply(expSize, sizeScale);
-
-                        // var sizeScale = 1.0 / 120000.0;
-                        // var size = Vec3.multiply(bodyData.size, sizeScale);
-                        // size = { x: sigmoid(size.x), y: sigmoid(size.y), z: sigmoid(size.z) };
-
-                        // var overlayID = Overlays.addOverlay("sphere", {
-                        //     position: Vec3.sum(orreryBaseLocation, position),
-                        //     size: size.x,
-                        //     color: { red: 30, green: 255, blue: 30 },
-                        //     alpha: 1,
-                        //     solid: false,
-                        //     visible: true,
-                        //     drawInFront: false,
-                        // });
-                        // bodyOverlays.push(overlayID);
-
-                        var color = { blue: 128, green: 128, red: 40 };
-                        if (bodyKey == "EARTH") {
-                            color = { blue: 128, green: 0, red: 0 };
-                        }
-                        if (bodyKey == "MARS") {
-                            color = { blue: 0, green: 0, red: 255 };
-                        }
-                        if (bodyKey == "MOON") {
-                            color = { blue: 0, green: 255, red: 0 };
-                        }
-
-                        var entityID = Entities.addEntity({
+                        bodyEntityIDs[bodyKey] = Entities.addEntity({
                             name: bodyData.name,
                             type: "Sphere",
                             color: color,
-                            dimensions: size,
                             position: position,
-                            dynamic: false,
+                            rotation: Quat.fromVec3Degrees({ x: 0, y: 0, z: 0 }),
+                            dimensions: size,
                             collisionless: true,
-                            lifetime: 120
+                            userData: userData,
+                            lifetime: 60
                         });
                     }
                 }
-
-                // print("QQQQ min=" + mindx + " max=" + maxdx);
-
-                // var overlayID = Overlays.addOverlay("sphere", {
-                //     position: { x: 0.1, y: 0.1, z: 0.1 },
-                //     size: 0.8,
-                //     color: { red: 30, green: 255, blue: 30 },
-                //     alpha: 1,
-                //     solid: false,
-                //     visible: true,
-                //     drawInFront: false,
-                // });
-
-                // var overlayID = Overlays.addOverlay("model", {
-                //     url: controller.modelURL,
-                //     dimensions: controller.dimensions,
-                //     localRotation: controller.rotation,
-                //     localPosition: position,
-                //     parentID: PARENT_ID,
-                //     parentJointIndex: controller.jointIndex,
-                //     ignoreRayIntersection: true
-                // });
-                // bodyOverlays.push(overlayID);
-
-                // print("HERE -- " + JSON.stringify(response));
             }
         };
 
@@ -168,16 +176,18 @@
         if (channel !== "Orrery Controls") {
             return;
         }
+        if (sender != MyAvatar.sessionUUID) {
+            return;
+        }
 
         var parsedMessage = {};
         try {
             parsedMessage = JSON.parse(message);
+            print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
+            updateBodies();
         }  catch (e) {
             print(e);
         }
-
-        print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
-        updateBodies();
     };
 
     Messages.messageReceived.connect(handleMessages);
