@@ -21,7 +21,10 @@ install: orrery-web-api.cgi
 	cp orrery-web-api.cgi orrery/
 	mkdir orrery/data
 	cp -p $(DATAFILES) orrery/data/
+	cp -p button-es.js orrery-es.js orrery/
 	rsync -avP orrery/ headache.hungry.com:public_html/hifi/orrery/
+
+upload: install
 
 clean:
 	rm -f *~ orrery-web-api.o orrery-web-api orrery-web-api.cgi
