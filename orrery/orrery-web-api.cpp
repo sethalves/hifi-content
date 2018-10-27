@@ -229,4 +229,5 @@ int main (int argc, char *argv[]) {
   https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/
   https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/erract_c.html
   https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/bodvar_c.html
+  ftp://naif.jpl.nasa.gov/pub/naif/misc/Quaternion_White_Paper/Quaternions_White_Paper.pdf
  */
