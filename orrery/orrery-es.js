@@ -12,6 +12,7 @@
     function notYet() {
         return [ { red: 90, green: 90, blue: 90 },
                  JSON.stringify({
+                     orrery: true,
                      grabbableKey: {
                          grabbable: false
                      }
@@ -22,6 +23,7 @@
         // return [ { red: 255, green: 255, blue: 0 }, "" ];
         return [{ red: 255, green: 255, blue: 255 },
                 JSON.stringify({
+                    orrery: true,
                     grabbableKey: {
                         grabbable: false
                     },
@@ -35,6 +37,7 @@
     function getEarthSurface() {
         return [{ red: 255, green: 255, blue: 255 },
                 JSON.stringify({
+                    orrery: true,
                     grabbableKey: {
                         grabbable: false
                     },
@@ -49,6 +52,7 @@
     function getSimpleTextureSurface(texturePath) {
         return [{ red: 255, green: 255, blue: 255 },
                 JSON.stringify({
+                    orrery: true,
                     grabbableKey: {
                         grabbable: false
                     },
@@ -78,11 +82,22 @@
         return surfaceFunctions[bodyKey]();
     }
 
-    function cleanupOverlays() {
+    function cleanupEntities() {
         // for (var i = 0; i < bodyOverlays.length; i++) {
         //     Overlays.deleteOverlay(bodyOverlays[i]);
         // }
         // bodyOverlays = [];
+        var entityIDs = Entities.findEntities(orreryBaseLocation, 1000);
+        for (var i = 0; i < entityIDs.length; i++) {
+            var entityProps = Entities.getEntityProperties(entityIDs[i], ["userData"]);
+            try {
+                var parsedUserData = JSON.parse(entityProps.userData);
+                if (parsedUserData.orrery == true) {
+                    Entities.deleteEntity(entityIDs[i]);
+                }
+            } catch (e) {
+            }
+        }
     }
 
     function sigmoid(t) {
@@ -98,7 +113,7 @@
         var distanceScaleForOrbit = {
             "NONE": 1,
             "SUN": 5100000000,
-            "EARTH": 5100000000
+            "EARTH": 2500000000
         };
 
         var modelRadius = 250;
@@ -140,7 +155,7 @@
                 var response = JSON.parse(request.responseText);
                 var bodies = response.bodies;
 
-                cleanupOverlays();
+                cleanupEntities();
 
                 for (var bodyKey in bodies) {
                     if (bodies.hasOwnProperty(bodyKey)) {
@@ -163,7 +178,7 @@
                             dimensions: size,
                             collisionless: true,
                             userData: userData,
-                            lifetime: 60
+                            lifetime: 600
                         });
                     }
                 }
@@ -188,7 +203,7 @@
             parsedMessage = JSON.parse(message);
             print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
             updateBodies();
-        }  catch (e) {
+        } catch (e) {
             print(e);
         }
     };
@@ -197,6 +212,6 @@
     Messages.subscribe("Orrery Controls");
 
     Script.scriptEnding.connect(function () {
-        cleanupOverlays();
+        cleanupEntities();
     });
 });
