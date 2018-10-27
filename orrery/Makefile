@@ -21,7 +21,7 @@ install: orrery-web-api.cgi
 	cp -p orrery-web-api.cgi orrery/
 	mkdir orrery/data
 	cp -p $(DATAFILES) orrery/data/
-	cp -p button-es.js orrery-es.js spheremap.fs sun.fs orrery/
+	cp -p button-es.js orrery-es.js spheremap.fs sun.fs unitBoxTransparent.fbx orrery/
 	rsync --delete -avP models/Planete/ orrery/models/
 	rsync -avP orrery/ headache.hungry.com:public_html/hifi/orrery/
 

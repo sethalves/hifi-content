@@ -114,7 +114,7 @@ int main (int argc, char *argv[]) {
     utc2et_c(utc, &et);
 
 
-    // also create a Observer epoch one minute in the future
+    // also create a Observer epoch one hour in the future
     time_t future = now + 3600;
     tm *gmtmFuture = gmtime(&future);
     char utcFuture[128];
@@ -161,6 +161,11 @@ int main (int argc, char *argv[]) {
         vector<float> velocity { (float)state[3], (float)state[4], (float)state[5] };
 
 
+        SpiceDouble futureState[6];
+        SpiceDouble futureLt;
+        spkezr_c(body.getBarycenterName(), etFuture, "IAU_SUN", "NONE", body.getOrbitsAround(), futureState, &futureLt);
+        vector<float> positionFuture { (float)futureState[0], (float)futureState[1], (float)futureState[2] };
+
 
         float radiusX, radiusY, radiusZ;
         SpiceDouble radii[3];
@@ -196,6 +201,7 @@ int main (int argc, char *argv[]) {
                  "            \"size\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
                  "            \"orbits\": \"%s\",\n"
                  "            \"orientation\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f },\n"
+                 "            \"positionInOneHour\": { \"x\": %f, \"y\": %f, \"z\": %f },\n"
                  "            \"orientationInOneHour\": { \"w\": %f, \"x\": %f, \"y\": %f, \"z\": %f }\n",
                  body.getName(),
                  body.getReadableName(),
@@ -205,6 +211,7 @@ int main (int argc, char *argv[]) {
                  radii[0], radii[1], radii[2],
                  body.getOrbitsAround(),
                  orientation[0], orientation[1], orientation[2], orientation[3],
+                 positionFuture[0], positionFuture[1], positionFuture[2],
                  orientationFuture[0], orientationFuture[1], orientationFuture[2], orientationFuture[3]
             );
         output << "    " << buffer << "        }";

@@ -1,36 +1,31 @@
 "use strict";
 
-/* global Script, Messages, print, Vec3, Math, Entities, Quat, MyAvatar */
+/* global Script, Messages, print, Vec3, Math, Entities, Quat, MyAvatar, Mat4 */
 
 (function() {
 
+    var speed = 1/12;
+
     var orreryBaseLocation = { x: 8000, y: 7999, z: 8000 };
     var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
+    // var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
 
-    var spins = {};
-    var rot0s = {};
-    var rot1s = {};
+    var bodyAnchorIDs = {}; // pivots and models are children of this
+    var bodyPivotIDs = {}; // each of these has an offset anchor child
+    var bodyEntityIDs = {}; // these are children of anchors
 
-    var bodyEntityIDs = {};
 
-    function notYet() {
-        return [ { red: 90, green: 90, blue: 90 },
-                 JSON.stringify({
-                     orrery: true,
-                     grabbableKey: {
-                         grabbable: false
-                     }
-                 })];
-    }
+    // function notYet() {
+    //     return [
+    //         { red: 90, green: 90, blue: 90 },
+    //         JSON.stringify({})
+    //     ];
+    // }
 
     function getSunSurface() {
         // return [ { red: 255, green: 255, blue: 0 }, "" ];
         return [{ red: 255, green: 255, blue: 255 },
                 JSON.stringify({
-                    orrery: true,
-                    grabbableKey: {
-                        grabbable: false
-                    },
                     ProceduralEntity: {
                         version: 2,
                         shaderUrl: Script.resolvePath("sun.fs")
@@ -41,10 +36,6 @@
     function getEarthSurface() {
         return [{ red: 255, green: 255, blue: 255 },
                 JSON.stringify({
-                    orrery: true,
-                    grabbableKey: {
-                        grabbable: false
-                    },
                     ProceduralEntity: {
                         version: 2,
                         shaderUrl: Script.resolvePath("spheremap.fs"),
@@ -56,10 +47,6 @@
     function getSimpleTextureSurface(texturePath) {
         return [{ red: 255, green: 255, blue: 255 },
                 JSON.stringify({
-                    orrery: true,
-                    grabbableKey: {
-                        grabbable: false
-                    },
                     ProceduralEntity: {
                         version: 2,
                         shaderUrl: Script.resolvePath("spheremap.fs"),
@@ -100,9 +87,9 @@
         }
     }
 
-    function sigmoid(t) {
-        return 1/(1+Math.pow(Math.E, -t));
-    }
+    // function sigmoid(t) {
+    //     return 1/(1+Math.pow(Math.E, -t));
+    // }
 
     function getBodyPosition(bodies, bodyKey) {
         // distances from sun range from 376632 to 5023876112
@@ -159,7 +146,66 @@
         return Quat.multiply(toHifiAxis, cspiceQuatToEngineeringQuat(q));
     }
 
-    function updateBodies() {
+
+    function hookupBodies(bodies) {
+        for (var bodyKey in bodies) {
+            if (bodies.hasOwnProperty(bodyKey)) {
+                if (bodyKey == "SUN") {
+                    continue;
+                }
+
+                var bodyData = bodies[bodyKey];
+
+                var rotation = cspiceQuatToHifi(bodyData.orientation);
+                var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
+                var bodyAngularVelocity = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
+                bodyAngularVelocity = Vec3.multiply(bodyAngularVelocity, speed);
+
+                Entities.editEntity(bodyEntityIDs[bodyKey], {
+                    localAngularVelocity: bodyAngularVelocity,
+                    parentID: bodyAnchorIDs[bodyKey]
+                });
+
+
+                Entities.editEntity(bodyAnchorIDs[bodyKey], {
+                    // XXX spin opposite of pivot?
+                    parentID: bodyPivotIDs[bodyKey]
+                });
+
+
+                // var relativePosition = bodyData.position;
+                // var relativePositionInOneHour = bodyData.positionInOneHour;
+
+                var relativePosition = Vec3.multiplyQbyV(toHifiAxis, bodyData.position);
+                var relativePositionInOneHour = Vec3.multiplyQbyV(toHifiAxis, bodyData.positionInOneHour);
+
+                // bring the relative positions into the frame of the anchor of what this orbits around
+                var parentAnchorProps = Entities.getEntityProperties(bodyAnchorIDs[bodyData.orbits],
+                                                                     ["position", "rotation"]);
+                var basePosition = parentAnchorProps.position;
+                var baseRotation = parentAnchorProps.rotation;
+                var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
+                var baseMatInv = Mat4.inverse(baseMat);
+                // var baseMatInvRot = Mat4.extractRotation(baseMatInv);
+
+                var localPosition = Mat4.transformPoint(baseMatInv, relativePosition);
+                var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
+
+                // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
+                var changeInHour = Quat.rotationBetween(localPosition, localPositionInOneHour);
+                var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
+                pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
+
+                Entities.editEntity(bodyPivotIDs[bodyKey], {
+                    localAngularVelocity: pivotAngularVelocity,
+                    parentID: bodyAnchorIDs[bodyData.orbits]
+                });
+            }
+        }
+    }
+
+
+    function createBodies() {
         var orreryWebAPI = "http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi";
         var request = new XMLHttpRequest();
         request.onreadystatechange = function() {
@@ -169,6 +215,7 @@
                 var bodies = response.bodies;
 
                 cleanupEntities();
+
 
                 for (var bodyKey in bodies) {
                     if (bodies.hasOwnProperty(bodyKey)) {
@@ -180,21 +227,50 @@
 
                         var surface = getSurface(bodyKey);
                         var color = surface[0];
-                        var userData = surface[1];
+                        var userDataParsed = JSON.parse(surface[1]);
 
-                        var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
+                        var orbitCenterPosition = getBodyPosition(bodies, bodyData.orbits);
 
-                        var eus = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
-                        eus = Vec3.multiply(eus, 1/15);
+                        bodyPivotIDs[bodyKey] = Entities.addEntity({
+                            name: "Orrery " + bodyData.name + " pivot",
+                            type: "Box",
+                            color: { blue: 255, green: 255, red: 255 },
+                            dimensions: { x: 0.02, y: 0.02, z: 0.02 },
+                            position: orbitCenterPosition,
+                            dynamic: false,
+                            collisionless: true,
+                            userData: JSON.stringify({
+                                grabbableKey: { grabbable: false },
+                                orrery: true
+                            }),
+                            angularDamping: 0,
+                            damping: 0,
+                            lifetime: 600
+                        });
 
-                        spins[bodyKey] = 0;
-                        rot0s[bodyKey] = rotation;
-                        rot1s[bodyKey] = rotationInOneHour;
-                        // rot0s[bodyKey] = cspiceQuatToEngineeringQuat(bodyData.orientation);
-                        // rot1s[bodyKey] = cspiceQuatToEngineeringQuat(bodyData.orientationInOneHour);
+                        bodyAnchorIDs[bodyKey] = Entities.addEntity({
+                            name: "Orrery " + bodyData.name + " anchor",
+                            type: "Box",
+                            color: { blue: 255, green: 255, red: 255 },
+                            dimensions: { x: 0.02, y: 0.02, z: 0.02 },
+                            position: position,
+                            dynamic: false,
+                            collisionless: true,
+                            userData: JSON.stringify({
+                                grabbableKey: { grabbable: false },
+                                orrery: true
+                            }),
+                            angularDamping: 0,
+                            damping: 0,
+                            lifetime: 600
+                        });
+
+                        userDataParsed.orrery = true;
+                        userDataParsed.grabbableKey = { grabbable: false };
+                        var userData = JSON.stringify(userDataParsed);
 
                         bodyEntityIDs[bodyKey] = Entities.addEntity({
-                            name: bodyData.name,
+                            name: "Orrery " + bodyData.name,
                             type: "Sphere",
                             color: color,
                             position: position,
@@ -202,12 +278,15 @@
                             dimensions: size,
                             collisionless: true,
                             userData: userData,
-                            angularVelocity: eus,
                             angularDamping: 0,
+                            damping: 0,
                             lifetime: 600
                         });
                     }
                 }
+
+                hookupBodies(bodies);
+
 
                 // Script.setInterval(function() {
                 //     for (var bodyKey in bodies) {
@@ -241,7 +320,7 @@
         try {
             parsedMessage = JSON.parse(message);
             print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
-            updateBodies();
+            createBodies();
         } catch (e) {
             print(e);
         }
