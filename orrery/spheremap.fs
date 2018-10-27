@@ -11,15 +11,21 @@ float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float s
     cameraOffset.y = 0.0;
     cameraOffset = normalize(cameraOffset);
 
-    // float cameraSpin = atan(cameraOffset.z, cameraOffset.x);
-    float theta = atan(v.z, -v.x); // - cameraSpin + PI;
+    // float theta = atan(v.z, v.x); // flipped
+    // float theta = atan(-v.z, v.x); // spins on wrong axis
+    // float theta = atan(v.x, v.z);  // spins on wrong axis
+    // float theta = atan(-v.x, v.z); // flipped
+    // float theta = atan(v.z, -v.x);
+
+    float theta = atan(v.y, v.x);
+
     while (theta < 0.0) {
         theta += TAU;
     }
     while (theta > TAU) {
         theta -= TAU;
     }
-    float phi = acos(v.y);
+    float phi = acos(v.z);
 
     vec2 texCoord = vec2(theta / TAU, phi / PI);
     vec3 col = texture(iChannel0, texCoord).rgb;

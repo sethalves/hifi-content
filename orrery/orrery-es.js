@@ -83,10 +83,6 @@
     }
 
     function cleanupEntities() {
-        // for (var i = 0; i < bodyOverlays.length; i++) {
-        //     Overlays.deleteOverlay(bodyOverlays[i]);
-        // }
-        // bodyOverlays = [];
         var entityIDs = Entities.findEntities(orreryBaseLocation, 1000);
         for (var i = 0; i < entityIDs.length; i++) {
             var entityProps = Entities.getEntityProperties(entityIDs[i], ["userData"]);
@@ -113,7 +109,7 @@
         var distanceScaleForOrbit = {
             "NONE": 1,
             "SUN": 5100000000,
-            "EARTH": 2500000000
+            "EARTH": 150000000
         };
 
         var modelRadius = 250;
@@ -169,6 +165,10 @@
                         var color = surface[0];
                         var userData = surface[1];
 
+                        var rotationInOneHour = Quat.multiply(toHifiAxis, bodyData.orientationInOneHour);
+                        var eus = Quat.safeEulerAngles(Quat.multiply(rotation, Quat.inverse(rotationInOneHour)));
+                        eus = Vec3.multiply(eus, 1/15);
+
                         bodyEntityIDs[bodyKey] = Entities.addEntity({
                             name: bodyData.name,
                             type: "Sphere",
@@ -178,6 +178,8 @@
                             dimensions: size,
                             collisionless: true,
                             userData: userData,
+                            angularVelocity: eus,
+                            angularDamping: 0,
                             lifetime: 600
                         });
                     }
