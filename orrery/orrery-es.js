@@ -127,8 +127,6 @@
     function getBodySize(bodies, bodyKey) {
         // sizes range from 1188 to 695700
         var bodyData = bodies[bodyKey];
-        // var bodySize = Vec3.multiplyQbyV(toHifiAxis, bodyData.size);
-        // var bodySize = { x: bodyData.size.x, y: bodyData.size.z, z: bodyData.size.y };
         var bodySize = bodyData.size;
         var expValue = 0.65;
         var expSize = {
@@ -158,7 +156,6 @@
     }
 
     function cspiceQuatToHifi(q) {
-        // return Quat.multiply(cspiceQuatToEngineeringQuat(q), toHifiAxis);
         return Quat.multiply(toHifiAxis, cspiceQuatToEngineeringQuat(q));
     }
 
@@ -186,8 +183,9 @@
                         var userData = surface[1];
 
                         var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
-                        // var eus = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
-                        // eus = Vec3.multiply(eus, 1/15);
+
+                        var eus = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
+                        eus = Vec3.multiply(eus, 1/15);
 
                         spins[bodyKey] = 0;
                         rot0s[bodyKey] = rotation;
@@ -204,25 +202,25 @@
                             dimensions: size,
                             collisionless: true,
                             userData: userData,
-                            // angularVelocity: eus,
+                            angularVelocity: eus,
                             angularDamping: 0,
                             lifetime: 600
                         });
                     }
                 }
 
-                Script.setInterval(function() {
-                    for (var bodyKey in bodies) {
-                        if (bodies.hasOwnProperty(bodyKey)) {
-                            // var bodyData = bodies[bodyKey];
-                            var rotation = Quat.slerp(rot0s[bodyKey], rot1s[bodyKey], spins[bodyKey]);
-                            spins[bodyKey] += 0.5;
-                            Entities.editEntity(bodyEntityIDs[bodyKey], {
-                                rotation: rotation
-                            });
-                        }
-                    }
-                }, 300);
+                // Script.setInterval(function() {
+                //     for (var bodyKey in bodies) {
+                //         if (bodies.hasOwnProperty(bodyKey)) {
+                //             // var bodyData = bodies[bodyKey];
+                //             var rotation = Quat.slerp(rot0s[bodyKey], rot1s[bodyKey], spins[bodyKey]);
+                //             spins[bodyKey] += 0.5;
+                //             Entities.editEntity(bodyEntityIDs[bodyKey], {
+                //                 rotation: rotation
+                //             });
+                //         }
+                //     }
+                // }, 300);
             }
         };
 
