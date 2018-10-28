@@ -88,6 +88,8 @@ int main (int argc, char *argv[]) {
 
     char* queryString = getenv("QUERY_STRING");
     if (queryString && strlen(queryString) > 0) {
+        // cerr << "QQQQ queryString = " << queryString << endl;
+
         vector<string> queryArgs;
         istringstream f(queryString);
         string s;
@@ -101,7 +103,8 @@ int main (int argc, char *argv[]) {
                 string var = arg.substr(0, eqPos);
                 string val = arg.substr(eqPos+1);
                 if (var == "time") {
-                    now = stoi(val);
+                    now = stol(val);
+                    // cerr << "QQQQ now = " << now << endl;
                 }
             }
         }
@@ -219,7 +222,14 @@ int main (int argc, char *argv[]) {
 
     output << "\n    },\n";
 
-    output << "    \"time\": " << now << "\n";
+    output << "    \"time\": " << now << ",\n";
+
+    const char *pictur { "Wkd Mon DD HR:MN:SC UTC YYYY ::UTC-0" };
+    char readableTime[1024];
+    timout_c(et, pictur, sizeof(readableTime), readableTime);
+    // cerr << "QQQQ now readable = " << readableTime << endl;
+
+    output << "    \"timeReadable\": \"" << readableTime << "\"\n";
 
     output << "}" << endl;
 

@@ -7,12 +7,13 @@
     var speed = 1/12;
 
     var orreryBaseLocation = { x: 12000, y: 11998.5, z: 12000 };
-    // var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
-    var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
+    var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
+    // var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
 
     var bodyAnchorIDs = {}; // pivots and models are children of this
     var bodyPivotIDs = {}; // each of these has an offset anchor child
     var bodyEntityIDs = {}; // these are children of anchors
+    var clockEntityID = null;
 
     var startTime = null;
 
@@ -85,10 +86,6 @@
         bodyEntityIDs = {};
     }
 
-    // function sigmoid(t) {
-    //     return 1/(1+Math.pow(Math.E, -t));
-    // }
-
     function getBodyPosition(bodies, bodyKey) {
         // distances from sun range from 376632 to 5023876112
         if (bodyKey == "SUN") {
@@ -145,7 +142,39 @@
         return Quat.multiply(toHifiAxis, cspiceQuatToEngineeringQuat(q));
     }
 
-    function spinBodies(bodies) {
+    function apiRequest(func) {
+
+        var now;
+        if (!startTime) {
+            startTime = Date.now() / 1000;
+            now = startTime;
+        } else {
+            now = Date.now() / 1000;
+        }
+
+        var realTimePassed = now - startTime;
+        var orreryEpochSeconds = startTime + (realTimePassed * 3600 * speed);
+
+        var orreryWebAPI = "http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi?time=" + orreryEpochSeconds;
+        // print("orreryWebAPI = " + orreryWebAPI);
+        // var orreryWebAPI = "http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi";
+        var request = new XMLHttpRequest();
+        request.onreadystatechange = function() {
+
+            if (request.readyState === request.DONE && request.status === 200) {
+                var response = JSON.parse(request.responseText);
+                var bodies = response.bodies;
+
+                func(bodies, response.time);
+            }
+        };
+
+        request.open('GET', orreryWebAPI);
+        request.timeout = 10000;
+        request.send();
+    }
+
+    function spinBodies(bodies, orreryEpochSeconds) {
         for (var bodyKey in bodies) {
             if (bodies.hasOwnProperty(bodyKey)) {
                 if (bodyKey == "SUN") {
@@ -207,43 +236,12 @@
         //     }
         // }, 300);
 
+
+        updateClock(orreryEpochSeconds);
     }
-
-    function apiRequest(func) {
-
-        var now;
-        if (!startTime) {
-            startTime = Date.now();
-            now = startTime;
-        } else {
-            now = Date.now();
-        }
-
-        var realTimePassed = now - startTime;
-        var orreryTime = startTime + (realTimePassed * 3600 * speed);
-
-        // var orreryWebAPI = "http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi?time=" + orreryTime;
-        // print("orreryWebAPI = " + orreryWebAPI);
-        var orreryWebAPI = "http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi";
-        var request = new XMLHttpRequest();
-        request.onreadystatechange = function() {
-
-            if (request.readyState === request.DONE && request.status === 200) {
-                var response = JSON.parse(request.responseText);
-                var bodies = response.bodies;
-
-                func(bodies);
-            }
-        };
-
-        request.open('GET', orreryWebAPI);
-        request.timeout = 10000;
-        request.send();
-    }
-
 
     function updateBodies() {
-        apiRequest(function(bodies) {
+        apiRequest(function(bodies, orreryEpochSeconds) {
             for (var bodyKey in bodies) {
                 if (bodies.hasOwnProperty(bodyKey)) {
                     var bodyData = bodies[bodyKey];
@@ -269,6 +267,7 @@
                             color: { blue: 255, green: 255, red: 255 },
                             dimensions: { x: 0.02, y: 0.02, z: 0.02 },
                             localPosition: { x: 0, y: 0, z: 0 },
+                            // rotation: { x: 0, y: 0, z: 0, w: 1 },
                             parentID: bodyAnchorIDs[bodyData.orbits],
                             dynamic: false,
                             collisionless: true,
@@ -293,6 +292,7 @@
                             color: { blue: 255, green: 255, red: 255 },
                             dimensions: { x: 0.02, y: 0.02, z: 0.02 },
                             position: position,
+                            // rotation: { x: 0, y: 0, z: 0, w: 1 },
                             parentID: bodyPivotIDs[bodyKey],
                             dynamic: false,
                             collisionless: true,
@@ -329,12 +329,59 @@
                             damping: 0,
                             lifetime: 600
                         });
+
+                        Entities.editEntity(bodyEntityIDs[bodyKey], {
+                            rotation: rotation
+                        });
                     }
                 }
             }
+
+            updateClock(orreryEpochSeconds);
         });
     }
 
+
+    function updateClock(orreryEpochSeconds) {
+        if (!clockEntityID) {
+            var entityIDs = Entities.findEntities(orreryBaseLocation, 1000);
+            var fastForwardButtonID = null;
+            for (var i = 0; i < entityIDs.length; i++) {
+                var entityProps = Entities.getEntityProperties(entityIDs[i], ["userData", "name"]);
+                if (entityProps && entityProps.name == "Orrery Fast Forward Button") {
+                    fastForwardButtonID = entityIDs[i];
+                }
+
+                if (entityProps && entityProps.name == "Orrery Date/Time") {
+                    clockEntityID = entityIDs[i];
+                    break;
+                }
+            }
+
+            print("orreryEpochSeconds=" + orreryEpochSeconds);
+            var orreryDate = new Date(orreryEpochSeconds * 1000);
+            var clockString = orreryDate.toGMTString();
+            print("clockString=" + clockString);
+
+            clockEntityID = Entities.addEntity({
+                name: "Orrery Date/Time",
+                type: "Text",
+                text: "",
+                parentID: fastForwardButtonID,
+                localPosition: { x: 0, y: 0.5, z: 0 },
+                localRotation: { x: 0, y: 0, z: 0, w: 1 },
+                dimensions: { x: 0.5, y: 0.2, z: 0.5 },
+                collisionless: true,
+                userData: JSON.stringify({
+                    grabbableKey: { grabbable: false },
+                    orrery: true
+                }),
+                lifetime: 600
+            });
+        }
+
+        Entities.editEntity(clockEntityID, { text: orreryEpochSeconds });
+    }
 
 
     var handleMessages = function(channel, message, sender) {
