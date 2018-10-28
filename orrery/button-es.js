@@ -1,5 +1,5 @@
 
-/* global Messages, MyAvatar */
+/* global Messages, MyAvatar, Entities */
 
 (function () {
 
@@ -9,10 +9,16 @@
     };
 
     this.turnOn = function () {
-        Messages.sendMessage("Orrery Controls", JSON.stringify({
-            action: 'update',
-            position: MyAvatar.position
-        }));
+        var entityProps = Entities.getEntityProperties(this.entityID, ["userData"]);
+        try {
+            var parsedUserData = JSON.parse(entityProps.userData);
+            Messages.sendMessage("Orrery Controls", JSON.stringify({
+                action: parsedUserData.action,
+                position: MyAvatar.position
+            }));
+        } catch (e) {
+            print("button needs userData set");
+        }
     };
 
     this.turnOff = function () {

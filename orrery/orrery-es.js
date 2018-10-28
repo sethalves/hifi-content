@@ -6,23 +6,15 @@
 
     var speed = 1/12;
 
-    var orreryBaseLocation = { x: 8000, y: 7999, z: 8000 };
-    var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
-    // var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
+    var orreryBaseLocation = { x: 12000, y: 11998.5, z: 12000 };
+    // var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
+    var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
 
     var bodyAnchorIDs = {}; // pivots and models are children of this
     var bodyPivotIDs = {}; // each of these has an offset anchor child
     var bodyEntityIDs = {}; // these are children of anchors
 
     var startTime = null;
-
-
-    // function notYet() {
-    //     return [
-    //         { red: 90, green: 90, blue: 90 },
-    //         JSON.stringify({})
-    //     ];
-    // }
 
     function getSunSurface() {
         // return [ { red: 255, green: 255, blue: 0 }, "" ];
@@ -87,6 +79,10 @@
             } catch (e) {
             }
         }
+
+        bodyAnchorIDs = {};
+        bodyPivotIDs = {};
+        bodyEntityIDs = {};
     }
 
     // function sigmoid(t) {
@@ -148,22 +144,6 @@
     function cspiceQuatToHifi(q) {
         return Quat.multiply(toHifiAxis, cspiceQuatToEngineeringQuat(q));
     }
-
-
-    // function hookupBodies(bodies) {
-    //     for (var bodyKey in bodies) {
-    //         if (bodies.hasOwnProperty(bodyKey)) {
-    //             if (bodyKey == "SUN") {
-    //                 continue;
-    //             }
-
-    //             var bodyData = bodies[bodyKey];
-    //             Entities.editEntity(bodyEntityIDs[bodyKey], { parentID: bodyAnchorIDs[bodyKey] });
-    //             Entities.editEntity(bodyAnchorIDs[bodyKey], { parentID: bodyPivotIDs[bodyKey] });
-    //             Entities.editEntity(bodyPivotIDs[bodyKey], { parentID: bodyAnchorIDs[bodyData.orbits] });
-    //         }
-    //     }
-    // }
 
     function spinBodies(bodies) {
         for (var bodyKey in bodies) {
@@ -229,9 +209,7 @@
 
     }
 
-    function updateBodies() {
-
-        cleanupEntities();
+    function apiRequest(func) {
 
         var now;
         if (!startTime) {
@@ -254,97 +232,7 @@
                 var response = JSON.parse(request.responseText);
                 var bodies = response.bodies;
 
-                for (var bodyKey in bodies) {
-                    if (bodies.hasOwnProperty(bodyKey)) {
-                        var bodyData = bodies[bodyKey];
-
-                        var position = getBodyPosition(bodies, bodyKey);
-                        var rotation = cspiceQuatToHifi(bodyData.orientation);
-                        var size = getBodySize(bodies, bodyKey);
-
-                        var surface = getSurface(bodyKey);
-                        var color = surface[0];
-                        var userDataParsed = JSON.parse(surface[1]);
-
-                        // var orbitCenterPosition = getBodyPosition(bodies, bodyData.orbits);
-
-                        if (bodyPivotIDs[bodyKey]) {
-                            Entities.editEntity(bodyPivotIDs[bodyKey], {
-                                rotation: rotation
-                            });
-                        } else {
-                            bodyPivotIDs[bodyKey] = Entities.addEntity({
-                                name: "Orrery " + bodyData.name + " pivot",
-                                type: "Box",
-                                color: { blue: 255, green: 255, red: 255 },
-                                dimensions: { x: 0.02, y: 0.02, z: 0.02 },
-                                localPosition: { x: 0, y: 0, z: 0 },
-                                parentID: bodyAnchorIDs[bodyData.orbits],
-                                dynamic: false,
-                                collisionless: true,
-                                userData: JSON.stringify({
-                                    grabbableKey: { grabbable: false },
-                                    orrery: true
-                                }),
-                                angularDamping: 0,
-                                damping: 0,
-                                lifetime: 600
-                            });
-                        }
-
-                        if (bodyAnchorIDs[bodyKey]) {
-                            Entities.editEntity(bodyAnchorIDs[bodyKey], {
-                                position: position
-                            });
-                        } else {
-                            bodyAnchorIDs[bodyKey] = Entities.addEntity({
-                                name: "Orrery " + bodyData.name + " anchor",
-                                type: "Box",
-                                color: { blue: 255, green: 255, red: 255 },
-                                dimensions: { x: 0.02, y: 0.02, z: 0.02 },
-                                position: position,
-                                parentID: bodyPivotIDs[bodyKey],
-                                dynamic: false,
-                                collisionless: true,
-                                userData: JSON.stringify({
-                                    grabbableKey: { grabbable: false },
-                                    orrery: true
-                                }),
-                                angularDamping: 0,
-                                damping: 0,
-                                lifetime: 600
-                            });
-                        }
-
-                        userDataParsed.orrery = true;
-                        userDataParsed.grabbableKey = { grabbable: false };
-                        var userData = JSON.stringify(userDataParsed);
-
-                        if (bodyEntityIDs[bodyKey]) {
-                            Entities.editEntity(bodyEntityIDs[bodyKey], {
-                                rotation: rotation
-                            });
-                        } else {
-                            bodyEntityIDs[bodyKey] = Entities.addEntity({
-                                name: "Orrery " + bodyData.name,
-                                type: "Sphere",
-                                color: color,
-                                parentID: bodyAnchorIDs[bodyKey],
-                                localPosition: { x: 0, y: 0, z: 0 },
-                                rotation: rotation,
-                                dimensions: size,
-                                collisionless: true,
-                                userData: userData,
-                                angularDamping: 0,
-                                damping: 0,
-                                lifetime: 600
-                            });
-                        }
-                    }
-                }
-
-                // hookupBodies(bodies);
-                spinBodies(bodies);
+                func(bodies);
             }
         };
 
@@ -352,6 +240,102 @@
         request.timeout = 10000;
         request.send();
     }
+
+
+    function updateBodies() {
+        apiRequest(function(bodies) {
+            for (var bodyKey in bodies) {
+                if (bodies.hasOwnProperty(bodyKey)) {
+                    var bodyData = bodies[bodyKey];
+
+                    var position = getBodyPosition(bodies, bodyKey);
+                    var rotation = cspiceQuatToHifi(bodyData.orientation);
+                    var size = getBodySize(bodies, bodyKey);
+
+                    var surface = getSurface(bodyKey);
+                    var color = surface[0];
+                    var userDataParsed = JSON.parse(surface[1]);
+
+                    // var orbitCenterPosition = getBodyPosition(bodies, bodyData.orbits);
+
+                    if (bodyPivotIDs[bodyKey]) {
+                        // Entities.editEntity(bodyPivotIDs[bodyKey], {
+                        //     rotation: rotation
+                        // });
+                    } else {
+                        bodyPivotIDs[bodyKey] = Entities.addEntity({
+                            name: "Orrery " + bodyData.name + " pivot",
+                            type: "Box",
+                            color: { blue: 255, green: 255, red: 255 },
+                            dimensions: { x: 0.02, y: 0.02, z: 0.02 },
+                            localPosition: { x: 0, y: 0, z: 0 },
+                            parentID: bodyAnchorIDs[bodyData.orbits],
+                            dynamic: false,
+                            collisionless: true,
+                            userData: JSON.stringify({
+                                grabbableKey: { grabbable: false },
+                                orrery: true
+                            }),
+                            angularDamping: 0,
+                            damping: 0,
+                            lifetime: 600
+                        });
+                    }
+
+                    if (bodyAnchorIDs[bodyKey]) {
+                        Entities.editEntity(bodyAnchorIDs[bodyKey], {
+                            position: position
+                        });
+                    } else {
+                        bodyAnchorIDs[bodyKey] = Entities.addEntity({
+                            name: "Orrery " + bodyData.name + " anchor",
+                            type: "Box",
+                            color: { blue: 255, green: 255, red: 255 },
+                            dimensions: { x: 0.02, y: 0.02, z: 0.02 },
+                            position: position,
+                            parentID: bodyPivotIDs[bodyKey],
+                            dynamic: false,
+                            collisionless: true,
+                            userData: JSON.stringify({
+                                grabbableKey: { grabbable: false },
+                                orrery: true
+                            }),
+                            angularDamping: 0,
+                            damping: 0,
+                            lifetime: 600
+                        });
+                    }
+
+                    userDataParsed.orrery = true;
+                    userDataParsed.grabbableKey = { grabbable: false };
+                    var userData = JSON.stringify(userDataParsed);
+
+                    if (bodyEntityIDs[bodyKey]) {
+                        Entities.editEntity(bodyEntityIDs[bodyKey], {
+                            rotation: rotation
+                        });
+                    } else {
+                        bodyEntityIDs[bodyKey] = Entities.addEntity({
+                            name: "Orrery " + bodyData.name,
+                            type: "Sphere",
+                            color: color,
+                            parentID: bodyAnchorIDs[bodyKey],
+                            localPosition: { x: 0, y: 0, z: 0 },
+                            rotation: rotation,
+                            dimensions: size,
+                            collisionless: true,
+                            userData: userData,
+                            angularDamping: 0,
+                            damping: 0,
+                            lifetime: 600
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+
 
     var handleMessages = function(channel, message, sender) {
         if (channel !== "Orrery Controls") {
@@ -365,7 +349,14 @@
         try {
             parsedMessage = JSON.parse(message);
             print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
-            updateBodies();
+            if (parsedMessage.action == "reset") {
+                cleanupEntities();
+                updateBodies();
+            } else if (parsedMessage.action == "spin") {
+                cleanupEntities();
+                updateBodies();
+                apiRequest(spinBodies);
+            }
         } catch (e) {
             print(e);
         }

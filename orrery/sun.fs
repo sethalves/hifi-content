@@ -50,7 +50,7 @@ float fbm(vec2 p) {
 float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float shininess) {
 
     // change the animation speed
-    float time = iGlobalTime * 0.2;
+    float time = iGlobalTime * 0.1;
     vec2 uv = _position.xy;
 
     float p = fbm(vec2(noise(uv + time / 2.5), noise(uv * 2. + cos(time / 2.0) / 2.0)));
