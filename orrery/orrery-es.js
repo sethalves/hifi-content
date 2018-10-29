@@ -6,6 +6,20 @@
 
     var speed = 1/12;
 
+    var bodyKeys = [
+        "SUN",
+        "MERCURY",
+        "VENUS",
+        "EARTH",
+        "MOON",
+        "MARS",
+        "JUPITER",
+        "SATURN",
+        "URANUS",
+        "NEPTUNE",
+        "PLUTO"
+    ];
+
     var orreryBaseLocation = { x: 12000, y: 11998.5, z: 12000 };
     var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
     // var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
@@ -175,56 +189,54 @@
     }
 
     function spinBodies(bodies, orreryEpochSeconds) {
-        for (var bodyKey in bodies) {
-            if (bodies.hasOwnProperty(bodyKey)) {
-                if (bodyKey == "SUN") {
-                    continue;
-                }
-
-                var bodyData = bodies[bodyKey];
-
-                var rotation = cspiceQuatToHifi(bodyData.orientation);
-                var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
-                var bodyAngularVelocity = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
-                bodyAngularVelocity = Vec3.multiply(bodyAngularVelocity, speed);
-
-                Entities.editEntity(bodyEntityIDs[bodyKey], {
-                    // localAngularVelocity: bodyAngularVelocity,
-                    angularVelocity: bodyAngularVelocity,
-                });
-
-                // Entities.editEntity(bodyAnchorIDs[bodyKey], {
-                //     // XXX spin opposite of pivot?
-                // });
-
-                var relativePosition = Vec3.multiplyQbyV(toHifiAxis, bodyData.position);
-                var relativePositionInOneHour = Vec3.multiplyQbyV(toHifiAxis, bodyData.positionInOneHour);
-
-                // bring the relative positions into the frame of the anchor of what this orbits around
-                var parentAnchorProps = Entities.getEntityProperties(bodyAnchorIDs[bodyData.orbits],
-                                                                     ["position", "rotation"]);
-                var basePosition = parentAnchorProps.position;
-                var baseRotation = parentAnchorProps.rotation;
-                var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
-                var baseMatInv = Mat4.inverse(baseMat);
-                // var baseMatInvRot = Mat4.extractRotation(baseMatInv);
-
-                var localPosition = Mat4.transformPoint(baseMatInv, relativePosition);
-                var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
-
-                // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
-                var changeInHour = Quat.rotationBetween(localPositionInOneHour, localPosition);
-                var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
-                pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
-
-                Entities.editEntity(bodyPivotIDs[bodyKey], {
-                    localAngularVelocity: pivotAngularVelocity,
-                });
+        bodyKeys.forEach(function(bodyKey) {
+            if (bodyKey == "SUN") {
+                return;
             }
-        }
+
+            var bodyData = bodies[bodyKey];
+
+            var rotation = cspiceQuatToHifi(bodyData.orientation);
+            var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
+            var bodyAngularVelocity = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
+            bodyAngularVelocity = Vec3.multiply(bodyAngularVelocity, speed);
+
+            Entities.editEntity(bodyEntityIDs[bodyKey], {
+                // localAngularVelocity: bodyAngularVelocity,
+                angularVelocity: bodyAngularVelocity,
+            });
+
+            // Entities.editEntity(bodyAnchorIDs[bodyKey], {
+            //     // XXX spin opposite of pivot?
+            // });
+
+            var relativePosition = Vec3.multiplyQbyV(toHifiAxis, bodyData.position);
+            var relativePositionInOneHour = Vec3.multiplyQbyV(toHifiAxis, bodyData.positionInOneHour);
+
+            // bring the relative positions into the frame of the anchor of what this orbits around
+            var parentAnchorProps = Entities.getEntityProperties(bodyAnchorIDs[bodyData.orbits],
+                                                                 ["position", "rotation"]);
+            var basePosition = parentAnchorProps.position;
+            var baseRotation = parentAnchorProps.rotation;
+            var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
+            var baseMatInv = Mat4.inverse(baseMat);
+            // var baseMatInvRot = Mat4.extractRotation(baseMatInv);
+
+            var localPosition = Mat4.transformPoint(baseMatInv, relativePosition);
+            var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
+
+            // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
+            var changeInHour = Quat.rotationBetween(localPositionInOneHour, localPosition);
+            var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
+            pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
+
+            Entities.editEntity(bodyPivotIDs[bodyKey], {
+                localAngularVelocity: pivotAngularVelocity,
+            });
+        });
 
         // Script.setInterval(function() {
-        //     for (var bodyKey in bodies) {
+        //     for (var bodyKey in bodyKeys) {
         //         if (bodies.hasOwnProperty(bodyKey)) {
         //             // var bodyData = bodies[bodyKey];
         //             var rotation = Quat.slerp(rot0s[bodyKey], rot1s[bodyKey], spins[bodyKey]);
@@ -242,134 +254,132 @@
 
     function updateBodies() {
         apiRequest(function(bodies, orreryEpochSeconds) {
-            for (var bodyKey in bodies) {
-                if (bodies.hasOwnProperty(bodyKey)) {
-                    var bodyData = bodies[bodyKey];
+            bodyKeys.forEach(function(bodyKey) {
+                var bodyData = bodies[bodyKey];
 
-                    var position = getBodyPosition(bodies, bodyKey);
-                    var rotation = cspiceQuatToHifi(bodyData.orientation);
-                    var size = getBodySize(bodies, bodyKey);
+                var position = getBodyPosition(bodies, bodyKey);
+                var rotation = cspiceQuatToHifi(bodyData.orientation);
+                var size = getBodySize(bodies, bodyKey);
 
-                    var surface = getSurface(bodyKey);
-                    var color = surface[0];
-                    var userDataParsed = JSON.parse(surface[1]);
+                var surface = getSurface(bodyKey);
+                var color = surface[0];
+                var userDataParsed = JSON.parse(surface[1]);
 
-                    // var orbitCenterPosition = getBodyPosition(bodies, bodyData.orbits);
+                // var orbitCenterPosition = getBodyPosition(bodies, bodyData.orbits);
 
-                    if (bodyPivotIDs[bodyKey]) {
-                        // Entities.editEntity(bodyPivotIDs[bodyKey], {
-                        //     rotation: rotation
-                        // });
-                    } else {
-                        bodyPivotIDs[bodyKey] = Entities.addEntity({
-                            name: "Orrery " + bodyData.name + " pivot",
-                            type: "Box",
-                            color: { blue: 255, green: 255, red: 255 },
-                            dimensions: { x: 0.02, y: 0.02, z: 0.02 },
-                            localPosition: { x: 0, y: 0, z: 0 },
-                            // rotation: { x: 0, y: 0, z: 0, w: 1 },
-                            parentID: bodyAnchorIDs[bodyData.orbits],
+                if (bodyPivotIDs[bodyKey]) {
+                    // Entities.editEntity(bodyPivotIDs[bodyKey], {
+                    //     rotation: rotation
+                    // });
+                } else {
+                    bodyPivotIDs[bodyKey] = Entities.addEntity({
+                        name: "Orrery " + bodyData.name + " pivot",
+                        type: "Box",
+                        color: { blue: 255, green: 255, red: 255 },
+                        dimensions: { x: 0.02, y: 0.02, z: 0.02 },
+                        localPosition: { x: 0, y: 0, z: 0 },
+                        // rotation: { x: 0, y: 0, z: 0, w: 1 },
+                        parentID: bodyAnchorIDs[bodyData.orbits],
+                        dynamic: false,
+                        collisionless: true,
+                        userData: JSON.stringify({
+                            grabbableKey: { grabbable: false },
+                            orrery: true
+                        }),
+                        angularDamping: 0,
+                        damping: 0,
+                        lifetime: 600
+                    });
+
+                    Entities.editEntity(bodyPivotIDs[bodyKey], {
+                        rotation: { x: 0, y: 0, z: 0, w: 1 }
+                    });
+                }
+
+                if (bodyAnchorIDs[bodyKey]) {
+                    Entities.editEntity(bodyAnchorIDs[bodyKey], {
+                        position: position
+                    });
+                } else {
+                    bodyAnchorIDs[bodyKey] = Entities.addEntity({
+                        name: "Orrery " + bodyData.name + " anchor",
+                        type: "Box",
+                        color: { blue: 255, green: 255, red: 255 },
+                        dimensions: { x: 0.02, y: 0.02, z: 0.02 },
+                        position: position,
+                        // rotation: { x: 0, y: 0, z: 0, w: 1 },
+                        parentID: bodyPivotIDs[bodyKey],
+                        dynamic: false,
+                        collisionless: true,
+                        userData: JSON.stringify({
+                            grabbableKey: { grabbable: false },
+                            orrery: true
+                        }),
+                        angularDamping: 0,
+                        damping: 0,
+                        lifetime: 600
+                    });
+
+                    Entities.editEntity(bodyAnchorIDs[bodyKey], {
+                        rotation: { x: 0, y: 0, z: 0, w: 1 }
+                    });
+                }
+
+                userDataParsed.orrery = true;
+                userDataParsed.grabbableKey = { grabbable: false };
+                var userData = JSON.stringify(userDataParsed);
+
+                if (bodyEntityIDs[bodyKey]) {
+                    Entities.editEntity(bodyEntityIDs[bodyKey], {
+                        rotation: rotation
+                    });
+                } else {
+                    bodyEntityIDs[bodyKey] = Entities.addEntity({
+                        name: "Orrery " + bodyData.name,
+                        type: "Sphere",
+                        color: color,
+
+                        parentID: bodyAnchorIDs[bodyKey],
+                        localPosition: { x: 0, y: 0, z: 0 },
+                        // position: position,
+                        rotation: rotation,
+
+                        dimensions: size,
+                        collisionless: true,
+                        userData: userData,
+                        angularDamping: 0,
+                        damping: 0,
+                        lifetime: 600
+                    });
+
+                    if (bodyKey == "SATURN") {
+                        Entities.addEntity({
+                            name: "Orrery Saturn Ring",
+                            color: { red: 200, green: 200, blue: 200 },
+                            dimensions: { x: 6, y: 0.1, z: 6 },
+                            shape: "Cylinder",
+                            type: "Shape",
                             dynamic: false,
                             collisionless: true,
-                            userData: JSON.stringify({
-                                grabbableKey: { grabbable: false },
-                                orrery: true
-                            }),
-                            angularDamping: 0,
-                            damping: 0,
-                            lifetime: 600
-                        });
-
-                        Entities.editEntity(bodyPivotIDs[bodyKey], {
-                            rotation: { x: 0, y: 0, z: 0, w: 1 }
-                        });
-                    }
-
-                    if (bodyAnchorIDs[bodyKey]) {
-                        Entities.editEntity(bodyAnchorIDs[bodyKey], {
-                            position: position
-                        });
-                    } else {
-                        bodyAnchorIDs[bodyKey] = Entities.addEntity({
-                            name: "Orrery " + bodyData.name + " anchor",
-                            type: "Box",
-                            color: { blue: 255, green: 255, red: 255 },
-                            dimensions: { x: 0.02, y: 0.02, z: 0.02 },
-                            position: position,
-                            // rotation: { x: 0, y: 0, z: 0, w: 1 },
-                            parentID: bodyPivotIDs[bodyKey],
-                            dynamic: false,
-                            collisionless: true,
-                            userData: JSON.stringify({
-                                grabbableKey: { grabbable: false },
-                                orrery: true
-                            }),
-                            angularDamping: 0,
-                            damping: 0,
-                            lifetime: 600
-                        });
-
-                        Entities.editEntity(bodyAnchorIDs[bodyKey], {
-                            rotation: { x: 0, y: 0, z: 0, w: 1 }
-                        });
-                    }
-
-                    userDataParsed.orrery = true;
-                    userDataParsed.grabbableKey = { grabbable: false };
-                    var userData = JSON.stringify(userDataParsed);
-
-                    if (bodyEntityIDs[bodyKey]) {
-                        Entities.editEntity(bodyEntityIDs[bodyKey], {
-                            rotation: rotation
-                        });
-                    } else {
-                        bodyEntityIDs[bodyKey] = Entities.addEntity({
-                            name: "Orrery " + bodyData.name,
-                            type: "Sphere",
-                            color: color,
-
+                            // parentID: bodyEntityIDs[bodyKey],
                             parentID: bodyAnchorIDs[bodyKey],
                             localPosition: { x: 0, y: 0, z: 0 },
-                            // position: position,
-                            rotation: rotation,
-
-                            dimensions: size,
-                            collisionless: true,
-                            userData: userData,
-                            angularDamping: 0,
-                            damping: 0,
-                            lifetime: 600
+                            localRotation: Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 }),
+                            userData: JSON.stringify({
+                                grabbableKey: { grabbable: false },
+                                orrery: true
+                            })
                         });
-
-                        if (bodyKey == "SATURN") {
-                            Entities.addEntity({
-                                name: "Orrery Saturn Ring",
-                                color: { red: 200, green: 200, blue: 200 },
-                                dimensions: { x: 6, y: 0.1, z: 6 },
-                                shape: "Cylinder",
-                                type: "Shape",
-                                dynamic: false,
-                                collisionless: true,
-                                // parentID: bodyEntityIDs[bodyKey],
-                                parentID: bodyAnchorIDs[bodyKey],
-                                localPosition: { x: 0, y: 0, z: 0 },
-                                localRotation: Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 }),
-                                userData: JSON.stringify({
-                                    grabbableKey: { grabbable: false },
-                                    orrery: true
-                                })
-                            });
-                        }
-
-
-                        // Entities.editEntity(bodyEntityIDs[bodyKey], {
-                        //     // rotation: rotation
-                        //     parentID: bodyAnchorIDs[bodyKey],
-                        //     localPosition: { x: 0, y: 0, z: 0 },
-                        // });
                     }
+
+
+                    // Entities.editEntity(bodyEntityIDs[bodyKey], {
+                    //     // rotation: rotation
+                    //     parentID: bodyAnchorIDs[bodyKey],
+                    //     localPosition: { x: 0, y: 0, z: 0 },
+                    // });
                 }
-            }
+            });
 
             updateClock(orreryEpochSeconds);
         });
