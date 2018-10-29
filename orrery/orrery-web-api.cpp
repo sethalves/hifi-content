@@ -227,7 +227,7 @@ int main (int argc, char *argv[]) {
     const char *pictur { "Wkd Mon DD HR:MN:SC UTC YYYY ::UTC-0" };
     char readableTime[1024];
     timout_c(et, pictur, sizeof(readableTime), readableTime);
-    // cerr << "QQQQ now readable = " << readableTime << endl;
+    cerr << "now = " << readableTime << endl;
 
     output << "    \"timeReadable\": \"" << readableTime << "\"\n";
 

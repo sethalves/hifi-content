@@ -55,7 +55,7 @@ float getProceduralColors(inout vec3 diffuse, inout vec3 specular, inout float s
 
     float p = fbm(vec2(noise(uv + time / 2.5), noise(uv * 2. + cos(time / 2.0) / 2.0)));
     // uncomment for more plasma/lighting/plastic effect..
-    // p = (1. - abs(p * 2.0 - 1.0))*.8;
+    p = (1. - abs(p * 2.0 - 1.0))*.8;
 
     vec3 col = pow(vec3(p), vec3(0.3)) - 0.4;
     col = mix(col, vec3(1.0), 1.0 - smoothstep(0.0, 0.2, pow(1.0 / 2.0,0.5) - uv.y / 40.0));

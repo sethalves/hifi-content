@@ -213,7 +213,7 @@
                 var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
 
                 // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
-                var changeInHour = Quat.rotationBetween(localPosition, localPositionInOneHour);
+                var changeInHour = Quat.rotationBetween(localPositionInOneHour, localPosition);
                 var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
                 pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
 
@@ -279,6 +279,10 @@
                             damping: 0,
                             lifetime: 600
                         });
+
+                        Entities.editEntity(bodyPivotIDs[bodyKey], {
+                            rotation: { x: 0, y: 0, z: 0, w: 1 }
+                        });
                     }
 
                     if (bodyAnchorIDs[bodyKey]) {
@@ -304,6 +308,10 @@
                             damping: 0,
                             lifetime: 600
                         });
+
+                        Entities.editEntity(bodyAnchorIDs[bodyKey], {
+                            rotation: { x: 0, y: 0, z: 0, w: 1 }
+                        });
                     }
 
                     userDataParsed.orrery = true;
@@ -319,9 +327,12 @@
                             name: "Orrery " + bodyData.name,
                             type: "Sphere",
                             color: color,
+
                             parentID: bodyAnchorIDs[bodyKey],
                             localPosition: { x: 0, y: 0, z: 0 },
+                            // position: position,
                             rotation: rotation,
+
                             dimensions: size,
                             collisionless: true,
                             userData: userData,
@@ -330,9 +341,32 @@
                             lifetime: 600
                         });
 
-                        Entities.editEntity(bodyEntityIDs[bodyKey], {
-                            rotation: rotation
-                        });
+                        if (bodyKey == "SATURN") {
+                            Entities.addEntity({
+                                name: "Orrery Saturn Ring",
+                                color: { red: 200, green: 200, blue: 200 },
+                                dimensions: { x: 6, y: 0.1, z: 6 },
+                                shape: "Cylinder",
+                                type: "Shape",
+                                dynamic: false,
+                                collisionless: true,
+                                // parentID: bodyEntityIDs[bodyKey],
+                                parentID: bodyAnchorIDs[bodyKey],
+                                localPosition: { x: 0, y: 0, z: 0 },
+                                localRotation: Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 }),
+                                userData: JSON.stringify({
+                                    grabbableKey: { grabbable: false },
+                                    orrery: true
+                                })
+                            });
+                        }
+
+
+                        // Entities.editEntity(bodyEntityIDs[bodyKey], {
+                        //     // rotation: rotation
+                        //     parentID: bodyAnchorIDs[bodyKey],
+                        //     localPosition: { x: 0, y: 0, z: 0 },
+                        // });
                     }
                 }
             }
@@ -358,11 +392,6 @@
                 }
             }
 
-            print("orreryEpochSeconds=" + orreryEpochSeconds);
-            var orreryDate = new Date(orreryEpochSeconds * 1000);
-            var clockString = orreryDate.toGMTString();
-            print("clockString=" + clockString);
-
             clockEntityID = Entities.addEntity({
                 name: "Orrery Date/Time",
                 type: "Text",
@@ -379,6 +408,11 @@
                 lifetime: 600
             });
         }
+
+        print("orreryEpochSeconds=" + orreryEpochSeconds);
+        var orreryDate = new Date(orreryEpochSeconds * 1000);
+        var clockString = orreryDate.toGMTString();
+        print("clockString=" + clockString);
 
         Entities.editEntity(clockEntityID, { text: orreryEpochSeconds });
     }
@@ -397,9 +431,11 @@
             parsedMessage = JSON.parse(message);
             print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
             if (parsedMessage.action == "reset") {
+                startTime = null;
                 cleanupEntities();
                 updateBodies();
             } else if (parsedMessage.action == "spin") {
+                startTime = null;
                 cleanupEntities();
                 updateBodies();
                 apiRequest(spinBodies);
