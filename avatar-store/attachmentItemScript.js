@@ -1,7 +1,7 @@
 //
 //  attachmentItemScript.js
 //
-//  This script is a simplified version of the original attachmentItemScript.js 
+//  This script is a simplified version of the original attachmentItemScript.js
 //  Copyright 2017 High Fidelity, Inc.
 //
 //  Distributed under the Apache License, Version 2.0.
@@ -28,7 +28,7 @@
     var RELEASE_GRAB_CHANNEL_BASE = "AvatarStoreReleaseGrab";
     var NOT_ATTACHED_DESTROY_RADIUS = 0.1;
     var IN_CHECKOUT_SETTINGS = 'io.highfidelity.avatarStore.checkOut.isInside';
-  
+
     var removedFromParentChannel;
     var releaseGrabChannel;
     var releaseGrabHandler;
@@ -88,16 +88,16 @@
     };
 
     function checkReleaseGrabOnParent() {
-        // If placed back within NOT_ATTACHED_DESTROY_RADIUS of the original parent entity 
+        // If placed back within NOT_ATTACHED_DESTROY_RADIUS of the original parent entity
         // and it is not attached then destroy it (if the user is putting it back)
         var properties = Entities.getEntityProperties(_entityID, ['userData', 'position']);
         var isAttached = JSON.parse(properties.userData).Attachment.attached;
-        if (!isAttached && initialParentPositionSet && 
+        if (!isAttached && initialParentPositionSet &&
             Vec3.distance(initialParentPosition, properties.position) < NOT_ATTACHED_DESTROY_RADIUS) {
             Entities.deleteEntity(_entityID);
         }
     }
-    
+
     var logAttachEvent = function(marketplaceID) {
         if (!cachedMarketplaceItemData) {
             MARKETPLACE_SHARED.requestMarketplaceDataForID(marketplaceID, function(error, marketplaceItemData) {
@@ -142,27 +142,27 @@
             } else {
                 _supportedJoints.push(_attachmentData.joint);
             }
-            
+
             isAttached = _attachmentData.attached;
 
             if (Entities.getNestableType(properties.parentID) !== "avatar" && !isAttached) {
                 removedFromParentChannel = REMOVED_FROM_PARENT_CHANNEL_BASE + properties.parentID;
                 Messages.subscribe(removedFromParentChannel);
             }
-            
+
             releaseGrabChannel = RELEASE_GRAB_CHANNEL_BASE + entityID;
             Messages.subscribe(releaseGrabChannel);
             releaseGrabHandler = function(channel, data, sender) {
                 if (channel === releaseGrabChannel) {
                     checkReleaseGrabOnParent();
-                }    
+                }
             };
             Messages.messageReceived.connect(releaseGrabHandler);
 
             Entities.editEntity(entityID, {marketplaceID: _marketplaceID});
             MyAvatar.scaleChanged.connect(attachFunction);
             attachDistance = MyAvatar.getEyeHeight() / ATTACH_SCALE;
-            
+
             // We only want to store the initial parent position for the original parent wearable entity
             if (properties.parentID !== EMPTY_PARENT_ID && Entities.getNestableType(properties.parentID) !== "avatar") {
                 initialParentPosition = Entities.getEntityProperties(properties.parentID, ['position']).position;
@@ -189,7 +189,7 @@
                 marketplaceID = userData.marketplaceID;
             });
             lastDesktopSupportedJointIndex = (lastDesktopSupportedJointIndex + 1) % _supportedJoints.length;
-            
+
             var defaultPosition = {x: 0, y: 0, z: 0};
             if (attachmentData.defaultPosition !== undefined) {
                 defaultPosition = attachmentData.defaultPosition;
@@ -281,7 +281,7 @@
                 Entities.editEntity(entityID, {parentID: EMPTY_PARENT_ID});
             }
             var userData = properties.userData;
-            var position = properties.position; 
+            var position = properties.position;
             var attachmentData = JSON.parse(userData).Attachment;
             isAttached = attachmentData.attached;
             if (!isAttached) {
@@ -311,10 +311,10 @@
                             logAttachEvent(marketplaceID);
                         }
                     }
-                }); 
+                });
             } else if (isAttached) {
-                var jointPosition = (properties.parentID === MyAvatar.sessionUUID) ? 
-                    MyAvatar.getJointPosition(properties.parentJointIndex) : 
+                var jointPosition = (properties.parentID === MyAvatar.sessionUUID) ?
+                    MyAvatar.getJointPosition(properties.parentJointIndex) :
                     AvatarList.getAvatar(properties.parentID).getJointPosition(properties.parentJointIndex);
                 if (Vec3.distance(position, jointPosition) > attachDistance) {
                     var newDetachEntityProperties = Entities.getEntityProperties(entityID);
@@ -337,10 +337,10 @@
                     Controller.triggerHapticPulse(TRIGGER_INTENSITY, TRIGGER_TIME, hand);
                 }
             }
-            
+
             Messages.sendMessage(releaseGrabChannel, "Released Grab: " + entityID);
             checkReleaseGrabOnParent();
         }
     };
-    return new AttachableItem(); 
+    return new AttachableItem();
 });

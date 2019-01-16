@@ -46,7 +46,7 @@
             removedFromParentHandler = function(channel, data, sender) {
                 if (channel === removedFromParentChannel) {
                     Entities.addEntity(newEntityProperties);
-                }    
+                }
             };
             Messages.messageReceived.connect(removedFromParentHandler);
             spawnMoreChildren = Script.setInterval(function() {
