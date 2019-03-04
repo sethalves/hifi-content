@@ -32,6 +32,8 @@
 
         if (message.method == "rez") {
             rezPuppet();
+        } else if (message.method == "derez") {
+            deletePuppet();
         }
     }
 
@@ -71,7 +73,12 @@
     var footThickness = scale * 0.03;
     var footWidth = scale * 0.08;
 
+
+    var puppetEntities = [];
+
     function rezPuppet() {
+
+        deletePuppet();
 
         //
         // body
@@ -85,10 +92,12 @@
             position: Vec3.sum(pos, { x: 0, y: scale * 0.0, z:0 }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(bodyID);
 
         //
         // head
@@ -102,10 +111,12 @@
             position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 + headSize / 2 + neckLength, z:0 }),
             dynamic: true,
             collisionless: false,
-            gravity: { x: 0, y: 0.5, z: 0 },
+            collidesWith: "static,dynamic,kinematic",
+            gravity: { x: 0, y: 0.8, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(headID);
 
         Entities.addAction("spring", headID, {
             targetRotation: { x: 0, y: 0, z: 0, w: 1 },
@@ -115,7 +126,7 @@
         });
 
 
-        /* var noseID = */ Entities.addEntity({
+        var noseID = Entities.addEntity({
             name: "puppet nose",
             type: "Box",
             color: { blue: 128, green: 100, red: 100 },
@@ -123,10 +134,12 @@
             localPosition: { x: headSize / 2 + headSize / 10, y: 0, z: 0 },
             dynamic: false,
             collisionless: true,
+            collidesWith: "static,dynamic,kinematic",
             lifetime: lifetime,
             parentID: headID,
-            userData: "{ \"grabbableKey\": { \"grabbable\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(noseID);
 
         Entities.addAction("cone-twist", headID, {
             pivot: { x: 0, y: -headSize / 2 - neckLength / 2, z: 0 },
@@ -155,10 +168,12 @@
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(rightUpperArmID);
 
         Entities.addAction("cone-twist", bodyID, {
             pivot: { x: 0, y: bodyHeight / 2 + upperArmThickness / 2, z: bodyWidth / 2 + shoulderGap / 2 },
@@ -187,10 +202,12 @@
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(leftUpperArmID);
 
         Entities.addAction("cone-twist", bodyID, {
             pivot: { x: 0, y: bodyHeight / 2 + upperArmThickness / 2, z: -bodyWidth / 2 - shoulderGap / 2 },
@@ -219,10 +236,12 @@
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: -1, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(rightLowerArmID);
 
         Entities.addAction("hinge", rightLowerArmID, {
             pivot: { x: 0, y: 0, z: -lowerArmLength / 2 - elbowGap / 2 },
@@ -250,10 +269,12 @@
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: -1, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(leftLowerArmID);
 
         Entities.addAction("hinge", leftLowerArmID, {
             pivot: { x: 0, y: 0, z: lowerArmLength / 2 + elbowGap / 2 },
@@ -278,10 +299,12 @@
             position: Vec3.sum(pos, { x: 0, y: -bodyHeight / 2 - hipGap - legLength / 2, z: bodyWidth / 2 - legThickness / 2 }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(rightLegID);
 
         Entities.addAction("cone-twist", rightLegID, {
             pivot: { x: 0, y: legLength / 2 + hipGap / 2, z: 0 },
@@ -307,10 +330,12 @@
             position: Vec3.sum(pos, { x: 0, y: -bodyHeight / 2 - hipGap - legLength / 2, z: -bodyWidth / 2 + legThickness / 2 }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(leftLegID);
 
         Entities.addAction("cone-twist", leftLegID, {
             pivot: { x: 0, y: legLength / 2 + hipGap / 2, z: 0 },
@@ -339,10 +364,12 @@
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: -2, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(rightShinID);
 
         Entities.addAction("hinge", rightShinID, {
             pivot: { x: 0, y: shinLength / 2 + kneeGap / 2, z: 0 },
@@ -371,10 +398,12 @@
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: -2, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(leftShinID);
 
         Entities.addAction("hinge", leftShinID, {
             pivot: { x: 0, y: shinLength / 2 + kneeGap / 2, z: 0 },
@@ -397,15 +426,18 @@
             color: { blue: 128, green: 100, red: 20 },
             dimensions: { x: footLength, y: footThickness, z: footWidth },
             position: Vec3.sum(pos, { x: -shinThickness / 2 + footLength / 2,
-                                      y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength - ankleGap - footThickness / 2,
+                                      y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength -
+                                         ankleGap - footThickness / 2,
                                       z: bodyWidth / 2 - legThickness / 2
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: -5, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(rightFootID);
 
         Entities.addAction("hinge", rightFootID, {
             pivot: { x: -footLength / 2 + shinThickness / 2, y: ankleGap / 2, z: 0 },
@@ -428,15 +460,18 @@
             color: { blue: 128, green: 100, red: 20 },
             dimensions: { x: footLength, y: footThickness, z: footWidth },
             position: Vec3.sum(pos, { x: -shinThickness / 2 + footLength / 2,
-                                      y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength - ankleGap - footThickness / 2,
+                                      y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength -
+                                         ankleGap - footThickness / 2,
                                       z: bodyWidth / 2 - legThickness / 2
                                     }),
             dynamic: true,
             collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: -5, z: 0 },
             lifetime: lifetime,
-            userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+            grab: { grabbable: true, grabKinematic: false }
         });
+        puppetEntities.push(leftFootID);
 
         Entities.addAction("hinge", leftFootID, {
             pivot: { x: -footLength / 2 + shinThickness / 2, y: ankleGap / 2, z: 0 },
@@ -449,4 +484,12 @@
             tag: "puppet left ankle joint"
         });
     }
+
+    function deletePuppet() {
+        puppetEntities.forEach(function (entityID) {
+            Entities.deleteEntity(entityID);
+        });
+        puppetEntities = [];
+    }
+
 }());
