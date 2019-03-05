@@ -43,9 +43,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var rightUpperArmID = Entities.addEntity({
-            name: "puppet right arm",
+            name: "puppet body right arm",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: upperArmThickness, y: upperArmThickness, z: upperArmLength },
             position: Vec3.sum(pos, { x: 0,
                                       y: bodyHeight / 2 + upperArmThickness / 2,
@@ -89,9 +89,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var rightLowerArmID = Entities.addEntity({
-            name: "puppet right lower arm",
+            name: "puppet body right lower arm",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: lowerArmThickness, y: lowerArmThickness, z: lowerArmLength },
             position: Vec3.sum(pos, { x: 0,
                                       y: bodyHeight / 2 - upperArmThickness / 2,
@@ -148,7 +148,7 @@ Script.include("/~/system/libraries/controllers.js");
         var rightHandID = Entities.addEntity({
             name: "puppet right hand",
             type: "Box",
-            color: { blue: 20, green: 20, red: 200 },
+            color: { red: 200, green: 20, blue: 20 },
             dimensions: { x: handDiameter / 4, y: swordLength, z: handDiameter / 4 },
             registrationPoint: { x: 0.5, y: 0.0, z: 0.5 },
             position: Vec3.sum(pos, { x: 0,
@@ -290,9 +290,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var bodyID = Entities.addEntity({
-            name: "puppet body",
+            name: "puppet body main",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: bodyDepth, y: bodyHeight, z: bodyWidth },
             position: Vec3.sum(pos, { x: 0, y: scale * 0.0, z:0 }),
             dynamic: true,
@@ -325,9 +325,9 @@ Script.include("/~/system/libraries/controllers.js");
 
         var headLocalPosition = Vec3.sum(pos, { x: 0, y: bodyHeight / 2 + headSize / 2 + neckLength, z:0 });
         var headID = Entities.addEntity({
-            name: "puppet head",
+            name: "puppet body head",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: headSize, y: headSize, z: headSize },
             position: headLocalPosition,
             dynamic: true,
@@ -341,9 +341,9 @@ Script.include("/~/system/libraries/controllers.js");
         puppetEntities.head = headID;
 
         // var noseID = Entities.addEntity({
-        //     name: "puppet nose",
+        //     name: "puppet body nose",
         //     type: "Box",
-        //     color: { blue: 128, green: 100, red: 100 },
+        //     color: { red: 100, green: 100, blue: 128 },
         //     dimensions: { x: headSize / 5, y: headSize / 5, z: headSize / 5 },
         //     localPosition: { x: headSize / 2 + headSize / 10, y: 0, z: 0 },
         //     dynamic: false,
@@ -386,9 +386,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var leftUpperArmID = Entities.addEntity({
-            name: "puppet left arm",
+            name: "puppet body left arm",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: upperArmThickness, y: upperArmThickness, z: upperArmLength },
             position: Vec3.sum(pos, { x: 0,
                                       y: bodyHeight / 2 + upperArmThickness / 2,
@@ -432,9 +432,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         // var leftLowerArmID = Entities.addEntity({
-        //     name: "puppet left lower arm",
+        //     name: "puppet body left lower arm",
         //     type: "Box",
-        //     color: { blue: 128, green: 100, red: 20 },
+        //     color: { red: 20, green: 100, blue: 128 },
         //     dimensions: { x: lowerArmThickness, y: lowerArmThickness, z: lowerArmLength },
         //     position: Vec3.sum(pos, { x: 0,
         //                               y: bodyHeight / 2 - upperArmThickness / 2,
@@ -451,7 +451,7 @@ Script.include("/~/system/libraries/controllers.js");
         // });
 
         var leftLowerArmID = Entities.addEntity({
-            name: "puppet left lower arm",
+            name: "puppet shield",
             type: "Shape",
             color: { red: 212, green: 0, blue: 240 },
             dimensions: { x: lowerArmLength * 2, y: handDiameter / 2, z: lowerArmLength * 2 },
@@ -509,7 +509,7 @@ Script.include("/~/system/libraries/controllers.js");
         // var leftHandID = Entities.addEntity({
         //     name: "puppet left hand",
         //     type: "Sphere",
-        //     color: { blue: 20, green: 20, red: 200 },
+        //     color: { red: 200, green: 20, blue: 20 },
         //     dimensions: { x: handDiameter / 2, y: handDiameter / 2, z: handDiameter / 2 },
         //     position: Vec3.sum(pos, { x: 0,
         //                               y: bodyHeight / 2 - upperArmThickness / 2,
@@ -558,9 +558,9 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         var rightLegID = Entities.addEntity({
-            name: "puppet right leg",
+            name: "puppet body right leg",
             type: "Box",
-            color: { blue: 20, green: 200, red: 20 },
+            color: { red: 20, green: 200, blue: 20 },
             dimensions: { x: legThickness, y: legLength, z: legThickness },
             position: Vec3.sum(pos, { x: 0, y: -bodyHeight / 2 - hipGap - legLength / 2, z: bodyWidth / 2 - legThickness / 2 }),
             dynamic: true,
@@ -601,9 +601,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var leftLegID = Entities.addEntity({
-            name: "puppet left arm",
+            name: "puppet body left arm",
             type: "Box",
-            color: { blue: 20, green: 200, red: 20 },
+            color: { red: 20, green: 200, blue: 20 },
             dimensions: { x: legThickness, y: legLength, z: legThickness },
             position: Vec3.sum(pos, { x: 0, y: -bodyHeight / 2 - hipGap - legLength / 2, z: -bodyWidth / 2 + legThickness / 2 }),
             dynamic: true,
@@ -643,9 +643,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var rightShinID = Entities.addEntity({
-            name: "puppet right shin",
+            name: "puppet body right shin",
             type: "Box",
-            color: { blue: 20, green: 200, red: 20 },
+            color: { red: 20, green: 200, blue: 20 },
             dimensions: { x: shinThickness, y: shinLength, z: shinThickness },
             position: Vec3.sum(pos, { x: 0,
                                       y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength / 2,
@@ -688,9 +688,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var leftShinID = Entities.addEntity({
-            name: "puppet left shin",
+            name: "puppet body left shin",
             type: "Box",
-            color: { blue: 20, green: 200, red: 20 },
+            color: { red: 20, green: 200, blue: 20 },
             dimensions: { x: shinThickness, y: shinLength, z: shinThickness },
             position: Vec3.sum(pos, { x: 0,
                                       y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength / 2,
@@ -732,9 +732,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var rightFootID = Entities.addEntity({
-            name: "puppet right foot",
+            name: "puppet body right foot",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: footLength, y: footThickness, z: footWidth },
             position: Vec3.sum(pos, { x: -shinThickness / 2 + footLength / 2,
                                       y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength -
@@ -777,9 +777,9 @@ Script.include("/~/system/libraries/controllers.js");
         //
 
         var leftFootID = Entities.addEntity({
-            name: "puppet left foot",
+            name: "puppet body left foot",
             type: "Box",
-            color: { blue: 128, green: 100, red: 20 },
+            color: { red: 20, green: 100, blue: 128 },
             dimensions: { x: footLength, y: footThickness, z: footWidth },
             position: Vec3.sum(pos, { x: -shinThickness / 2 + footLength / 2,
                                       y: -bodyHeight / 2 - hipGap - legLength - kneeGap - shinLength -
@@ -849,19 +849,21 @@ Script.include("/~/system/libraries/controllers.js");
 
         var otherProps = Entities.getEntityProperties(otherID, ["name"]);
         var otherName = otherProps.name;
-        if (otherName && otherName.substring(0, 7) == "puppet ") {
-            var hitSize = Vec3.length(velocityChange) * 2;
+        if (otherName && otherName.substring(0, 12) == "puppet body ") {
+            // var hitSize = Vec3.length(velocityChange) * 2;
+
+            var hitSize = Math.log(Vec3.length(velocityChange) + 1.0);
 
             Entities.addEntity({
                 name: "puppet hit indicator",
                 type: "Sphere",
-                color: { red: 220, green: 0, blue: 0 },
+                color: { red: 220, green: 140, blue: 0 },
                 dimensions: { x: hitSize, y: hitSize, z: hitSize },
                 position: contactPoint,
                 dynamic: false,
                 collisionless: true,
                 gravity: { x: 0, y: 0, z: 0 },
-                lifetime: 1.5,
+                lifetime: 5,
                 alpha: 0.8,
                 grab: { grabbable: false }
             });
