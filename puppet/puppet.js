@@ -1,24 +1,13 @@
 "use strict";
 
-/* global Vec3, Quat, MyAvatar, Entities, Script, Graphics */
+/* global Vec3, Quat, MyAvatar, Entities, Script, Graphics, Controller, Messages, getGrabPointSphereOffset */
+
+Script.include("/~/system/libraries/controllers.js");
 
 (function() {
-    var AppUi = Script.require('appUi');
+    var AppUi = Script.require("appUi");
 
     var ui;
-    function startup() {
-        ui = new AppUi({
-            buttonName: "PUPPET",
-            home: Script.resolvePath("puppet.qml"),
-            onMessage: fromQml,
-            // normalButton: "icons/tablet-icons/avatar-i.svg",
-            // activeButton: "icons/tablet-icons/avatar-a.svg",
-        });
-    }
-    startup();
-    Script.scriptEnding.connect(function () {
-    });
-
 
     function fromQml(message) {
         print("message from qml: " + JSON.stringify(message));
@@ -38,54 +27,16 @@
 
     var scale = 1.1;
     // var lifetime = 120;
-    var lifetime = -1;
+    var lifetime = 7000;
     var alpha = 1.0;
-
-    var neckLength = scale * 0.05;
-    var shoulderGap = scale * 0.1;
-    var elbowGap = scale * 0.06;
-    var wristGap = scale * 0.05;
-    var hipGap = scale * 0.07;
-    var kneeGap = scale * 0.08;
-    var ankleGap = scale * 0.06;
-    // var ankleMin = 0;
-    // var ankleMax = Math.PI / 4;
-
-    var headSize = scale * 0.2;
-
-    // var spineOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Spine"));
-    // var hipsOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Hips"));
-    // var neckOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Neck"));
-
-    var bodyHeight = jointToJointDistance("Hips", "Neck"); // scale * 0.4;
-    var bodyWidth = scale * 0.3; // jointToJointDistance("LeftShoulder", "RightShoulder")
-    var bodyDepth = scale * 0.2;
-
-    var upperArmThickness = scale * 0.05;
-    var upperArmLength = jointToJointDistance("LeftShoulder", "LeftForeArm") - (elbowGap / 2) - (shoulderGap / 2);
-
-    var lowerArmThickness = scale * 0.05;
-    var lowerArmLength = jointToJointDistance("LeftForeArm", "LeftHand") - (elbowGap / 2) - (wristGap / 2);
-
-    var handDiameter = scale * 0.24;
-
-    var legLength = jointToJointDistance("RightUpLeg", "RightLeg") - (hipGap / 2) - (kneeGap / 2);
-    var legThickness = scale * 0.08;
-
-    var shinLength = jointToJointDistance("RightLeg", "RightFoot") - (kneeGap / 2) - (ankleGap / 2);
-    var shinThickness = scale * 0.06;
-
-    var footLength = scale * 0.2;
-    var footThickness = scale * 0.03;
-    var footWidth = scale * 0.08;
-
-    var shieldOffset = lowerArmThickness * 3;
-
 
     var puppetEntities = {};
 
 
-    function rezRightArm(pos, bodyID) {
+    function rezRightArm(pos, bodyID, bodyWidth, bodyHeight, shoulderGap, upperArmThickness, upperArmLength,
+                         lowerArmThickness, lowerArmLength, elbowGap, swordLength, handDiameter, wristGap) {
+
+        var grabPointOffset = getGrabPointSphereOffset(Controller.Standard.RightHand, false);
 
         //
         // right upper arm
@@ -198,7 +149,7 @@
             name: "puppet right hand",
             type: "Box",
             color: { blue: 20, green: 20, red: 200 },
-            dimensions: { x: handDiameter / 4, y: 1.0, z: handDiameter / 4 },
+            dimensions: { x: handDiameter / 4, y: swordLength, z: handDiameter / 4 },
             registrationPoint: { x: 0.5, y: 0.0, z: 0.5 },
             position: Vec3.sum(pos, { x: 0,
                                       y: bodyHeight / 2 - upperArmThickness / 2,
@@ -210,8 +161,10 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            script: Script.resolvePath("hit-detector.js"),
             alpha: alpha,
-            grab: { grabbable: true, grabKinematic: false }
+            ignorePickIntersection: true,
+            grab: { grabbable: false }
         });
         puppetEntities.rightHand = rightHandID;
 
@@ -229,7 +182,7 @@
 
         Entities.addAction("tractor", rightHandID, {
             targetRotation: Quat.fromPitchYawRollDegrees(0, 0, -70),
-            targetPosition: { x: 0, y: 0.13, z: 0 },
+            targetPosition: grabPointOffset,
             linearTimeScale: 0.01,
             angularTimeScale: 0.01,
             maximumActiveDistance: 0.07,
@@ -237,10 +190,96 @@
             otherJointIndex: MyAvatar.getJointIndex("RightHand"),
             tag: "puppet to right-hand spring"
         });
+
+        //
+        // grab-point indicator on hand
+        //
+
+        var rightHandGrabPointID = Entities.addEntity({
+            name: "puppet right hand grab point",
+            type: "Sphere",
+            color: { red: 220, green: 160, blue: 0 },
+            dimensions: { x: handDiameter / 4, y: handDiameter / 4, z: handDiameter / 4 },
+            localPosition: grabPointOffset,
+            dynamic: true,
+            collisionless: true,
+            gravity: { x: 0, y: 0, z: 0 },
+            lifetime: lifetime,
+            alpha: alpha,
+            parentID: MyAvatar.sessionUUID,
+            parentJointIndex: MyAvatar.getJointIndex("RightHand"),
+            ignorePickIntersection: true,
+            grab: { grabbable: true, grabKinematic: false }
+        });
+        puppetEntities.rightHandGrabPoint = rightHandGrabPointID;
+
+
+        //
+        // grab-point indicator on sword
+        //
+
+        var rightHandGrabSwordID = Entities.addEntity({
+            name: "puppet right hand grab sword point",
+            type: "Sphere",
+            color: { red: 220, green: 160, blue: 0 },
+            dimensions: { x: handDiameter / 4, y: handDiameter / 4, z: handDiameter / 4 },
+            localPosition: { x: 0, y: 0, z: 0 },
+            dynamic: true,
+            collisionless: true,
+            gravity: { x: 0, y: 0, z: 0 },
+            lifetime: lifetime,
+            alpha: alpha,
+            parentID: rightHandID,
+            grab: { grabbable: false }
+        });
+        puppetEntities.rightHandGrabSword = rightHandGrabSwordID;
     }
 
 
     function rezPuppet() {
+
+        var neckLength = scale * 0.05;
+        var shoulderGap = scale * 0.1;
+        var elbowGap = scale * 0.06;
+        var wristGap = scale * 0.05;
+        var hipGap = scale * 0.07;
+        var kneeGap = scale * 0.08;
+        var ankleGap = scale * 0.06;
+        // var ankleMin = 0;
+        // var ankleMax = Math.PI / 4;
+
+        var headSize = scale * 0.2;
+
+        // var spineOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Spine"));
+        // var hipsOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Hips"));
+        // var neckOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Neck"));
+
+        var bodyHeight = jointToJointDistance("Hips", "Neck"); // scale * 0.4;
+        var bodyWidth = scale * 0.3; // jointToJointDistance("LeftShoulder", "RightShoulder")
+        var bodyDepth = scale * 0.2;
+
+        var upperArmThickness = scale * 0.05;
+        var upperArmLength = jointToJointDistance("LeftShoulder", "LeftForeArm") - (elbowGap / 2) - (shoulderGap / 2);
+
+        var lowerArmThickness = scale * 0.05;
+        var lowerArmLength = jointToJointDistance("LeftForeArm", "LeftHand") - (elbowGap / 2) - (wristGap / 2);
+
+        var handDiameter = scale * 0.24;
+
+        var legLength = jointToJointDistance("RightUpLeg", "RightLeg") - (hipGap / 2) - (kneeGap / 2);
+        var legThickness = scale * 0.08;
+
+        var shinLength = jointToJointDistance("RightLeg", "RightFoot") - (kneeGap / 2) - (ankleGap / 2);
+        var shinThickness = scale * 0.06;
+
+        var footLength = scale * 0.2;
+        var footThickness = scale * 0.03;
+        var footWidth = scale * 0.08;
+
+        var shieldOffset = lowerArmThickness * 3;
+        var swordLength = 1.1;
+
+
 
         // var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 1.0, z: -2}));
         var pos = MyAvatar.jointToWorldPoint({x: 0, y: 0, z: 0}, MyAvatar.getJointIndex("Head"));
@@ -407,6 +446,7 @@
         //     gravity: { x: 0, y: 0, z: 0 },
         //     lifetime: lifetime,
         //     alpha: alpha,
+        //     ignorePickIntersection: true,
         //     grab: { grabbable: true, grabKinematic: false }
         // });
 
@@ -426,6 +466,7 @@
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
             alpha: alpha,
+            ignorePickIntersection: true,
             grab: { grabbable: true, grabKinematic: false }
         });
 
@@ -512,7 +553,8 @@
         //
 
 
-        rezRightArm(pos, bodyID);
+        rezRightArm(pos, bodyID, bodyWidth, bodyHeight, shoulderGap, upperArmThickness, upperArmLength,
+                    lowerArmThickness, lowerArmLength, elbowGap, swordLength, handDiameter, wristGap);
 
 
         var rightLegID = Entities.addEntity({
@@ -776,6 +818,55 @@
         });
     }
 
+    function handleHit(data) {
+        // var myID = data.myID;
+        var otherID = data.otherID;
+        // var hitType = data.collisionInfo.type;
+        // var penetration = data.collisionInfo.penetration;
+        var contactPoint = data.collisionInfo.contactPoint;
+        var velocityChange = data.collisionInfo.velocityChange;
+
+        // "collisionInfo": {
+        //     "type": 2,
+        //     "idA": "{10bfae34-02f8-4eca-a1cf-c5f8c07b9905}",
+        //     "idB": "{80188ac5-ebfa-4a0c-b95e-e84ea1d1516f}",
+        //     "penetration": {
+        //         "x": 0.006713929120451212,
+        //         "y": 0.0016198069788515568,
+        //         "z": -0.00239554513245821
+        //     },
+        //     "contactPoint": {
+        //         "x": 80.54314422607422,
+        //         "y": 1.6683143377304077,
+        //         "z": 75.14118957519531
+        //     },
+        //     "velocityChange": {
+        //         "x": 0.08970536291599274,
+        //         "y": -0.03307801112532616,
+        //         "z": -0.031879980117082596
+        //     }
+        // }
+
+        var otherProps = Entities.getEntityProperties(otherID, ["name"]);
+        var otherName = otherProps.name;
+        if (otherName && otherName.substring(0, 7) == "puppet ") {
+            var hitSize = Vec3.length(velocityChange) * 2;
+
+            Entities.addEntity({
+                name: "puppet hit indicator",
+                type: "Sphere",
+                color: { red: 220, green: 0, blue: 0 },
+                dimensions: { x: hitSize, y: hitSize, z: hitSize },
+                position: contactPoint,
+                dynamic: false,
+                collisionless: true,
+                gravity: { x: 0, y: 0, z: 0 },
+                lifetime: 1.5,
+                alpha: 0.8,
+                grab: { grabbable: false }
+            });
+        }
+    }
 
     function getTopMaterial(multiMaterial) {
         // For non-models: multiMaterial[0] will be the top material
@@ -807,7 +898,7 @@
                                 materialVersion: 1,
                                 materials: {
                                     model: "hifi_pbr",
-                                    opacity: 0.1,
+                                    opacity: 0.0,
                                     defaultFallthrough: true
                                 }
                             }),
@@ -836,10 +927,47 @@
         puppetEntities = {};
     }
 
+    function handleMessages(channel, message, sender) {
+        if (sender !== MyAvatar.sessionUUID) {
+            return;
+        }
+        if (channel !== "Puppet-Sword-Fight") {
+            return;
+        }
+        var data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            print("WARNING: error parsing 'Puppet-Sword-Fight' message: " + message);
+            return;
+        }
+
+        var method = data.method;
+        if (method == "hit") {
+            handleHit(data);
+        }
+    }
+
     function cleanup() {
+        Messages.unsubscribe("Puppet-Sword-Fight");
+        Messages.messageReceived.disconnect(handleMessages);
         deletePuppet();
     }
 
-    Script.scriptEnding.connect(cleanup);
+    function startup() {
+        ui = new AppUi({
+            buttonName: "PUPPET",
+            home: Script.resolvePath("puppet.qml"),
+            onMessage: fromQml,
+            // normalButton: "icons/tablet-icons/avatar-i.svg",
+            // activeButton: "icons/tablet-icons/avatar-a.svg",
+        });
+
+        Script.scriptEnding.connect(cleanup);
+        Messages.messageReceived.connect(handleMessages);
+        Messages.subscribe("Puppet-Sword-Fight");
+    }
+
+    startup();
 
 }());

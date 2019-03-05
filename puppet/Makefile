@@ -4,7 +4,7 @@
 
 all:
 
-upload: puppet.js puppet.qml
+upload: puppet.js puppet.qml hit-detector.js
 	rm -rf puppet
 	mkdir -p puppet
 	cp  $^ puppet/
