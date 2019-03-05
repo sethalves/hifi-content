@@ -17,19 +17,11 @@
     }
     startup();
     Script.scriptEnding.connect(function () {
-        // Controller.mousePressEvent.disconnect(onMousePressEvent);
-        // Controller.mouseReleaseEvent.disconnect(onMouseReleaseEvent);
-        // Controller.mouseMoveEvent.disconnect(onMouseMoveEvent);
-        // pages.clear();
-        // killEngineInspectorView();
-        // killCullInspectorView();
-        // killEngineLODWindow();
     });
 
 
     function fromQml(message) {
         print("message from qml: " + JSON.stringify(message));
-
         if (message.method == "rez") {
             deletePuppet();
             fadeAvatar();
@@ -39,14 +31,20 @@
         }
     }
 
+    function jointToJointDistance(jointNameA, jointNameB) {
+        return Vec3.distance(MyAvatar.jointToWorldPoint(Vec3.ZERO, MyAvatar.getJointIndex(jointNameA)),
+                             MyAvatar.jointToWorldPoint(Vec3.ZERO, MyAvatar.getJointIndex(jointNameB)));
+    }
+
     var scale = 1.1;
     // var lifetime = 120;
     var lifetime = -1;
+    var alpha = 0.6;
 
     var neckLength = scale * 0.05;
     var shoulderGap = scale * 0.1;
     var elbowGap = scale * 0.06;
-    var handGap = scale * 0.05;
+    var wristGap = scale * 0.05;
     var hipGap = scale * 0.07;
     var kneeGap = scale * 0.08;
     var ankleGap = scale * 0.06;
@@ -55,22 +53,26 @@
 
     var headSize = scale * 0.2;
 
-    var bodyHeight = scale * 0.4;
-    var bodyWidth = scale * 0.3;
+    var spineOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Spine"));
+    var hipsOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Hips"));
+    var neckOffset = MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Neck"));
+
+    var bodyHeight = jointToJointDistance("Hips", "Neck"); // scale * 0.4;
+    var bodyWidth = scale * 0.3; // jointToJointDistance("LeftShoulder", "RightShoulder")
     var bodyDepth = scale * 0.2;
 
     var upperArmThickness = scale * 0.05;
-    var upperArmLength = scale * 0.2;
+    var upperArmLength = jointToJointDistance("LeftShoulder", "LeftForeArm") - (elbowGap / 2) - (shoulderGap / 2);
 
     var lowerArmThickness = scale * 0.05;
-    var lowerArmLength = scale * 0.2;
+    var lowerArmLength = jointToJointDistance("LeftForeArm", "LeftHand") - (elbowGap / 2) - (wristGap / 2);
 
-    var handDiameter = scale * 0.06;
+    var handDiameter = scale * 0.12;
 
-    var legLength = scale * 0.3;
+    var legLength = jointToJointDistance("RightUpLeg", "RightLeg") - (hipGap / 2) - (kneeGap / 2);
     var legThickness = scale * 0.08;
 
-    var shinLength = scale * 0.2;
+    var shinLength = jointToJointDistance("RightLeg", "RightFoot") - (kneeGap / 2) - (ankleGap / 2);
     var shinThickness = scale * 0.06;
 
     var footLength = scale * 0.2;
@@ -101,14 +103,18 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(bodyID);
 
+        var bodyOffset = Vec3.multiply(Vec3.sum(hipsOffset, neckOffset), 0.5);
+        var bodyOffsetFromSpine = Vec3.subtract(bodyOffset, spineOffset);
+
         Entities.addAction("tractor", bodyID, {
             targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
-            targetPosition: { x: 0, y: 0, z: 0 },
-            linearTimeScale: 0.02,
+            // targetPosition: bodyOffsetFromSpine,
+            // linearTimeScale: 0.02,
             angularTimeScale: 0.02,
             otherID: MyAvatar.sessionUUID,
             otherJointIndex: MyAvatar.getJointIndex("Spine"),
@@ -120,17 +126,19 @@
         // head
         //
 
+        var headLocalPosition = Vec3.sum(pos, { x: 0, y: bodyHeight / 2 + headSize / 2 + neckLength, z:0 });
         var headID = Entities.addEntity({
             name: "puppet head",
             type: "Box",
             color: { blue: 128, green: 100, red: 20 },
             dimensions: { x: headSize, y: headSize, z: headSize },
-            position: Vec3.sum(pos, { x: 0, y: bodyHeight / 2 + headSize / 2 + neckLength, z:0 }),
+            position: headLocalPosition,
             dynamic: true,
             collisionless: false,
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(headID);
@@ -145,6 +153,7 @@
             collisionless: true,
             collidesWith: "static,dynamic,kinematic",
             lifetime: lifetime,
+            alpha: alpha,
             parentID: headID,
             grab: { grabbable: true, grabKinematic: false }
         });
@@ -162,9 +171,12 @@
             tag: "puppet neck joint"
         });
 
+        // var hipsToNeck = Vec3.subtract(MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Neck")),
+        //                                MyAvatar.getAbsoluteJointTranslationInObjectFrame(MyAvatar.getJointIndex("Hips")));
+
         Entities.addAction("tractor", headID, {
             targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
-            targetPosition: { x: 0, y: 0, z: 0 },
+            targetPosition: Vec3.ZERO,
             linearTimeScale: 0.02,
             angularTimeScale: 0.02,
             otherID: MyAvatar.sessionUUID,
@@ -190,6 +202,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(rightUpperArmID);
@@ -224,6 +237,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(leftUpperArmID);
@@ -254,23 +268,46 @@
                                       z: bodyWidth / 2 + shoulderGap + upperArmLength + elbowGap + lowerArmLength / 2
                                     }),
             dynamic: true,
-            collisionless: false,
-            collidesWith: "static,dynamic,kinematic",
+            collisionless: true,
+            // collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(rightLowerArmID);
 
-        Entities.addAction("hinge", rightLowerArmID, {
+        // Entities.addAction("hinge", rightLowerArmID, {
+        //     pivot: { x: 0, y: 0, z: -lowerArmLength / 2 - elbowGap / 2 },
+        //     axis: { x: 0, y: 1, z: 0 },
+        //     otherEntityID: rightUpperArmID,
+        //     otherPivot: { x: 0, y: 0, z: upperArmLength / 2 + elbowGap / 2 },
+        //     otherAxis: { x: 0, y: 1, z: 0 },
+        //     low: Math.PI / -2,
+        //     high: 0,
+        //     tag: "puppet right elbow joint"
+        // });
+
+        Entities.addAction("cone-twist", rightLowerArmID, {
             pivot: { x: 0, y: 0, z: -lowerArmLength / 2 - elbowGap / 2 },
-            axis: { x: 0, y: 1, z: 0 },
+            axis: { x: 0, y: 0, z: 1 },
             otherEntityID: rightUpperArmID,
             otherPivot: { x: 0, y: 0, z: upperArmLength / 2 + elbowGap / 2 },
-            otherAxis: { x: 0, y: 1, z: 0 },
-            low: Math.PI / -2,
-            high: 0,
+            otherAxis: { x: 0, y: 0, z: 1 },
+            swingSpan1: 2 * Math.PI,
+            swingSpan2: 2 * Math.PI,
+            twistSpan: 2 * Math.PI,
             tag: "puppet right elbow joint"
+        });
+
+        Entities.addAction("tractor", rightLowerArmID, {
+            targetRotation: Quat.fromPitchYawRollDegrees(-90, 0, 0),
+            angularTimeScale: 0.02,
+            targetPosition: { x: 0, y: lowerArmLength / 2, z: 0 },
+            linearTimeScale: 0.02,
+            otherID: MyAvatar.sessionUUID,
+            otherJointIndex: MyAvatar.getJointIndex("RightForeArm"),
+            tag: "puppet right forearm spring"
         });
 
         //
@@ -291,6 +328,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(leftLowerArmID);
@@ -306,46 +344,56 @@
             tag: "puppet left elbow joint"
         });
 
+        // Entities.addAction("tractor", leftLowerArmID, {
+        //     targetRotation: Quat.fromPitchYawRollDegrees(0, 0, 0),
+        //     angularTimeScale: 0.02,
+        //     otherID: MyAvatar.sessionUUID,
+        //     otherJointIndex: MyAvatar.getJointIndex("LeftForeArm"),
+        //     tag: "puppet left forearm spring"
+        // });
+
         //
         // right hand
         //
 
         var rightHandID = Entities.addEntity({
             name: "puppet right hand",
-            type: "Sphere",
+            type: "Box",
             color: { blue: 20, green: 20, red: 200 },
-            dimensions: { x: handDiameter, y: handDiameter, z: handDiameter },
+            dimensions: { x: handDiameter / 4, y: 1.0, z: handDiameter / 4 },
+            registrationPoint: { x: 0.5, y: 0.0, z: 0.5 },
             position: Vec3.sum(pos, { x: 0,
                                       y: bodyHeight / 2 - upperArmThickness / 2,
                                       z: bodyWidth / 2 + shoulderGap + upperArmLength + elbowGap +
-                                         lowerArmLength + handGap + handDiameter / 2
+                                         lowerArmLength + wristGap + handDiameter / 2
                                     }),
             dynamic: true,
             collisionless: false,
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(rightHandID);
 
-        Entities.addAction("cone-twist", rightHandID, {
-            pivot: { x: 0, y: 0, z: -handDiameter / 2 - handGap / 2 },
-            axis: { x: 0, y: 0, z: 1 },
-            otherEntityID: rightLowerArmID,
-            otherPivot: { x: 0, y:0, z: lowerArmLength / 2 + handGap / 2 },
-            otherAxis: { x: 0, y: 0, z: 1 },
-            swingSpan1: Math.PI / 2,
-            swingSpan2: Math.PI / 2,
-            twistSpan: Math.PI,
-            tag: "puppet right wrist joint"
-        });
+        // Entities.addAction("cone-twist", rightHandID, {
+        //     pivot: { x: 0, y: 0, z: -handDiameter / 2 - wristGap / 2 },
+        //     axis: { x: 0, y: 0, z: 1 },
+        //     otherEntityID: rightLowerArmID,
+        //     otherPivot: { x: 0, y:0, z: lowerArmLength / 2 + wristGap / 2 },
+        //     otherAxis: { x: 0, y: 0, z: 1 },
+        //     swingSpan1: Math.PI / 2,
+        //     swingSpan2: Math.PI / 2,
+        //     twistSpan: Math.PI,
+        //     tag: "puppet right wrist joint"
+        // });
 
         Entities.addAction("tractor", rightHandID, {
-            targetRotation: { x: 0, y: 0, z: 0, w: 0 },
-            targetPosition: { x: 0, y: 0, z: 0 },
-            linearTimeScale: 0.02,
-            angularTimeScale: 0.02,
+            targetRotation: Quat.fromPitchYawRollDegrees(0, 0, -90),
+            targetPosition: { x: 0, y: 0.13, z: 0 },
+            linearTimeScale: 0.01,
+            angularTimeScale: 0.01,
             otherID: MyAvatar.sessionUUID,
             otherJointIndex: MyAvatar.getJointIndex("RightHand"),
             tag: "puppet to right-hand spring"
@@ -359,38 +407,39 @@
             name: "puppet left hand",
             type: "Sphere",
             color: { blue: 20, green: 20, red: 200 },
-            dimensions: { x: handDiameter, y: handDiameter, z: handDiameter },
+            dimensions: { x: handDiameter / 2, y: handDiameter / 2, z: handDiameter / 2 },
             position: Vec3.sum(pos, { x: 0,
                                       y: bodyHeight / 2 - upperArmThickness / 2,
                                       z: -bodyWidth / 2 - shoulderGap - upperArmLength - elbowGap -
-                                         lowerArmLength - handGap - handDiameter / 2
+                                         lowerArmLength - wristGap - handDiameter / 2
                                     }),
             dynamic: true,
             collisionless: false,
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(leftHandID);
 
         Entities.addAction("cone-twist", leftHandID, {
-            pivot: { x: 0, y: 0, z: handDiameter / 2 + handGap / 2 },
-            axis: { x: 0, y: 0, z: 1 },
+            pivot: { x: 0, y: 0, z: handDiameter / 2 + wristGap / 2 },
+            axis: { x: 0, y: 0, z: -1 },
             otherEntityID: leftLowerArmID,
-            otherPivot: { x: 0, y:0, z: -lowerArmLength / 2 - handGap / 2 },
-            otherAxis: { x: 0, y: 0, z: 1 },
-            swingSpan1: Math.PI / 2,
-            swingSpan2: Math.PI / 2,
-            twistSpan: Math.PI,
+            otherPivot: { x: 0, y:0, z: -lowerArmLength / 2 - wristGap / 2 },
+            otherAxis: { x: 0, y: 0, z: -1 },
+            swingSpan1: 2 * Math.PI,
+            swingSpan2: 2 * Math.PI,
+            twistSpan: 2 * Math.PI,
             tag: "puppet left wrist joint"
         });
 
         Entities.addAction("tractor", leftHandID, {
-            targetRotation: { x: 0, y: 0, z: 0, w: 0 },
+            // targetRotation: Quat.fromPitchYawRollDegrees(0, 0, 0),
             targetPosition: { x: 0, y: 0, z: 0 },
             linearTimeScale: 0.02,
-            angularTimeScale: 0.02,
+            // angularTimeScale: 0.02,
             otherID: MyAvatar.sessionUUID,
             otherJointIndex: MyAvatar.getJointIndex("LeftHand"),
             tag: "puppet to left-hand spring"
@@ -411,6 +460,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(rightLegID);
@@ -442,6 +492,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(leftLegID);
@@ -476,6 +527,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(rightShinID);
@@ -510,6 +562,7 @@
             collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(leftShinID);
@@ -540,10 +593,11 @@
                                       z: bodyWidth / 2 - legThickness / 2
                                     }),
             dynamic: true,
-            collisionless: false,
-            collidesWith: "static,dynamic,kinematic",
+            collisionless: true,
+            // collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(rightFootID);
@@ -560,12 +614,12 @@
         });
 
         Entities.addAction("tractor", rightFootID, {
-            targetRotation: { x: 0, y: 0, z: 0, w: 0 },
+            // targetRotation: Quat.fromPitchYawRollDegrees(0, 0, 90),
             targetPosition: { x: 0, y: 0, z: 0 },
             linearTimeScale: 0.02,
-            angularTimeScale: 0.02,
+            // angularTimeScale: 0.02,
             otherID: MyAvatar.sessionUUID,
-            otherJointIndex: MyAvatar.getJointIndex("RightFoot"),
+            otherJointIndex: MyAvatar.getJointIndex("RightToeBase"),
             tag: "puppet to right-foot spring"
         });
 
@@ -584,10 +638,11 @@
                                       z: bodyWidth / 2 - legThickness / 2
                                     }),
             dynamic: true,
-            collisionless: false,
-            collidesWith: "static,dynamic,kinematic",
+            collisionless: true,
+            // collidesWith: "static,dynamic,kinematic",
             gravity: { x: 0, y: 0, z: 0 },
             lifetime: lifetime,
+            alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
         });
         puppetEntities.push(leftFootID);
@@ -604,12 +659,12 @@
         });
 
         Entities.addAction("tractor", leftFootID, {
-            targetRotation: { x: 0, y: 0, z: 0, w: 0 },
+            // targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
             targetPosition: { x: 0, y: 0, z: 0 },
             linearTimeScale: 0.02,
-            angularTimeScale: 0.02,
+            // angularTimeScale: 0.02,
             otherID: MyAvatar.sessionUUID,
-            otherJointIndex: MyAvatar.getJointIndex("LeftFoot"),
+            otherJointIndex: MyAvatar.getJointIndex("LeftToeBase"),
             tag: "puppet to left-foot spring"
         });
     }
@@ -645,7 +700,7 @@
                                 materialVersion: 1,
                                 materials: {
                                     model: "hifi_pbr",
-                                    opacity: 0.2,
+                                    opacity: 0.0,
                                     defaultFallthrough: true
                                 }
                             }),
