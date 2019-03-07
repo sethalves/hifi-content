@@ -1,5 +1,5 @@
 
-/* global module, Graphics, Entities, Vec3, Quat, AvatarList, Script, AvatarManager */
+/* global module, Graphics, Entities, Vec3, Quat, AvatarList, Script, Messages */
 
 function getTopMaterial(multiMaterial) {
     // For non-models: multiMaterial[0] will be the top material
@@ -13,9 +13,27 @@ function getTopMaterial(multiMaterial) {
     return multiMaterial[0];
 }
 
-function applyMaterial(avatarID, opacity, lifetime, materialsDict) {
+
+function mergeIntoAssociativeArray(dst, other) {
+    for (var entityKey in other) {
+        if (other.hasOwnProperty(entityKey)) {
+            dst[entityKey] = other[entityKey];
+        }
+    }
+    return dst;
+}
+
+
+function applyMaterial(targetID, opacity, lifetime, andChildren, materialsDict) {
     var newEntityIDs = {};
-    var mesh = Graphics.getModel(avatarID);
+
+    var mesh = null;
+    try {
+        mesh = Graphics.getModel(targetID);
+    } catch (e) {
+        print("QQQQ no mesh for " + targetID);
+    }
+
     if (mesh) {
         var materials = mesh.materialLayers;
         for (var m in materials) {
@@ -33,24 +51,34 @@ function applyMaterial(avatarID, opacity, lifetime, materialsDict) {
                         }),
                         localPosition: Vec3.ZERO,
                         localRotation: Quat.IDENTITY,
-                        parentID: avatarID,
+                        parentID: targetID,
                         priority: topMaterial.priority + 1,
                         parentMaterialName: m.toString(),
                         lifetime: lifetime
                     }, true);
 
-                    newEntityIDs["material-" + m + "-" + avatarID] = materialEntityID;
+                    newEntityIDs["material-" + m + "-" + targetID] = materialEntityID;
                 }
             }
         }
     }
 
+    if (andChildren) {
+        var children = Entities.getChildrenIDs(targetID);
+        for (var c = 0; c < children.length; c++) {
+            var childID = children[c];
+            var moreIDs = applyMaterial(childID, opacity, lifetime, andChildren, materialsDict);
+            mergeIntoAssociativeArray(newEntityIDs, moreIDs);
+        }
+    }
+
+
     return newEntityIDs;
 }
 
 
-function fadeTarget(avatarID, opacity, lifetime) {
-    return applyMaterial(avatarID, opacity, lifetime, {
+function fadeTarget(avatarID, opacity, lifetime, andChildren) {
+    return applyMaterial(avatarID, opacity, lifetime, andChildren, {
         model: "hifi_pbr",
         opacity: opacity,
         defaultFallthrough: true
@@ -58,8 +86,8 @@ function fadeTarget(avatarID, opacity, lifetime) {
 }
 
 
-function colorTarget(entityID, opacity, lifetime, color) {
-    return applyMaterial(entityID, opacity, lifetime, {
+function colorTarget(entityID, opacity, lifetime, color, andChildren) {
+    return applyMaterial(entityID, opacity, lifetime, andChildren, {
         albedo: color,
         opacity: opacity,
         defaultFallthrough: true
@@ -70,6 +98,12 @@ function colorTarget(entityID, opacity, lifetime, color) {
 function scheduleUnfreeze(avatarID, position, rotation, lifetime, newEntityIDs) {
     Script.setTimeout(function () {
         print("QQQQ unfreezing avatar " + JSON.stringify(avatarID));
+
+        Messages.sendMessage("Freeze-Avatar", JSON.stringify({
+            method: "unfreeze",
+            targetID: avatarID
+        }));
+
         for (var entityKey in newEntityIDs) {
             if (newEntityIDs.hasOwnProperty(entityKey)) {
                 Entities.deleteEntity(newEntityIDs[entityKey]);
@@ -81,14 +115,14 @@ function scheduleUnfreeze(avatarID, position, rotation, lifetime, newEntityIDs) 
 
 function addLockdownEntity(avatarID, position, rotation, lifetime) {
     Entities.addEntity({
-        name: "dead",
+        name: "frozen-" + avatarID,
         type: "Sphere",
         color: { red: 0, green: 0, blue: 0 },
         dimensions: 0.1,
         localPosition: Vec3.ZERO,
         dynamic: false,
         collisionless: true,
-        lifetime: lifetime,
+        lifetime: lifetime + 2,
         alpha: 0.0,
         parentID: avatarID,
         script: Script.resolvePath("lockdown.js"),
@@ -105,7 +139,12 @@ function addLockdownEntity(avatarID, position, rotation, lifetime) {
 
 function freezeAvatar(avatarID, lifetime) {
     print("QQQQ freezing avatar " + JSON.stringify(avatarID) + " for " + lifetime + " seconds.");
-    var newEntityIDs = fadeTarget(avatarID, 0.0, lifetime + 2);
+    var newEntityIDs = fadeTarget(avatarID, 0.0, lifetime + 2, true);
+
+    Messages.sendMessage("Freeze-Avatar", JSON.stringify({
+        method: "freeze",
+        targetID: avatarID
+    }));
 
     var avatar = AvatarList.getAvatar(avatarID);
 
@@ -164,12 +203,8 @@ function freezeAvatar(avatarID, lifetime) {
                         dimensions: props.naturalDimensions
                     });
 
-                    var moreIDs = colorTarget(dopplegangerID, 1.0, lifetime + 2, [0.0, 0.0, 1.0]);
-                    for (var entityKey in moreIDs) {
-                        if (moreIDs.hasOwnProperty(entityKey)) {
-                            newEntityIDs[entityKey] = moreIDs[entityKey];
-                        }
-                    }
+                    var moreIDs = colorTarget(dopplegangerID, 1.0, lifetime + 2, [0.0, 0.0, 1.0], true);
+                    mergeIntoAssociativeArray(newEntityIDs, moreIDs);
 
                     scheduleUnfreeze(avatarID, position, rotation, lifetime, newEntityIDs);
 
