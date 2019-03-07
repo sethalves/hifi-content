@@ -1,5 +1,5 @@
 
-/*global Entities, Script, Vec3, Messages */
+/* global Entities, Script, Vec3, Messages, Controller */
 
 (function() {
     var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
@@ -7,10 +7,20 @@
 
     var rayGun;
     var freezeTime = 5.0;
+    var gunRecoverTime = 2.0;
+
+    var HAPTIC_PULSE_STRENGTH = 1.0;
+    var HAPTIC_PULSE_DURATION = 13.0;
 
     rayGun = genericTool.genericTool(
         // start
         function() {
+            rayGun.enabled = false;
+            Script.setTimeout(function () {
+                rayGun.enabled = true;
+                Controller.triggerHapticPulse(HAPTIC_PULSE_STRENGTH, HAPTIC_PULSE_DURATION, rayGun.hand);
+            }, gunRecoverTime * 1000);
+
             var origin = this.pickRay.origin;
             var direction = Vec3.normalize(this.pickRay.direction);
             var distance = -1;
@@ -98,9 +108,9 @@
         }
 
         if (data.method == "freeze" && data.targetID == rayGun.equipperID) {
-            rayGun.canActivate = false;
+            rayGun.enabled = false;
         } else if (data.method == "unfreeze" && data.targetID == rayGun.equipperID) {
-            rayGun.canActivate = true;
+            rayGun.enabled = true;
         }
     };
 
