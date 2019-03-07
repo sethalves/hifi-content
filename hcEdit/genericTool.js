@@ -1,7 +1,7 @@
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 
-/* global Script, module, AvatarManager, Controller, Entities, MyAvatar, Overlays, Quat, SoundCache, Vec3,
+/* global Script, module, AvatarManager, Controller, Entities, Overlays, Quat, SoundCache, Vec3,
    genericTool:true
  */
 
@@ -37,6 +37,7 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
         startEquip: function(id, params) {
             this.equipped = true;
             this.hand = params[0] == "left" ? 0 : 1;
+            this.equipperID = params[1];
             this.targetEntity = null;
             this.active = false;
             this.canActivate = false; // to avoid firing right as the thing is equipped
@@ -110,10 +111,12 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
         // },
 
         activate: function() {
-            Audio.playSound(this.activateSound, {
-                position: this.barrelPoint,
-                volume: this.activateSoundVolume
-            });
+            if (this.activateSound) {
+                Audio.playSound(this.activateSound, {
+                    position: this.barrelPoint,
+                    volume: this.activateSoundVolume
+                });
+            }
 
             this.pickRay = {
                 origin: this.barrelPoint,
@@ -166,7 +169,8 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
                 this.entityDistance = -1;
             }
 
-            intersection = AvatarManager.findRayIntersection(this.pickRay, [], [MyAvatar.sessionUUID]);
+            // intersection = AvatarManager.findRayIntersection(this.pickRay, [], [MyAvatar.sessionUUID]);
+            intersection = AvatarManager.findRayIntersection(this.pickRay, [], []);
             if (intersection.intersects) {
                 this.targetAvatar = intersection.avatarID;
                 this.avatarDistance = intersection.distance;
