@@ -4,7 +4,7 @@
 
 all:
 
-upload: freeze-effect.js
+upload: freeze-effect.js lockdown.js
 	rm -rf freeze-effect
 	mkdir -p freeze-effect
 	cp  $^ freeze-effect/

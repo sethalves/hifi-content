@@ -1,5 +1,5 @@
 
-/* global module, Graphics, Entities, Vec3, Quat, AvatarList, Script */
+/* global module, Graphics, Entities, Vec3, Quat, AvatarList, Script, AvatarManager */
 
 function getTopMaterial(multiMaterial) {
     // For non-models: multiMaterial[0] will be the top material
@@ -14,7 +14,7 @@ function getTopMaterial(multiMaterial) {
 }
 
 function applyMaterial(avatarID, opacity, lifetime, materialsDict) {
-    var newEntities = {};
+    var newEntityIDs = {};
     var mesh = Graphics.getModel(avatarID);
     if (mesh) {
         var materials = mesh.materialLayers;
@@ -23,7 +23,7 @@ function applyMaterial(avatarID, opacity, lifetime, materialsDict) {
                 var multiMaterial = materials[m];
                 if (multiMaterial) {
                     var topMaterial = getTopMaterial(multiMaterial);
-                    var materialID = Entities.addEntity({
+                    var materialEntityID = Entities.addEntity({
                         name: "puppet avatar-fade " + m,
                         type: "Material",
                         materialURL: "materialData",
@@ -39,17 +39,17 @@ function applyMaterial(avatarID, opacity, lifetime, materialsDict) {
                         lifetime: lifetime
                     }, true);
 
-                    newEntities["material-" + m] = materialID;
+                    newEntityIDs["material-" + m + "-" + avatarID] = materialEntityID;
                 }
             }
         }
     }
 
-    return newEntities;
+    return newEntityIDs;
 }
 
 
-function fadeAvatar(avatarID, opacity, lifetime) {
+function fadeTarget(avatarID, opacity, lifetime) {
     return applyMaterial(avatarID, opacity, lifetime, {
         model: "hifi_pbr",
         opacity: opacity,
@@ -58,18 +58,54 @@ function fadeAvatar(avatarID, opacity, lifetime) {
 }
 
 
-function greyEntity(entityID, opacity, lifetime) {
+function colorTarget(entityID, opacity, lifetime, color) {
     return applyMaterial(entityID, opacity, lifetime, {
-        albedo: [1.0, 1.0, 0],
+        albedo: color,
         opacity: opacity,
         defaultFallthrough: true
     });
 }
 
 
+function scheduleUnfreeze(avatarID, position, rotation, lifetime, newEntityIDs) {
+    Script.setTimeout(function () {
+        print("QQQQ unfreezing avatar " + JSON.stringify(avatarID));
+        for (var entityKey in newEntityIDs) {
+            if (newEntityIDs.hasOwnProperty(entityKey)) {
+                Entities.deleteEntity(newEntityIDs[entityKey]);
+            }
+        }
+    }, lifetime * 1000);
+}
+
+
+function addLockdownEntity(avatarID, position, rotation, lifetime) {
+    Entities.addEntity({
+        name: "dead",
+        type: "Sphere",
+        color: { red: 0, green: 0, blue: 0 },
+        dimensions: 0.1,
+        localPosition: Vec3.ZERO,
+        dynamic: false,
+        collisionless: true,
+        lifetime: lifetime,
+        alpha: 0.0,
+        parentID: avatarID,
+        script: Script.resolvePath("lockdown.js"),
+        userData: JSON.stringify({
+            position: position,
+            rotation: rotation,
+            lifetime: lifetime
+        }),
+        ignorePickIntersection: true,
+        grab: { grabbable: false }
+    });
+}
+
+
 function freezeAvatar(avatarID, lifetime) {
     print("QQQQ freezing avatar " + JSON.stringify(avatarID) + " for " + lifetime + " seconds.");
-    var newEntities = fadeAvatar(avatarID, 0.1, lifetime);
+    var newEntityIDs = fadeTarget(avatarID, 0.0, lifetime + 2);
 
     var avatar = AvatarList.getAvatar(avatarID);
 
@@ -85,37 +121,29 @@ function freezeAvatar(avatarID, lifetime) {
             //     jointRotationsSet.push(true);
             // }
 
-            // var av = AvatarManager.getAvatar(avatarID);
-            // print("QQQQ hips " + JSON.stringify(avatar.getJointTranslation(avatar.getJointIndex("Hips"))) +
-            //       " " + JSON.stringify(av.getJointPosition("Hips")) +
-            //       " " + JSON.stringify(av.getAbsoluteJointTranslationInObjectFrame(avatar.getJointIndex("Hips")))
-            //      );
-            // print("QQQQ feet " + JSON.stringify(avatar.getJointTranslation(avatar.getJointIndex("RightFoot"))) +
-            //       " " + JSON.stringify(av.getJointPosition("RightFoot")) +
-            //       " " + JSON.stringify(av.getAbsoluteJointTranslationInObjectFrame(avatar.getJointIndex("RightFoot")))
-            //      );
-            // print("QQQQ pos " + JSON.stringify(avatar.position) + " " + JSON.stringify(av.position));
-            // print("QQQQ off " + JSON.stringify(av.getSkeletonOffset()));
-
+            var position = avatar.position;
+            var rotation = avatar.orientation;
 
             var dopplegangerID = Entities.addEntity({
                 type: "Model",
                 name: "frozen avatar: " + avatar.displayName,
-                position: avatar.position,
+                position: position,
                 // position: hipsPosition,
                 // position: Vec3.sum(avatar.position, offset),
-                rotation: Quat.multiply(Quat.fromPitchYawRollDegrees(0, 180, 0), avatar.orientation),
+                rotation: Quat.multiply(Quat.fromPitchYawRollDegrees(0, 180, 0), rotation),
                 // rotation: Quat.fromPitchYawRollRadians(0, avatar.bodyYaw, 0),
                 // avatar.scale
                 // dimensions: { x: 0.5, y: 0.5, z: 0.5 },
                 collisionless: true,
                 dynamic: 0,
                 modelURL: modelURL,
-                lifetime: lifetime
+                lifetime: lifetime + 2
                 // jointRotations: jointRotations,
                 // jointRotationsSet: jointRotationsSet
             });
-            newEntities.doppleganger = dopplegangerID;
+            newEntityIDs.doppleganger = dopplegangerID;
+
+            addLockdownEntity(avatarID, position, rotation, lifetime);
 
             var tries = 0;
             var setJoints = function () {
@@ -129,12 +157,21 @@ function freezeAvatar(avatarID, lifetime) {
 
                     var modelHips =
                         Entities.getAbsoluteJointTranslationInObjectFrame(dopplegangerID, avatar.getJointIndex("Hips"));
+                    var props = Entities.getEntityProperties(dopplegangerID, ["naturalDimensions"]);
+
                     Entities.editEntity(dopplegangerID, {
                         position: Vec3.subtract(avatar.position, modelHips),
-                        scale: 1.0
+                        dimensions: props.naturalDimensions
                     });
 
-                    greyEntity(dopplegangerID, 1.0, lifetime);
+                    var moreIDs = colorTarget(dopplegangerID, 1.0, lifetime + 2, [0.0, 0.0, 1.0]);
+                    for (var entityKey in moreIDs) {
+                        if (moreIDs.hasOwnProperty(entityKey)) {
+                            newEntityIDs[entityKey] = moreIDs[entityKey];
+                        }
+                    }
+
+                    scheduleUnfreeze(avatarID, position, rotation, lifetime, newEntityIDs);
 
                     return;
                 }
@@ -144,12 +181,13 @@ function freezeAvatar(avatarID, lifetime) {
         }
     }
 
-    return newEntities;
+    return newEntityIDs;
 }
 
 
 module.exports = {
     getTopMaterial: getTopMaterial,
-    fadeAvatar: fadeAvatar,
+    fadeTarget: fadeTarget,
+    colorTarget: colorTarget,
     freezeAvatar: freezeAvatar
 };
