@@ -1,10 +1,12 @@
 
-/*global Entities, Script, Vec3 */
+/*global Entities, Script, Vec3, Messages */
 
 (function() {
     var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
+    var freezeEffect = Script.require("http://headache.hungry.com/~seth/hifi/freeze-effect/freeze-effect.js");
 
     var rayGun;
+    var freezeTime = 5.0;
 
     rayGun = genericTool.genericTool(
         // start
@@ -12,29 +14,30 @@
             var origin = this.pickRay.origin;
             var direction = Vec3.normalize(this.pickRay.direction);
             var distance = -1;
-            var hitPoint;
+            var hitCoords;
             if (this.targetAvatar) {
-                hitPoint = Vec3.sum(origin, Vec3.multiply(this.avatarDistance, direction));
+                hitCoords = Vec3.sum(origin, Vec3.multiply(this.avatarDistance, direction));
                 distance = this.avatarDistance;
+                freezeEffect.freezeAvatar(this.targetAvatar, freezeTime);
             }
             if (this.targetEntity && (distance < 0 || this.entityDistance < distance)) {
-                hitPoint = Vec3.sum(origin, Vec3.multiply(this.entityDistance, direction));
+                hitCoords = Vec3.sum(origin, Vec3.multiply(this.entityDistance, direction));
                 distance = this.entityDistance;
             }
 
             if (distance > 0) {
                 Entities.addEntity({
                     type: "Sphere",
-                    position: hitPoint,
+                    position: hitCoords,
                     color: {red: 0, green: 200, blue: 200},
                     visible: true,
                     dimensions: { x: 0.6, y: 0.6, z: 0.6 },
-                    lifetime: 2.0
+                    lifetime: 2.0,
+                    alpha: 0.6
                 });
             } else {
                 distance = 20;
             }
-
 
             this.createRay(distance);
         },
@@ -81,6 +84,30 @@
     };
 
     rayGun.laserOffsets = { x: 0, y: 0.008, z: 0.12 };
+
+    rayGun.handleMessages = function (channel, message, sender) {
+        if (channel !== "Freeze-Avatar") {
+            return;
+        }
+        var data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            print("WARNING: error parsing 'Freeze-Avatar' message: " + message);
+            return;
+        }
+
+        if (data.method == "freeze" && data.targetID == rayGun.equipperID) {
+            rayGun.canActivate = false;
+        } else if (data.method == "unfreeze" && data.targetID == rayGun.equipperID) {
+            rayGun.canActivate = true;
+        }
+    };
+
+    Messages.messageReceived.connect(function (channel, message, sender) {
+        rayGun.handleMessages(channel, message, sender);
+    });
+    Messages.subscribe("Freeze-Avatar");
 
     return rayGun;
 });
