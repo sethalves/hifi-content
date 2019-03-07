@@ -32,7 +32,9 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
     };
 
     Tool.prototype = {
-        canActivate: false,
+        triggerHasReset: false,
+
+        enabled: true,
 
         startEquip: function(id, params) {
             this.equipped = true;
@@ -40,7 +42,7 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
             this.equipperID = params[1];
             this.targetEntity = null;
             this.active = false;
-            this.canActivate = false; // to avoid firing right as the thing is equipped
+            this.triggerHasReset = false; // to avoid firing right as the thing is equipped
             if (this.equipStarted) {
                 this.equipStarted(id, params);
             }
@@ -79,20 +81,21 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
             if (this.triggerValue < RELOAD_THRESHOLD) {
                 this.targetEntity = null;
                 this.targetAvatar = null;
-                this.canActivate = true;
+                this.triggerHasReset = true;
                 if (this.active && this.toolFunctionStop) {
                     this.toolFunctionStop();
                 }
                 this.active = false;
             }
-            if (this.canActivate === true && this.triggerValue > 0.55) {
-                this.canActivate = false;
+            if (this.enabled && this.triggerHasReset === true && this.triggerValue > 0.55) {
+                this.triggerHasReset = false;
                 this.updateProps();
                 this.activate();
             }
         },
 
         releaseEquip: function(id, params) {
+            this.equipperID = null;
             if (this.equipStopped) {
                 this.equipStopped(id, params);
             }
