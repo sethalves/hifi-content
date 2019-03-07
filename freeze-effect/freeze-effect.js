@@ -115,7 +115,7 @@ function scheduleUnfreeze(avatarID, position, rotation, lifetime, newEntityIDs) 
 function addLockdownEntity(avatarID, position, rotation, lifetime) {
     Entities.addEntity({
         name: "frozen-" + avatarID,
-        type: "Sphere",
+        type: "Box",
         color: { red: 0, green: 0, blue: 0 },
         dimensions: 0.1,
         localPosition: Vec3.ZERO,
@@ -128,7 +128,7 @@ function addLockdownEntity(avatarID, position, rotation, lifetime) {
         userData: JSON.stringify({
             position: position,
             rotation: rotation,
-            lifetime: lifetime - 0.6 // jump target back slightly before they unfreeze
+            lifetime: lifetime - 0.8 // jump target back slightly before they unfreeze
         }),
         ignorePickIntersection: true,
         grab: { grabbable: false }

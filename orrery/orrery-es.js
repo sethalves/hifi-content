@@ -20,6 +20,7 @@
         "PLUTO"
     ];
 
+
     var orreryBaseLocation = { x: 12000, y: 11998.5, z: 12000 };
     var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
     // var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
@@ -28,6 +29,7 @@
     var bodyPivotIDs = {}; // each of these has an offset anchor child
     var bodyEntityIDs = {}; // these are children of anchors
     var clockEntityID = null;
+    // var // pivotSpin = {};
 
     var startTime = null;
 
@@ -191,6 +193,7 @@
     function spinBodies(bodies, orreryEpochSeconds) {
         bodyKeys.forEach(function(bodyKey) {
             if (bodyKey == "SUN") {
+                // pivotSpin.SUN = { x: 0, y: 0, z: 0 };
                 return;
             }
 
@@ -230,6 +233,10 @@
             var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
             pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
 
+            if (bodyKey == "MOON") {
+                pivotAngularVelocity = { x: 0, y: 0.1, z: 0 };
+            }
+
             Entities.editEntity(bodyPivotIDs[bodyKey], {
                 localAngularVelocity: pivotAngularVelocity,
             });
@@ -252,7 +259,57 @@
         updateClock(orreryEpochSeconds);
     }
 
-    function updateBodies() {
+    function createOrrery() {
+
+        orreryBaseLocation = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 1, z: -5 }));
+
+        Entities.addEntity({
+            cutoff: 0,
+            damping: 0,
+            dimensions: { x: 20, y: 20, z: 20 },
+            falloffRadius: 1000,
+            intensity: 8,
+            name: "Orrery Sun Light",
+            position: orreryBaseLocation,
+            type: "Light",
+            userData: JSON.stringify({
+                grabbableKey: { grabbable: false },
+                orrery: true
+            }),
+            lifetime: 600
+        });
+
+        Entities.addEntity({
+            ambientLight: {
+                ambientIntensity: 1
+            },
+            ambientLightMode: "enabled",
+            bloomMode: "disabled",
+            collisionless: true,
+            dimensions: { x: 100, y: 100, z: 100 },
+            haze: {
+                hazeBackgroundBlend: 0.7400000095367432,
+                hazeCeiling: 1000,
+                hazeColor: { blue: 59, green: 23, red: 14 },
+                hazeGlareAngle: 36,
+                hazeRange: 300
+            },
+            hazeMode: "enabled",
+            ignoreForCollisions: true,
+            keyLightMode: "disabled",
+            name: "Orrery Zone",
+            position: orreryBaseLocation,
+            shapeType: "box",
+            skyboxMode: "disabled",
+            type: "Zone",
+            userData: JSON.stringify({
+                grabbableKey: { grabbable: false },
+                orrery: true
+            }),
+            lifetime: 600
+        });
+
+
         apiRequest(function(bodies, orreryEpochSeconds) {
             bodyKeys.forEach(function(bodyKey) {
                 var bodyData = bodies[bodyKey];
@@ -368,7 +425,8 @@
                             userData: JSON.stringify({
                                 grabbableKey: { grabbable: false },
                                 orrery: true
-                            })
+                            }),
+                            lifetime: 600
                         });
                     }
 
@@ -428,37 +486,71 @@
     }
 
 
-    var handleMessages = function(channel, message, sender) {
-        if (channel !== "Orrery Controls") {
-            return;
-        }
-        if (sender != MyAvatar.sessionUUID) {
-            return;
-        }
+    // var handleMessages = function(channel, message, sender) {
+    //     if (channel !== "Orrery Controls") {
+    //         return;
+    //     }
+    //     if (sender != MyAvatar.sessionUUID) {
+    //         return;
+    //     }
 
-        var parsedMessage = {};
-        try {
-            parsedMessage = JSON.parse(message);
-            print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
-            if (parsedMessage.action == "reset") {
-                startTime = null;
-                cleanupEntities();
-                updateBodies();
-            } else if (parsedMessage.action == "spin") {
-                startTime = null;
-                cleanupEntities();
-                updateBodies();
-                apiRequest(spinBodies);
-            }
-        } catch (e) {
-            print(e);
-        }
-    };
+    //     var parsedMessage = {};
+    //     try {
+    //         parsedMessage = JSON.parse(message);
+    //         print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
+    //         if (parsedMessage.action == "reset") {
+    //             startTime = null;
+    //             cleanupEntities();
+    //             createOrrery();
+    //         } else if (parsedMessage.action == "spin") {
+    //             startTime = null;
+    //             cleanupEntities();
+    //             createOrrery();
+    //             apiRequest(spinBodies);
+    //         }
+    //     } catch (e) {
+    //         print(e);
+    //     }
+    // };
 
-    Messages.messageReceived.connect(handleMessages);
-    Messages.subscribe("Orrery Controls");
+    // Messages.messageReceived.connect(handleMessages);
+    // Messages.subscribe("Orrery Controls");
 
     Script.scriptEnding.connect(function () {
         cleanupEntities();
     });
+
+    this.preload = function (entityID) {
+        this.entityID = entityID;
+    };
+
+    this.turnOn = function () {
+        if (!bodyEntityIDs.SUN) {
+            print("spawning orrery");
+            startTime = null;
+            cleanupEntities();
+            createOrrery();
+        } else {
+            print("spinning orrery");
+            startTime = null;
+            cleanupEntities();
+            createOrrery();
+            apiRequest(spinBodies);
+        }
+    };
+
+    this.startNearTrigger = function (entityID) {
+        this.entityID = entityID;
+        this.turnOn();
+    };
+
+    this.clickDownOnEntity = function (entityID, mouseEvent) {
+        this.entityID = entityID;
+        this.turnOn();
+    };
+
+    this.startFarTrigger = function (entityID) {
+        this.entityID = entityID;
+        this.turnOn();
+    };
 });

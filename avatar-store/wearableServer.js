@@ -18,6 +18,7 @@
     var spawnMoreChildren;
     var properties;
     var newEntityProperties;
+    var nth = 0;
 
     var Wearable = function() {
 
@@ -39,9 +40,7 @@
                 lifetime: CLONE_LIFETIME,
                 visible: false,
                 shapeType: "box",
-
                 collidesWith: "dynamic,"
-
             };
             removedFromParentHandler = function(channel, data, sender) {
                 if (channel === removedFromParentChannel) {
@@ -50,6 +49,8 @@
             };
             Messages.messageReceived.connect(removedFromParentHandler);
             spawnMoreChildren = Script.setInterval(function() {
+                newEntityProperties.name = 'Mexico Hat ' + nth;
+                nth++;
                 if (Entities.getChildrenIDs(entityID).length === 0) {
                     Entities.addEntity(newEntityProperties);
                 }

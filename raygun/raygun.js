@@ -2,8 +2,8 @@
 /* global Entities, Script, Vec3, Messages, Controller */
 
 (function() {
-    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js");
-    var freezeEffect = Script.require("http://headache.hungry.com/~seth/hifi/freeze-effect/freeze-effect.js");
+    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js?v=2");
+    var freezeEffect = Script.require("http://headache.hungry.com/~seth/hifi/freeze-effect/freeze-effect.js?v=2");
 
     var rayGun;
     var freezeTime = 5.0;
@@ -15,10 +15,12 @@
     rayGun = genericTool.genericTool(
         // start
         function() {
-            rayGun.enabled = false;
+            rayGun.gunRecovering = true;
+            rayGun.enableGun();
+
             Script.setTimeout(function () {
-                rayGun.enabled = true;
-                Controller.triggerHapticPulse(HAPTIC_PULSE_STRENGTH, HAPTIC_PULSE_DURATION, rayGun.hand);
+                rayGun.gunRecovering = false;
+                rayGun.enableGun();
             }, gunRecoverTime * 1000);
 
             var origin = this.pickRay.origin;
@@ -41,9 +43,9 @@
                     position: hitCoords,
                     color: {red: 0, green: 200, blue: 200},
                     visible: true,
-                    dimensions: { x: 0.6, y: 0.6, z: 0.6 },
-                    lifetime: 2.0,
-                    alpha: 0.6
+                    dimensions: { x: 0.5, y: 0.5, z: 0.5 },
+                    lifetime: 1.0,
+                    alpha: 0.4
                 });
             } else {
                 distance = 20;
@@ -81,7 +83,7 @@
             parentJointIndex: -1,
             localRotation: {x: 0, y: 0, z: 0, w: 1},
             localPosition: {x: 0, y: 0.008, z: 0.12},
-            lifetime: 0.25
+            lifetime: 0.35
         });
     };
 
@@ -94,6 +96,15 @@
     };
 
     rayGun.laserOffsets = { x: 0, y: 0.008, z: 0.12 };
+
+    rayGun.enableGun = function () {
+        if (!rayGun.frozen && !rayGun.gunRecovering) {
+            Controller.triggerHapticPulse(HAPTIC_PULSE_STRENGTH, HAPTIC_PULSE_DURATION, rayGun.hand);
+            rayGun.enabled = true;
+        } else {
+            rayGun.enabled = false;
+        }
+    };
 
     rayGun.handleMessages = function (channel, message, sender) {
         if (channel !== "Freeze-Avatar") {
@@ -108,9 +119,14 @@
         }
 
         if (data.method == "freeze" && data.targetID == rayGun.equipperID) {
-            rayGun.enabled = false;
+            rayGun.frozen = true;
+            rayGun.enableGun();
+            Controller.triggerHapticPulse(HAPTIC_PULSE_STRENGTH, HAPTIC_PULSE_DURATION * 8, "left");
+            Controller.triggerHapticPulse(HAPTIC_PULSE_STRENGTH, HAPTIC_PULSE_DURATION * 8, "right");
         } else if (data.method == "unfreeze" && data.targetID == rayGun.equipperID) {
-            rayGun.enabled = true;
+            rayGun.frozen = false;
+            rayGun.enableGun();
+            Controller.triggerHapticPulse(HAPTIC_PULSE_STRENGTH, HAPTIC_PULSE_DURATION, rayGun.hand);
         }
     };
 

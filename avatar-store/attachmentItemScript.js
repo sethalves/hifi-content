@@ -7,7 +7,7 @@
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
-/* global Render, Selection */
+/* global Selection, SoundCache, Script, MyAvatar, Entities, Vec3, UserActivityLogger, Messages, Settings, Controller, AvatarList */
 
 (function() {
     var highlightGrabToggle = false;
@@ -28,6 +28,7 @@
     var RELEASE_GRAB_CHANNEL_BASE = "AvatarStoreReleaseGrab";
     var NOT_ATTACHED_DESTROY_RADIUS = 0.1;
     var IN_CHECKOUT_SETTINGS = 'io.highfidelity.avatarStore.checkOut.isInside';
+    var MINIMUM_ACTIVATION_RADIUS = 4; // meters
 
     var removedFromParentChannel;
     var releaseGrabChannel;
@@ -174,6 +175,26 @@
             Messages.unsubscribe(releaseGrabChannel);
             Messages.unsubscribe(removedFromParentChannel);
         },
+
+        clickDownOnEntity: function(entityID, mouseEvent) {
+            if (!mouseEvent.isPrimaryButton) {
+                // only attach by primary mouse button
+                return;
+            }
+            if (Vec3.distance(Entities.getEntityProperties(_entityID, 'position').position,
+                              MyAvatar.position) > MINIMUM_ACTIVATION_RADIUS) {
+                // only allow attaching when avatar is inside MINIMUM_ACTIVATION_RADIUS
+                return;
+            }
+            var childIDs = Entities.getChildrenIDs(_entityID);
+            if (childIDs.length === 0) {
+                print('[DesktopAttacher_' + _entityID + '] no child entities found..');
+                return;
+            }
+            Entities.callEntityMethod(childIDs[0], 'desktopAttach');
+            Entities.callEntityServerMethod(_entityID, 'spawnNewEntity'); // Replace child entity
+        },
+
         /**
          * Local remote function to be called from desktopAttachment.js whenever a click event is registered.
          * @param entityID current entityID
@@ -214,6 +235,8 @@
                 visible: true,
                 localPosition: defaultPosition,
                 localRotation: defaultRotation,
+                localVelocity: {x: 0, y: 0, z: 0},
+                localAngularVelocity: {x: 0, y: 0, z: 0},
                 dimensions: defaultDimensions,
                 parentID: MyAvatar.sessionUUID,
                 parentJointIndex: jointIndex,
@@ -302,6 +325,8 @@
                             parentID: MyAvatar.sessionUUID,
                             parentJointIndex: MyAvatar.getJointIndex(joint),
                             userData: newEntityProperties.userData,
+                            localVelocity: {x: 0, y: 0, z: 0},
+                            localAngularVelocity: {x: 0, y: 0, z: 0},
                             lifetime: -1
                         });
                         playAttachSound();

@@ -3,7 +3,8 @@
 #
 
 # WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
-WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+# WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool
 L_SYSTEM_TREE=../L-system-tree/L-system-tree
 OPENSCAD_FN=10
 COMBINE_DISTANCE=0.2
@@ -13,6 +14,9 @@ SKYBOX_HEIGTH=640
 
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
 
+
+%.stl: %.scad
+	openscad -o $@ $^
 
 %.obj.gz: %.obj
 	cat $< | gzip -9 - > $@
@@ -44,14 +48,34 @@ TERRAIN_TARGETS= \
 all: $(TERRAIN_TARGETS)
 
 
-terrain-textured.obj: terrain.obj
+terrain-scaled.obj: terrain.obj
 	$(WAVEFRONT_OBJ_TOOL) \
-	-L terrain.mtl -S terrain_mtl \
-	-R 0 0 0.7071067690849304 0.7071067690849304 \
-	-s 2000 \
-	--center \
-	$^ \
-	> $@
+		-L terrain.mtl -S terrain_mtl \
+		-R 0 0 0.7071067690849304 0.7071067690849304 -s 2000 --center \
+		$^ -o $@
+
+# -C 0.001 -c \
+
+
+terrain.scad: terrain-scaled.obj
+	$(WAVEFRONT_OBJ_TOOL) $^ -o $@
+
+terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad
+	openscad -o $@ $<
+
+terrain-with-caves.obj: terrain-with-caves.stl
+	$(WAVEFRONT_OBJ_TOOL) $^ -o $@
+
+terrain-fixed.obj: terrain-with-caves.obj
+	$(WAVEFRONT_OBJ_TOOL) \
+		-C 2 -c \
+		$^ -o $@
+
+terrain-textured.obj: terrain-fixed.obj
+	$(WAVEFRONT_OBJ_TOOL) \
+		-L terrain.mtl -S terrain_mtl \
+		--copy-textures terrain-scaled.obj 100 \
+		$^ -o $@
 
 
 
@@ -167,6 +191,7 @@ clean:
 	rm -f terrain-textured.obj
 	rm -f tree-locations.dat
 	rm -rf wm-terrain
+	rm -f terrain-scaled.obj terrain.scad terrain-with-caves.stl terrain-fixed.obj terrain-textured.obj
 
 
 very-clean: clean

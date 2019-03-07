@@ -525,7 +525,7 @@ function propertiesToEntitiesAuto(jsonDecoded, basePosition, baseRotation) {
     if (!makeAvatarEntities) {
         // some domains allow rezzing but then block it with server-side filters.
         // wait 1/5 of a second and make sure the entities made it.
-        Script.setTimeout(function() {
+        Script.setTimeout(function () {
             var success = checkRezSuccess(newEntityIDs);
             if (!success) {
                 for (var i = 0; i < newEntityIDs.length; i++) {
@@ -731,6 +731,7 @@ module.exports = {
     cleanProperties: cleanProperties,
     isNullID: isNullID,
     sortPropertiesByParentChainOrder: sortPropertiesByParentChainOrder,
+    objectsAlmostEqual: objectsAlmostEqual,
     entitiesIDsToProperties: entitiesIDsToProperties,
     checkRezSuccess: checkRezSuccess,
     propertiesToEntities: propertiesToEntities,

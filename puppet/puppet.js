@@ -886,7 +886,6 @@ Script.include("/~/system/libraries/controllers.js");
         var mesh = Graphics.getModel(MyAvatar.sessionUUID);
         if (mesh) {
             var materials = mesh.materialLayers;
-            // for (var m = 0; m < mesh.meshes.length; m++) { // XXX not mesh.meshes.length
             for (var m in materials) {
                 if (materials.hasOwnProperty(m) && parseInt(m.toString()) == m) {
                     var multiMaterial = materials[m];

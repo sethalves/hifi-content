@@ -9,6 +9,8 @@
 //  Distributed under the Apache License, Version 2.0.
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
+/* global Vec3, Entities, MyAvatar */
+
 (function() {
     var _entityID;
     var MINIMUM_ACTIVATION_RADIUS = 4; // meters
