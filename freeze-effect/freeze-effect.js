@@ -31,7 +31,7 @@ function applyMaterial(targetID, opacity, lifetime, andChildren, materialsDict) 
     try {
         mesh = Graphics.getModel(targetID);
     } catch (e) {
-        print("QQQQ no mesh for " + targetID);
+        // print("QQQQ no mesh for " + targetID);
     }
 
     if (mesh) {
@@ -72,13 +72,12 @@ function applyMaterial(targetID, opacity, lifetime, andChildren, materialsDict) 
         }
     }
 
-
     return newEntityIDs;
 }
 
 
-function fadeTarget(avatarID, opacity, lifetime, andChildren) {
-    return applyMaterial(avatarID, opacity, lifetime, andChildren, {
+function fadeTarget(targetID, opacity, lifetime, andChildren) {
+    return applyMaterial(targetID, opacity, lifetime, andChildren, {
         model: "hifi_pbr",
         opacity: opacity,
         defaultFallthrough: true
@@ -86,8 +85,8 @@ function fadeTarget(avatarID, opacity, lifetime, andChildren) {
 }
 
 
-function colorTarget(entityID, opacity, lifetime, color, andChildren) {
-    return applyMaterial(entityID, opacity, lifetime, andChildren, {
+function colorTarget(targetID, opacity, lifetime, color, andChildren) {
+    return applyMaterial(targetID, opacity, lifetime, andChildren, {
         albedo: color,
         opacity: opacity,
         defaultFallthrough: true
@@ -129,7 +128,7 @@ function addLockdownEntity(avatarID, position, rotation, lifetime) {
         userData: JSON.stringify({
             position: position,
             rotation: rotation,
-            lifetime: lifetime
+            lifetime: lifetime - 0.6 // jump target back slightly before they unfreeze
         }),
         ignorePickIntersection: true,
         grab: { grabbable: false }
