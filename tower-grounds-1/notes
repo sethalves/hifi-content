@@ -1,0 +1,9 @@
+-*- org -*-
+
+* design in wolframalpha
+
+https://www.wolframalpha.com/
+
+Plot3D[Cos[y] Sin[x] (1/x), {x, -1, 5}, {y, -1, 5}]
+
+Plot3D[Cos[y] Sin[x-5] (1/(x-5)), {x, -5, 5}, {y, -5, 5}]
