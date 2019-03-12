@@ -450,6 +450,7 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
     var patchUps = [];
 
     // deep copy
+
     props = JSON.parse(JSON.stringify(jsonDecoded.Entities));
     try {
         actions = JSON.parse(JSON.stringify(jsonDecoded.Actions));
@@ -828,7 +829,7 @@ function propertySetsAreSimilar(propsA, propsB) {
 
 function getIDsFromProperties(jsonDecoded) {
     var entityIDs = [];
-    for (var i = 0; i < jsonDecoded.Entities; i++) {
+    for (var i = 0; i < jsonDecoded.Entities.length; i++) {
         var entityProps = jsonDecoded.Entities[i];
         entityIDs.push(entityProps.id);
     }
