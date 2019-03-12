@@ -24,26 +24,52 @@ Script.include("/~/system/libraries/controllers.js");
     var TRIGGER_ON_VALUE = TRIGGER_OFF_VALUE + 0.05; // Squeezed just enough to activate search or near grab
 
 
+    // function detectScabbardGesture(controllerLocation, hand) {
+    //     if (! controllerLocation.valid) {
+    //         return false;
+    //     }
+    //
+    //     var neckJointIndex = MyAvatar.getJointIndex("Neck");
+    //     var avatarFrameNeckPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(neckJointIndex);
+    //     var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
+    //     var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
+    //
+    //     var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
+    //     var avatarFrameControllerRot = MyAvatar.worldToJointRotation(controllerLocation.orientation, -1);
+    //
+    //     if (avatarFrameControllerPos.y > avatarFrameNeckPos.y && // above the neck and
+    //         avatarFrameControllerPos.z + 0.08 > avatarFrameEyePos.z) { // (nearly) behind the eyes
+    //         var localHandUpAxis = hand === RIGHT_HAND ? { x: 1, y: 0, z: 0 } : { x: -1, y: 0, z: 0 };
+    //         var localHandUp = Vec3.multiplyQbyV(avatarFrameControllerRot, localHandUpAxis);
+    //         if (Vec3.dot(localHandUp, DOWN) > 0.0) {
+    //             return true; // hand is upside-down vs avatar
+    //         }
+    //     }
+    //     return false;
+    // }
+
+
     function detectScabbardGesture(controllerLocation, hand) {
         if (! controllerLocation.valid) {
             return false;
         }
 
-        var neckJointIndex = MyAvatar.getJointIndex("Neck");
-        var avatarFrameNeckPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(neckJointIndex);
         var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
         var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
+        var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightShoulder" : "LeftShoulder");
+        var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
+        var avatarFrameScabbardPoint = { x: shoulderPos.x, y: avatarFrameEyePos.y, z: avatarFrameEyePos.z };
 
         var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
-        var avatarFrameControllerRot = MyAvatar.worldToJointRotation(controllerLocation.orientation, -1);
+        // var avatarFrameControllerRot = MyAvatar.worldToJointRotation(controllerLocation.orientation, -1);
 
-        if (avatarFrameControllerPos.y > avatarFrameNeckPos.y && // above the neck and
-            avatarFrameControllerPos.z > avatarFrameEyePos.z) { // behind the eyes
+        if (Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.20) {
             var localHandUpAxis = hand === RIGHT_HAND ? { x: 1, y: 0, z: 0 } : { x: -1, y: 0, z: 0 };
-            var localHandUp = Vec3.multiplyQbyV(avatarFrameControllerRot, localHandUpAxis);
-            if (Vec3.dot(localHandUp, DOWN) > 0.0) {
-                return true; // hand is upside-down vs avatar
-            }
+            // var localHandUp = Vec3.multiplyQbyV(avatarFrameControllerRot, localHandUpAxis);
+            // if (Vec3.dot(localHandUp, DOWN) > 0.0) {
+            //     return true; // hand is upside-down vs avatar
+            // }
+            return true;
         }
         return false;
     }
@@ -74,7 +100,7 @@ Script.include("/~/system/libraries/controllers.js");
             if (detectScabbardGesture(controllerLocation, this.hand)) {
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
 
-                // this line would make the scabbard empty after an item is take out:
+                // this line would make the scabbard empty after an item is taken out:
                 // this.entityInScabbardProps = null;
             }
         };
@@ -127,12 +153,45 @@ Script.include("/~/system/libraries/controllers.js");
         this.noteGrab = function (grabbedEntityID) {
             this.inHandID = grabbedEntityID;
         };
+
+
+        this.cleanup = function () {
+            if (this.debugEntity) {
+                Entities.deleteEntity(this.debugEntity);
+            }
+        }
+
+
+        this.debug = function () {
+            var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
+            var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
+            var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightArm" : "LeftArm");
+            var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
+            var avatarFrameScabbardPoint = { x: shoulderPos.x, y: avatarFrameEyePos.y, z: avatarFrameEyePos.z };
+
+            this.debugEntity = Entities.addEntity({
+                name: "scabbard debug entity",
+                type: "Sphere",
+                color: { red: 220, green: 140, blue: 0 },
+                dimensions: 0.20 * 2.0,
+                localPosition: avatarFrameScabbardPoint,
+                parentID: MyAvatar.sessionUUID,
+                parentJointIndex: -1,
+                dynamic: false,
+                collisionless: true,
+                lifetime: 500,
+                alpha: 0.8,
+                grab: { grabbable: false }
+            });
+        };
     }
 
 
     var leftScabbard = new Scabbard(LEFT_HAND);
     var rightScabbard = new Scabbard(RIGHT_HAND);
 
+    // leftScabbard.debug();
+    // rightScabbard.debug();
 
     function leftTrigger(value) {
         leftScabbard.handleTriggerValue(value);
@@ -144,10 +203,10 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function handleMessage(channel, message, sender) {
+    function handleMessages(channel, message, sender) {
         var data;
         if (sender === MyAvatar.sessionUUID) {
-            if (channel === 'Hifi-Object-Manipulation') {
+            if (channel === "Hifi-Object-Manipulation") {
                 try {
                     data = JSON.parse(message);
                     if (data.action == "release") {
@@ -172,21 +231,26 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function cleanup() {
-        menuMapping.disable();
-    }
+    Messages.subscribe("Hifi-Object-Manipulation");
+    Messages.messageReceived.connect(handleMessages);
 
-    Messages.subscribe('Hifi-Object-Manipulation');
-    Messages.messageReceived.connect(handleMessage);
+    var mappingName = "Scabbard-Mapping-" + "-" + Math.random();
+    var triggerMapping = Controller.newMapping(mappingName);
 
-    var mappingName = 'Scabbard-Mapping-' + "-" + Math.random();
-    var menuMapping = Controller.newMapping(mappingName);
-
-    menuMapping.from(Controller.Standard.LT).peek().to(leftTrigger);
-    menuMapping.from(Controller.Standard.RT).peek().to(rightTrigger);
+    triggerMapping.from(Controller.Standard.LT).peek().to(leftTrigger);
+    triggerMapping.from(Controller.Standard.RT).peek().to(rightTrigger);
 
     Controller.enableMapping(mappingName);
 
+    function cleanup() {
+        Messages.unsubscribe("Hifi-Object-Manipulation");
+        Messages.messageReceived.disconnect(handleMessages);
+
+        triggerMapping.disable();
+
+        leftScabbard.cleanup();
+        rightScabbard.cleanup();
+    }
     Script.scriptEnding.connect(cleanup);
 
 }());
