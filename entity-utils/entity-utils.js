@@ -21,27 +21,43 @@ function objectsAlmostEqual(x, y, tolerance) {
     }
 
     // test for deep equality, but allow some slack in numbers
-    if (x === null || x === undefined || y === null || y === undefined) { return x === y; }
+    if (x === null || x === undefined || y === null || y === undefined) {
+        return x === y;
+    }
     // after this just checking type of one would be enough
-    if (x.constructor !== y.constructor) { return false; }
+    if (x.constructor !== y.constructor) {
+        return false;
+    }
     // if they are functions, they should exactly refer to same one (because of closures)
-    if (x instanceof Function) { return x === y; }
+    if (x instanceof Function) {
+        return x === y;
+    }
     // if they are regexps, they should exactly refer to same one (it is hard to better equality check on current ES)
-    if (x instanceof RegExp) { return x === y; }
+    if (x instanceof RegExp) {
+        return x === y;
+    }
 
     if (typeof x == typeof 5 && typeof y == typeof 5) {
         return Math.abs(x - y) < tolerance;
     }
 
     if (x === y || x.valueOf() === y.valueOf()) { return true; }
-    if (Array.isArray(x) && x.length !== y.length) { return false; }
+    if (Array.isArray(x) && x.length !== y.length) {
+        return false;
+    }
 
     // if they are dates, they must had equal valueOf
-    if (x instanceof Date) { return false; }
+    if (x instanceof Date) {
+        return false;
+    }
 
     // if they are strictly equal, they both need to be object at least
-    if (!(x instanceof Object)) { return false; }
-    if (!(y instanceof Object)) { return false; }
+    if (!(x instanceof Object)) {
+        return false;
+    }
+    if (!(y instanceof Object)) {
+        return false;
+    }
 
     // recursive object equality check
     var p = Object.keys(x);
@@ -79,6 +95,51 @@ var defaultProperties = {
     "angularDamping": 0.39346998929977417, // actually 0.39347, but ieee
     "visible": true,
     "canCastShadow": true,
+    "isVisibleInSecondaryCamera": true,
+    "renderLayer": "world",
+    "primitiveMode": "solid",
+    "ignorePickIntersection": false,
+    "grab": {
+        "grabbable": true,
+        "grabKinematic": true,
+        "grabFollowsController": true,
+        "triggerable": false,
+        "equippable": false,
+        "grabDelegateToParent": true,
+        "equippableLeftPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "equippableLeftRotation": {
+            "x": -1.52587890625e-05,
+            "y": -1.52587890625e-05,
+            "z": -1.52587890625e-05,
+            "w": 1
+        },
+        "equippableRightPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "equippableRightRotation": {
+            "x": -1.52587890625e-05,
+            "y": -1.52587890625e-05,
+            "z": -1.52587890625e-05,
+            "w": 1
+        },
+        "equippableIndicatorURL": "",
+        "equippableIndicatorScale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+        },
+        "equippableIndicatorOffset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        }
+    },
     "collisionless": false,
     // "ignoreForCollisions": false, // ? XXX
     // "collisionMask": 31,
@@ -91,7 +152,13 @@ var defaultProperties = {
     "locked": false,
     "userData": "",
     "alpha": 1,
-    "itemName": "",
+    "pulse": {
+        "min": 0,
+        "max": 1,
+        "period": 1,
+        "colorMode": "none",
+        "alphaMode": "none"
+    },    "itemName": "",
     "itemDescription": "",
     "itemCategories": "",
     "itemArtist": "",
@@ -117,6 +184,11 @@ var defaultProperties = {
     "localAngularVelocity": { "x": 0, "y": 0, "z": 0 },
     "localDimensions": { "x": 0.2, "y": 0.2, "z": 0.2 },
     "clientOnly": false,
+    "avatarEntity": false,
+    "localEntity": false,
+    "faceCamera": false,
+    "isFacingAvatar": false,
+    "entityHostType": "domain",
     "owningAvatarID": "{00000000-0000-0000-0000-000000000000}",
     // "renderInfo": null,
     "cloneable": false,
@@ -221,6 +293,22 @@ function cleanProperties(props, removeDefaults) {
         }
     }
 
+    // scrub grab-key stuff out of userData
+    try {
+        var userData = JSON.parse(props.userData);
+        if (userData) {
+            delete userData.grabbableKey;
+            delete userData.equipHotspots;
+            if (userData.wearable && userData.wearable.joints) {
+                delete userData.wearable.joints.LeftHand;
+                delete userData.wearable.joints.RightHand;
+            }
+            props.userData = JSON.stringify(userData);
+        }
+    } catch (userDataErr) {
+        // userData may not be json
+    }
+
     return props;
 }
 
@@ -251,7 +339,7 @@ function sortPropertiesByParentChainOrder(props) {
             }
         }
 
-        // push non-children to the front or the list
+        // push non-children to the front of the list
         if (!isNullID(sortPropsA.parentID) && isNullID(sortPropsB.parentID)) {
             return 1;
         }
@@ -652,9 +740,14 @@ function propertySetsAreSimilar(propsA, propsB) {
     // { Entities: [ ... ], Actions: [ ... ] }
     // TODO -- examine the parent/child and neighbor relationships and the actions
 
+    var debugPrints = false;
+
+
     if (propsA.Entities.length != propsB.Entities.length) {
-        // print("QQQQ propsA.Entities.length != propsB.Entities.length -- " +
-        //       propsA.Entities.length + " " + propsB.Entities.length);
+        if (debugPrints) {
+            print("QQQQ propsA.Entities.length != propsB.Entities.length -- " +
+                  propsA.Entities.length + " " + propsB.Entities.length);
+        }
         return false;
     }
 
@@ -696,8 +789,10 @@ function propertySetsAreSimilar(propsA, propsB) {
     scrubPropsList(entityPropsACopy);
     scrubPropsList(entityPropsBCopy);
 
-    // print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
-    // print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+    if (debugPrints) {
+        print("QQQQ entityPropsACopy = " + JSON.stringify(entityPropsACopy));
+        print("QQQQ entityPropsBCopy = " + JSON.stringify(entityPropsBCopy));
+    }
 
     // var result = (JSON.stringify(entityPropsACopy) == JSON.stringify(entityPropsBCopy));
     // they are sorted by IDs, and these have changed, so the above line can fail.
@@ -716,14 +811,42 @@ function propertySetsAreSimilar(propsA, propsB) {
             }
         }
         if (!foundMatch) {
-            // print("QQQQ no match for " + JSON.stringify(aCopy));
-            // print("QQQQ similar result = false");
+            if (debugPrints) {
+                print("QQQQ no match for " + JSON.stringify(aCopy));
+                print("QQQQ similar result = false");
+            }
             return false;
         }
     }
 
-    // print("QQQQ similar result = true");
+    if (debugPrints) {
+        print("QQQQ similar result = true");
+    }
     return true;
+}
+
+
+function getIDsFromProperties(jsonDecoded) {
+    var entityIDs = [];
+    for (var i = 0; i < jsonDecoded.Entities; i++) {
+        var entityProps = jsonDecoded.Entities[i];
+        entityIDs.push(entityProps.id);
+    }
+    return entityIDs;
+}
+
+
+function deleteEntities(entityIDs, waitBetweenMS, doneThunk) {
+    var entityIDsToDelete = entityIDs.slice(); // deep copy
+    var deleteOneAndPause = function () {
+        if (entityIDsToDelete.length > 0) {
+            Entities.deleteEntity(entityIDsToDelete.pop());
+            Script.setTimeout(deleteOneAndPause, waitBetweenMS);
+        } else {
+            doneThunk();
+        }
+    };
+    deleteOneAndPause();
 }
 
 
@@ -738,5 +861,7 @@ module.exports = {
     propertiesToEntitiesAuto: propertiesToEntitiesAuto,
     getRootIDOfParentingTree: getRootIDOfParentingTree,
     getConnectedEntityIDs: getConnectedEntityIDs,
-    propertySetsAreSimilar: propertySetsAreSimilar
+    propertySetsAreSimilar: propertySetsAreSimilar,
+    getIDsFromProperties: getIDsFromProperties,
+    deleteEntities: deleteEntities
 };

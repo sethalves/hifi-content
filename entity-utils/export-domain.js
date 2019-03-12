@@ -25,6 +25,19 @@
                 props.id == "{b5151e2f-bd84-44f5-a9b9-84fc542007a3}" || // boat
                 props.name == "Alan water" ||
                 props.name == "Trees Skybox" ||
+                props.name == "terrain" ||
+
+                (props.name == "tree" &&
+                 props.id != "{b1998c35-3967-4a1e-843d-03afbb8c05e5}" &&
+                 props.id != "{410dc933-ce02-4793-bf13-b9fc1e03ba8d}" &&
+                 props.id != "{f6abc3cf-b612-462d-9883-60b9fa76abb3}") ||
+
+                props.id == "{47c46cf5-979d-45bb-8cdc-57878ab9a35c}" || // palm tree
+                props.id == "{2966ae23-e25d-4bb1-8681-62ba049dda84}" || // cave rock
+                props.id == "{2c42dacb-a31b-48b8-bee3-9e184e69a923}" || // cave rock
+                props.id == "{66c6568d-95e0-401b-affc-4bca85a475fc}" || // origin box
+                props.id == "{d5c8f6bf-b8b7-49d2-bd55-d36a07699b9f}" || // origin brick wall
+                props.id == "{d30d536f-a499-4d58-8faa-e485027a74c0}" || // "floor" box
                 props.name == "Moon") {
                 continue;
             }
