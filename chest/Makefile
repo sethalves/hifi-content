@@ -7,6 +7,7 @@ DOMAIN=eschatology
 # VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 ATP_CLIENT=../../hifi/build/tools/atp-client/atp-client
 WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+OPENSCAD=openscad-nightly
 
 %.obj: %.stl
 	$(WAVEFRONT_OBJ_TOOL) -m 0.4 -n -c $^ -o $@
@@ -17,13 +18,13 @@ WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 
 box-hull-parts/%.stl: chest.scad
 	mkdir -p box-hull-parts
-	openscad -D output_box_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
+	$(OPENSCAD) -D output_box_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
 
 lid-hull-parts/%.stl: chest.scad
 	mkdir -p lid-hull-parts
-	openscad -D output_lid_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
+	$(OPENSCAD) -D output_lid_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
 
-TARGETS=chest-box.obj chest-box-hull.obj chest-lid.obj chest-lid-hull.obj chest.mtl chest.json
+TARGETS=chest-box.obj chest-box-hull.obj chest-lid.obj chest-lid-hull.obj chest.mtl chest.json rez-chest.js
 
 
 BOX_HULL_PARTS=$(foreach nth,0 1 2 3 4,box-hull-parts/${nth}.obj)
@@ -37,7 +38,7 @@ all: ${TARGETS}
 #
 
 chest-box.stl: chest.scad
-	openscad -D output_box=1 -o $@ $^
+	$(OPENSCAD) -D output_box=1 -o $@ $^
 
 chest-box.obj: chest-box.stl
 	$(WAVEFRONT_OBJ_TOOL) -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl
@@ -47,7 +48,7 @@ chest-box.obj: chest-box.stl
 #
 
 chest-lid.stl: chest.scad
-	openscad -D output_lid=1 -o $@ $^
+	$(OPENSCAD) -D output_lid=1 -o $@ $^
 
 chest-lid.obj: chest-lid.stl
 	$(WAVEFRONT_OBJ_TOOL) -m 0.4 -n -c $^ -o $@ -L chest.mtl -S chest_wood_mtl

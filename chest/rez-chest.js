@@ -25,7 +25,10 @@
         dynamic: 1,
         gravity: { "x": 0, "y": -1, "z": 0 },
         shapeType: "compound",
-        userData: JSON.stringify({ grabbableKey: { grabbable: true, kinematic: false }})
+        grab: {
+            grabbable: true,
+            grabKinematic: false
+        }
     });
 
     var chestLidID = Entities.addEntity({
@@ -41,14 +44,17 @@
         dynamic: 1,
         gravity: { "x": 0, "y": -1, "z": 0 },
         shapeType: "compound",
-        userData: JSON.stringify({ grabbableKey: { grabbable: true, kinematic: false }})
+        grab: {
+            grabbable: true,
+            grabKinematic: false
+        }
     });
 
-    /* var hingeID = */ Entities.addAction("hinge", chestBoxID, {
-        pivot: { x: 0, y: height/2 + 0.002, z: -depth/2 },
+    /* var hingeID = */ Entities.addAction("hinge", chestLidID, {
+        pivot: { x: 0, y: -depth / 4, z: -depth/2 },
         axis: { x: 1, y: 0, z: 0 },
-        otherEntityID: chestLidID,
-        otherPivot: { x: 0, y: -depth / 4, z: -depth/2 },
+        otherEntityID: chestBoxID,
+        otherPivot: { x: 0, y: height/2 + 0.002, z: -depth/2 },
         otherAxis: { x: 1, y: 0, z: 0 },
         tag: "chest hinge"
     });
