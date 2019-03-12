@@ -1,0 +1,3 @@
+-*- org -*-
+
+./atp-client -d eschatology.hungry.com atp:/domain-cleaner-data.json
