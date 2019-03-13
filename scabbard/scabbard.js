@@ -17,7 +17,7 @@ Script.include("/~/system/libraries/controllers.js");
     var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
     var SCABBARD_SETTINGS = "io.highfidelity.scabbard";
-    var DOWN = { x: 0, y: -1, z: 0 };
+    // var DOWN = { x: 0, y: -1, z: 0 };
     var LEFT_HAND = 0;
     var RIGHT_HAND = 1;
 
@@ -56,21 +56,33 @@ Script.include("/~/system/libraries/controllers.js");
     // }
 
 
+    function getAvatarFrameScabbardPoint(hipOrShoulder, hand) {
+        if (hipOrShoulder == SHOULDER) {
+            var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
+            var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
+            var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightShoulder" : "LeftShoulder");
+            var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
+            return { x: shoulderPos.x, y: avatarFrameEyePos.y, z: 0.0 };
+        } else {
+            return {
+                x: hand == LEFT_HAND ? -0.15 : 0.15,
+                y: 0.07,
+                z: 0.08
+            };
+        }
+    }
+
+
     function detectShoulderGesture(controllerLocation, hand) {
         if (! controllerLocation.valid) {
             return false;
         }
 
-        var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
-        var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
-        var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightShoulder" : "LeftShoulder");
-        var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
-        var avatarFrameScabbardPoint = { x: shoulderPos.x, y: avatarFrameEyePos.y, z: 0.0 };
-
+        var avatarFrameScabbardPoint = getAvatarFrameScabbardPoint(SHOULDER, hand);
         var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
         // var avatarFrameControllerRot = MyAvatar.worldToJointRotation(controllerLocation.orientation, -1);
 
-        if (Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.20) {
+        if (Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.2) {
             // var localHandUpAxis = hand === RIGHT_HAND ? { x: 1, y: 0, z: 0 } : { x: -1, y: 0, z: 0 };
             // var localHandUp = Vec3.multiplyQbyV(avatarFrameControllerRot, localHandUpAxis);
             // if (Vec3.dot(localHandUp, DOWN) > 0.0) {
@@ -83,7 +95,13 @@ Script.include("/~/system/libraries/controllers.js");
 
 
     function detectHipGesture(controllerLocation, hand) {
-        return false;
+        if (! controllerLocation.valid) {
+            return false;
+        }
+
+        var avatarFrameScabbardPoint = getAvatarFrameScabbardPoint(HIP, hand);
+        var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
+        return Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.2;
     }
 
 
@@ -130,12 +148,12 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
-            if (this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) {
+            if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) ||
+                (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand))) {
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
 
                 // this line would make the scabbard empty after an item is taken out:
                 // this.entityInScabbardProps = null;
-            } else if (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand)) {
             }
         };
 
@@ -189,9 +207,8 @@ Script.include("/~/system/libraries/controllers.js");
             }
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
-            if (this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) {
-                this.saveEntityInScabbard(droppedEntityID, controllerLocation);
-            } else if (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand)) {
+            if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) ||
+                (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand))) {
                 this.saveEntityInScabbard(droppedEntityID, controllerLocation);
             }
         };
@@ -210,12 +227,7 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.debug = function () {
-            var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
-            var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
-            var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightArm" : "LeftArm");
-            var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
-            var avatarFrameScabbardPoint = { x: shoulderPos.x, y: avatarFrameEyePos.y, z: avatarFrameEyePos.z };
-
+            var avatarFrameScabbardPoint = getAvatarFrameScabbardPoint(this.hipOrShoulder, this.hand);
             this.debugEntity = Entities.addEntity({
                 name: "scabbard debug entity",
                 type: "Sphere",
@@ -238,13 +250,15 @@ Script.include("/~/system/libraries/controllers.js");
     var leftHipScabbard = new Scabbard(LEFT_HAND, HIP);
     var rightHipScabbard = new Scabbard(RIGHT_HAND, HIP);
 
+
     function leftTrigger(value) {
         leftShoulderScabbard.handleTriggerValue(value);
+        leftHipScabbard.handleTriggerValue(value);
     }
-
 
     function rightTrigger(value) {
         rightShoulderScabbard.handleTriggerValue(value);
+        rightHipScabbard.handleTriggerValue(value);
     }
 
 
@@ -287,6 +301,8 @@ Script.include("/~/system/libraries/controllers.js");
 
         leftShoulderScabbard.cleanup();
         rightShoulderScabbard.cleanup();
+        leftHipScabbard.cleanup();
+        rightHipScabbard.cleanup();
     }
 
 
@@ -310,6 +326,8 @@ Script.include("/~/system/libraries/controllers.js");
 
     // leftShoulderScabbard.debug();
     // rightShoulderScabbard.debug();
+    // leftHipScabbard.debug();
+    // rightHipScabbard.debug();
 
     Messages.subscribe("Hifi-Object-Manipulation");
     Messages.messageReceived.connect(handleMessages);
@@ -335,10 +353,6 @@ Script.include("/~/system/libraries/controllers.js");
         if (message.method == "leftHipLocked") { leftHipScabbard.setLocked(message.value); }
         if (message.method == "rightHipEnabled") { rightHipScabbard.setEnabled(message.value); }
         if (message.method == "rightHipLocked") { rightHipScabbard.setLocked(message.value); }
-
-        // if (message.method == "rez") {
-        // } else if (message.method == "derez") {
-        // }
     }
 
 
