@@ -577,16 +577,18 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
         if (action.hasOwnProperty("otherEntityID")) {
             if (!entityIDMap.hasOwnProperty(action.otherEntityID)) {
                 print("Warning: propertiesToEntities -- action on unknown otherEntityID: " + action.otherEntityID);
-                continue;
+                // not fatal -- otherID may be a locked in-world entity.
+            } else {
+                action.otherEntityID = entityIDMap[action.otherEntityID];
             }
-            action.otherEntityID = entityIDMap[action.otherEntityID];
         }
         if (action.hasOwnProperty("otherID")) {
             if (!entityIDMap.hasOwnProperty(action.otherID)) {
                 print("Warning: propertiesToEntities -- action on unknown otherID: " + action.otherID);
-                continue;
+                // not fatal -- otherID may be a locked in-world entity.
+            } else {
+                action.otherID = entityIDMap[action.otherID];
             }
-            action.otherID = entityIDMap[action.otherID];
         }
 
         if (action.type == "offset") {
@@ -748,6 +750,8 @@ function propertySetsAreSimilar(propsA, propsB) {
         if (debugPrints) {
             print("QQQQ propsA.Entities.length != propsB.Entities.length -- " +
                   propsA.Entities.length + " " + propsB.Entities.length);
+            print("QQQQ propsA = " + JSON.stringify(propsA));
+            print("QQQQ propsB = " + JSON.stringify(propsB));
         }
         return false;
     }
