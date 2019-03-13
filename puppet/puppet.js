@@ -61,27 +61,27 @@ Script.include("/~/system/libraries/controllers.js");
         });
         puppetEntities.rightUpperArm = rightUpperArmID;
 
-        Entities.addAction("cone-twist", bodyID, {
-            pivot: { x: 0, y: bodyHeight / 2 + upperArmThickness / 2, z: bodyWidth / 2 + shoulderGap / 2 },
-            axis: { x: 0, y: 0, z: 1 },
-            otherEntityID: rightUpperArmID,
-            otherPivot: { x: 0, y: 0, z: -upperArmLength / 2 - shoulderGap / 2 },
-            otherAxis: { x: 0, y: 0, z: 1 },
-            swingSpan1: Math.PI / 2,
-            swingSpan2: Math.PI / 2,
-            twistSpan: 0,
-            tag: "puppet right shoulder joint"
-        });
-
-        // Entities.addAction("tractor", rightUpperArmID, {
-        //     targetRotation: Quat.fromPitchYawRollDegrees(-90, 0, 0),
-        //     angularTimeScale: 0.02,
-        //     targetPosition: { x: 0, y: upperArmLength / 2, z: 0 },
-        //     linearTimeScale: 0.02,
-        //     otherID: MyAvatar.sessionUUID,
-        //     otherJointIndex: MyAvatar.getJointIndex("RightArm"),
-        //     tag: "puppet right upper spring"
+        // Entities.addAction("cone-twist", bodyID, {
+        //     pivot: { x: 0, y: bodyHeight / 2 + upperArmThickness / 2, z: bodyWidth / 2 + shoulderGap / 2 },
+        //     axis: { x: 0, y: 0, z: 1 },
+        //     otherEntityID: rightUpperArmID,
+        //     otherPivot: { x: 0, y: 0, z: -upperArmLength / 2 - shoulderGap / 2 },
+        //     otherAxis: { x: 0, y: 0, z: 1 },
+        //     swingSpan1: Math.PI / 2,
+        //     swingSpan2: Math.PI / 2,
+        //     twistSpan: 0,
+        //     tag: "puppet right shoulder joint"
         // });
+
+        Entities.addAction("tractor", rightUpperArmID, {
+            targetRotation: Quat.fromPitchYawRollDegrees(-90, 0, 0),
+            angularTimeScale: 0.02,
+            targetPosition: { x: 0, y: upperArmLength / 2, z: 0 },
+            linearTimeScale: 0.02,
+            otherID: MyAvatar.sessionUUID,
+            otherJointIndex: MyAvatar.getJointIndex("RightArm"),
+            tag: "puppet right upper spring"
+        });
 
 
         //
@@ -107,16 +107,16 @@ Script.include("/~/system/libraries/controllers.js");
         });
         puppetEntities.rightLowerArm = rightLowerArmID;
 
-        Entities.addAction("hinge", rightLowerArmID, {
-            pivot: { x: 0, y: 0, z: -lowerArmLength / 2 - elbowGap / 2 },
-            axis: { x: 0, y: 1, z: 0 },
-            otherEntityID: rightUpperArmID,
-            otherPivot: { x: 0, y: 0, z: upperArmLength / 2 + elbowGap / 2 },
-            otherAxis: { x: 0, y: 1, z: 0 },
-            low: Math.PI / -2,
-            high: 0,
-            tag: "puppet right elbow joint"
-        });
+        // Entities.addAction("hinge", rightLowerArmID, {
+        //     pivot: { x: 0, y: 0, z: -lowerArmLength / 2 - elbowGap / 2 },
+        //     axis: { x: 0, y: 1, z: 0 },
+        //     otherEntityID: rightUpperArmID,
+        //     otherPivot: { x: 0, y: 0, z: upperArmLength / 2 + elbowGap / 2 },
+        //     otherAxis: { x: 0, y: 1, z: 0 },
+        //     low: Math.PI / -2,
+        //     high: 0,
+        //     tag: "puppet right elbow joint"
+        // });
 
         // Entities.addAction("cone-twist", rightLowerArmID, {
         //     pivot: { x: 0, y: 0, z: -lowerArmLength / 2 - elbowGap / 2 },
@@ -130,15 +130,15 @@ Script.include("/~/system/libraries/controllers.js");
         //     tag: "puppet right elbow joint"
         // });
 
-        // Entities.addAction("tractor", rightLowerArmID, {
-        //     targetRotation: Quat.fromPitchYawRollDegrees(-90, 0, 0),
-        //     angularTimeScale: 0.02,
-        //     targetPosition: { x: 0, y: lowerArmLength / 2 + elbowGap, z: 0 },
-        //     linearTimeScale: 0.02,
-        //     otherID: MyAvatar.sessionUUID,
-        //     otherJointIndex: MyAvatar.getJointIndex("RightForeArm"),
-        //     tag: "puppet right forearm spring"
-        // });
+        Entities.addAction("tractor", rightLowerArmID, {
+            targetRotation: Quat.fromPitchYawRollDegrees(-90, 0, 0),
+            angularTimeScale: 0.02,
+            targetPosition: { x: 0, y: lowerArmLength / 2 + elbowGap, z: 0 },
+            linearTimeScale: 0.02,
+            otherID: MyAvatar.sessionUUID,
+            otherJointIndex: MyAvatar.getJointIndex("RightForeArm"),
+            tag: "puppet right forearm spring"
+        });
 
 
         //
@@ -168,24 +168,24 @@ Script.include("/~/system/libraries/controllers.js");
         });
         puppetEntities.rightHand = rightHandID;
 
-        Entities.addAction("cone-twist", rightHandID, {
-            pivot: { x: 0, y: 0, z: -handDiameter / 2 - wristGap / 2 },
-            axis: { x: 0, y: 0, z: 1 },
-            otherEntityID: rightLowerArmID,
-            otherPivot: { x: 0, y:0, z: lowerArmLength / 2 + wristGap / 2 },
-            otherAxis: { x: 0, y: 0, z: 1 },
-            swingSpan1: Math.PI / 2,
-            swingSpan2: Math.PI / 2,
-            twistSpan: Math.PI,
-            tag: "puppet right wrist joint"
-        });
+        // Entities.addAction("cone-twist", rightHandID, {
+        //     pivot: { x: 0, y: 0, z: -handDiameter / 2 - wristGap / 2 },
+        //     axis: { x: 0, y: 0, z: 1 },
+        //     otherEntityID: rightLowerArmID,
+        //     otherPivot: { x: 0, y:0, z: lowerArmLength / 2 + wristGap / 2 },
+        //     otherAxis: { x: 0, y: 0, z: 1 },
+        //     swingSpan1: Math.PI / 2,
+        //     swingSpan2: Math.PI / 2,
+        //     twistSpan: Math.PI,
+        //     tag: "puppet right wrist joint"
+        // });
 
         Entities.addAction("tractor", rightHandID, {
             targetRotation: Quat.fromPitchYawRollDegrees(0, 0, -70),
             targetPosition: grabPointOffset,
-            linearTimeScale: 0.01,
-            angularTimeScale: 0.01,
-            maximumActiveDistance: 0.07,
+            linearTimeScale: 0.6,
+            angularTimeScale: 0.6,
+            // maximumActiveDistance: 0.07,
             otherID: MyAvatar.sessionUUID,
             otherJointIndex: MyAvatar.getJointIndex("RightHand"),
             tag: "puppet to right-hand spring"
