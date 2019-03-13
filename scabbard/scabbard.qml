@@ -23,18 +23,28 @@ Rectangle {
         if (message.method === "rightHipLocked") { rightHipLockedCB.checked = message.value; }
     }
 
+
+    Text {
+        id: text5
+        x: 58
+        y: 39
+        text: qsTr("Scabbard Settings")
+        font.pixelSize: 26
+    }
+
+
     Text {
         id: text1
-        x: 65
-        y: 46
+        x: 58
+        y: 96
         text: qsTr("Left Shoulder")
         font.pixelSize: 15
     }
 
     CheckBox {
         id: leftShoulderEnabledCB
-        x: 65
-        y: 66
+        x: 58
+        y: 116
         width: 143
         height: 40
         text: qsTr("Enabled")
@@ -44,8 +54,8 @@ Rectangle {
 
     CheckBox {
         id: leftShoulderLockedCB
-        x: 65
-        y: 112
+        x: 58
+        y: 162
         width: 143
         height: 40
         text: qsTr("Locked")
@@ -54,16 +64,16 @@ Rectangle {
 
     Text {
         id: text2
-        x: 251
-        y: 46
+        x: 244
+        y: 96
         text: qsTr("Right Shoulder")
         font.pixelSize: 15
     }
 
     CheckBox {
         id: rightShoulderEnabledCB
-        x: 251
-        y: 66
+        x: 244
+        y: 116
         width: 137
         height: 40
         text: qsTr("Enabled")
@@ -73,8 +83,8 @@ Rectangle {
 
     CheckBox {
         id: rightShoulderLockedCB
-        x: 251
-        y: 112
+        x: 244
+        y: 162
         width: 137
         height: 40
         text: qsTr("Locked")
@@ -83,24 +93,16 @@ Rectangle {
 
     Text {
         id: text3
-        x: 65
-        y: 181
+        x: 58
+        y: 231
         text: qsTr("Left Hip")
-        font.pixelSize: 15
-    }
-
-    Text {
-        id: text4
-        x: 251
-        y: 181
-        text: qsTr("Right Hip")
         font.pixelSize: 15
     }
 
     CheckBox {
         id: leftHipEnabledCB
-        x: 65
-        y: 201
+        x: 58
+        y: 251
         width: 143
         height: 40
         text: qsTr("Enabled")
@@ -110,18 +112,26 @@ Rectangle {
 
     CheckBox {
         id: leftHipLockedCB
-        x: 65
-        y: 247
+        x: 58
+        y: 297
         width: 143
         height: 40
         text: qsTr("Locked")
         font.family: "Arial"
     }
 
+    Text {
+        id: text4
+        x: 244
+        y: 231
+        text: qsTr("Right Hip")
+        font.pixelSize: 15
+    }
+
     CheckBox {
         id: rightHipEnabledCB
-        x: 251
-        y: 201
+        x: 244
+        y: 251
         width: 137
         height: 40
         text: qsTr("Enabled")
@@ -131,13 +141,15 @@ Rectangle {
 
     CheckBox {
         id: rightHipLockedCB
-        x: 251
-        y: 247
+        x: 244
+        y: 297
         width: 137
         height: 40
         text: qsTr("Locked")
         font.family: "Arial"
     }
+
+
 
     Connections {
         target: leftShoulderEnabledCB

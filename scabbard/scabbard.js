@@ -107,7 +107,6 @@ Script.include("/~/system/libraries/controllers.js");
         }
 
         this.initUI = function () {
-            print("QQQQ " + this.idStr + " " + this.enabled + " " + this.locked);
             ui.sendMessage({'method' : this.idStr + "Enabled", 'value' : this.enabled});
             ui.sendMessage({'method' : this.idStr + "Locked", 'value' : this.locked});
         };
@@ -124,7 +123,6 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.takeEntityFromScabbard = function () {
-            print("QQQQ takeEntityFromScabbard " + this.idStr);
             if (!this.entityInScabbardProps) {
                 return;
             }
@@ -155,10 +153,7 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
-            print("QQQQ saveEntityInScabbard " + this.idStr + " targetEntityID=" + targetEntityID);
-
             var entityIDs = getConnectedEntityIDs(targetEntityID);
-            print("QQQQ entityIDs = " + JSON.stringify(entityIDs));
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
             if (!props) {
                 print("WARNING: scabbard.js -- got null properties for IDs: " + JSON.stringify(entityIDs));
@@ -296,7 +291,6 @@ Script.include("/~/system/libraries/controllers.js");
 
 
     function initUI() {
-        print("QQQQ ---- initUI ---");
         leftShoulderScabbard.initUI();
         rightShoulderScabbard.initUI();
         leftHipScabbard.initUI();
