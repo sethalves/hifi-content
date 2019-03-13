@@ -5,10 +5,10 @@
 all:
 
 
-upload:
+upload: scabbard.js scabbard.qml
 	rm -rf scabbard
 	mkdir -p scabbard
-	cp scabbard.js scabbard/
+	cp $^ scabbard/
 	rsync --delete -avP scabbard/ headache.hungry.com:public_html/hifi/scabbard/
 
 

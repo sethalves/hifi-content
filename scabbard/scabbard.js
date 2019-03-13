@@ -6,6 +6,8 @@
 Script.include("/~/system/libraries/controllers.js");
 
 (function() {
+    var AppUi = Script.require("appUi");
+    var ui;
 
     var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
     var cleanProperties = EUs.cleanProperties;
@@ -14,17 +16,22 @@ Script.include("/~/system/libraries/controllers.js");
     var getConnectedEntityIDs = EUs.getConnectedEntityIDs;
     var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
-
     var SCABBARD_SETTINGS = "io.highfidelity.scabbard";
     var DOWN = { x: 0, y: -1, z: 0 };
     var LEFT_HAND = 0;
     var RIGHT_HAND = 1;
 
+    var SHOULDER = 0;
+    var HIP = 1;
+
     var TRIGGER_OFF_VALUE = 0.1;
     var TRIGGER_ON_VALUE = TRIGGER_OFF_VALUE + 0.05; // Squeezed just enough to activate search or near grab
 
+    var mappingName;
+    var triggerMapping;
 
-    // function detectScabbardGesture(controllerLocation, hand) {
+
+    // function detectShoulderGesture(controllerLocation, hand) {
     //     if (! controllerLocation.valid) {
     //         return false;
     //     }
@@ -49,7 +56,7 @@ Script.include("/~/system/libraries/controllers.js");
     // }
 
 
-    function detectScabbardGesture(controllerLocation, hand) {
+    function detectShoulderGesture(controllerLocation, hand) {
         if (! controllerLocation.valid) {
             return false;
         }
@@ -58,13 +65,13 @@ Script.include("/~/system/libraries/controllers.js");
         var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
         var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightShoulder" : "LeftShoulder");
         var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
-        var avatarFrameScabbardPoint = { x: shoulderPos.x, y: avatarFrameEyePos.y, z: avatarFrameEyePos.z };
+        var avatarFrameScabbardPoint = { x: shoulderPos.x, y: avatarFrameEyePos.y, z: 0.0 };
 
         var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
         // var avatarFrameControllerRot = MyAvatar.worldToJointRotation(controllerLocation.orientation, -1);
 
         if (Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.20) {
-            var localHandUpAxis = hand === RIGHT_HAND ? { x: 1, y: 0, z: 0 } : { x: -1, y: 0, z: 0 };
+            // var localHandUpAxis = hand === RIGHT_HAND ? { x: 1, y: 0, z: 0 } : { x: -1, y: 0, z: 0 };
             // var localHandUp = Vec3.multiplyQbyV(avatarFrameControllerRot, localHandUpAxis);
             // if (Vec3.dot(localHandUp, DOWN) > 0.0) {
             //     return true; // hand is upside-down vs avatar
@@ -75,21 +82,49 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function Scabbard(hand) {
+    function detectHipGesture(controllerLocation, hand) {
+        return false;
+    }
+
+
+    function Scabbard(hand, hipOrShoulder) {
         this.hand = hand;
+        this.hipOrShoulder = hipOrShoulder;
         this.entityInScabbardProps = null;
         this.previousTriggerValue = 0;
         this.inHandID = null;
 
+        this.idStr = (this.hand == LEFT_HAND ? "left" : "right") + (hipOrShoulder == HIP ? "Hip" : "Shoulder");
+
+        this.enabled = Settings.getValue(SCABBARD_SETTINGS + "." + this.idStr + "Enabled", true);
+        this.locked = Settings.getValue(SCABBARD_SETTINGS + "." + this.idStr + "Locked", false);
+
         try {
-            this.entityInScabbardProps = JSON.parse(Settings.getValue(SCABBARD_SETTINGS + "." + this.hand));
+            this.entityInScabbardProps = JSON.parse(Settings.getValue(SCABBARD_SETTINGS + "." + this.idStr));
             cleanProperties(this.entityInScabbardProps);
         } catch (err) {
             // don't spam the logs
         }
 
+        this.initUI = function () {
+            print("QQQQ " + this.idStr + " " + this.enabled + " " + this.locked);
+            ui.sendMessage({'method' : this.idStr + "Enabled", 'value' : this.enabled});
+            ui.sendMessage({'method' : this.idStr + "Locked", 'value' : this.locked});
+        };
+
+        this.setEnabled = function (value) {
+            this.enabled = value;
+            Settings.setValue(SCABBARD_SETTINGS + "." + this.idStr + "Enabled", value);
+        };
+
+        this.setLocked = function (value) {
+            this.locked = value;
+            Settings.setValue(SCABBARD_SETTINGS + "." + this.idStr + "Locked", value);
+        };
+
 
         this.takeEntityFromScabbard = function () {
+            print("QQQQ takeEntityFromScabbard " + this.idStr);
             if (!this.entityInScabbardProps) {
                 return;
             }
@@ -97,11 +132,12 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
-            if (detectScabbardGesture(controllerLocation, this.hand)) {
+            if (this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) {
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
 
                 // this line would make the scabbard empty after an item is taken out:
                 // this.entityInScabbardProps = null;
+            } else if (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand)) {
             }
         };
 
@@ -111,7 +147,7 @@ Script.include("/~/system/libraries/controllers.js");
                 return;
             }
 
-            if (this.previousTriggerValue < TRIGGER_ON_VALUE && value >= TRIGGER_ON_VALUE) {
+            if (this.enabled && this.previousTriggerValue < TRIGGER_ON_VALUE && value >= TRIGGER_ON_VALUE) {
                 this.takeEntityFromScabbard();
             }
             this.previousTriggerValue = value;
@@ -119,32 +155,48 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
+            print("QQQQ saveEntityInScabbard " + this.idStr + " targetEntityID=" + targetEntityID);
+
             var entityIDs = getConnectedEntityIDs(targetEntityID);
+            print("QQQQ entityIDs = " + JSON.stringify(entityIDs));
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
             if (!props) {
                 print("WARNING: scabbard.js -- got null properties for IDs: " + JSON.stringify(entityIDs));
                 return;
             }
 
-            if (this.entityInScabbardProps && !propertySetsAreSimilar(this.entityInScabbardProps, props)) {
+            var areSimilar = this.entityInScabbardProps && propertySetsAreSimilar(this.entityInScabbardProps, props);
+
+            if (!this.locked && this.entityInScabbardProps && !areSimilar) {
                 // the scabbard already had something in it.  if they don't mostly match, kick the old thing
                 // out into the world.
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+                areSimilar = true;
             }
 
-            this.entityInScabbardProps = props;
-            Settings.setValue(SCABBARD_SETTINGS + "." + this.hand, JSON.stringify(props));
-            for (var i = 0; i < entityIDs.length; i++) {
-                Entities.deleteEntity(entityIDs[i]);
+            if (!this.locked) {
+                this.entityInScabbardProps = props;
+                Settings.setValue(SCABBARD_SETTINGS + "." + this.idStr, JSON.stringify(props));
+            }
+
+            if (areSimilar) {
+                for (var i = 0; i < entityIDs.length; i++) {
+                    Entities.deleteEntity(entityIDs[i]);
+                }
             }
         };
 
 
         this.checkRelease = function (droppedEntityID) {
             this.inHandID = null;
+            if (!this.enabled) {
+                return;
+            }
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
-            if (detectScabbardGesture(controllerLocation, this.hand)) {
+            if (this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) {
+                this.saveEntityInScabbard(droppedEntityID, controllerLocation);
+            } else if (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand)) {
                 this.saveEntityInScabbard(droppedEntityID, controllerLocation);
             }
         };
@@ -159,7 +211,7 @@ Script.include("/~/system/libraries/controllers.js");
             if (this.debugEntity) {
                 Entities.deleteEntity(this.debugEntity);
             }
-        }
+        };
 
 
         this.debug = function () {
@@ -186,20 +238,18 @@ Script.include("/~/system/libraries/controllers.js");
         };
     }
 
-
-    var leftScabbard = new Scabbard(LEFT_HAND);
-    var rightScabbard = new Scabbard(RIGHT_HAND);
-
-    // leftScabbard.debug();
-    // rightScabbard.debug();
+    var leftShoulderScabbard = new Scabbard(LEFT_HAND, SHOULDER);
+    var rightShoulderScabbard = new Scabbard(RIGHT_HAND, SHOULDER);
+    var leftHipScabbard = new Scabbard(LEFT_HAND, HIP);
+    var rightHipScabbard = new Scabbard(RIGHT_HAND, HIP);
 
     function leftTrigger(value) {
-        leftScabbard.handleTriggerValue(value);
+        leftShoulderScabbard.handleTriggerValue(value);
     }
 
 
     function rightTrigger(value) {
-        rightScabbard.handleTriggerValue(value);
+        rightShoulderScabbard.handleTriggerValue(value);
     }
 
 
@@ -207,40 +257,32 @@ Script.include("/~/system/libraries/controllers.js");
         var data;
         if (sender === MyAvatar.sessionUUID) {
             if (channel === "Hifi-Object-Manipulation") {
-                try {
+                // try {
                     data = JSON.parse(message);
                     if (data.action == "release") {
                         if (data.joint == "RightHand") {
-                            rightScabbard.checkRelease(data.grabbedEntity);
+                            rightShoulderScabbard.checkRelease(data.grabbedEntity);
+                            rightHipScabbard.checkRelease(data.grabbedEntity);
                         } else {
-                            leftScabbard.checkRelease(data.grabbedEntity);
+                            leftShoulderScabbard.checkRelease(data.grabbedEntity);
+                            leftHipScabbard.checkRelease(data.grabbedEntity);
                         }
                     } else if (data.action == "grab" || data.action == "equip") {
                         if (data.joint == "RightHand") {
-                            rightScabbard.noteGrab(data.grabbedEntity);
+                            rightShoulderScabbard.noteGrab(data.grabbedEntity);
+                            rightHipScabbard.noteGrab(data.grabbedEntity);
                         } else {
-                            leftScabbard.noteGrab(data.grabbedEntity);
+                            leftShoulderScabbard.noteGrab(data.grabbedEntity);
+                            leftHipScabbard.noteGrab(data.grabbedEntity);
                         }
                     }
-                } catch (err) {
-                    print("WARNING: scabbard.js -- error reacting to Hifi-Object-Manipulation message: " + message);
-                    print(err.message);
-                }
+                // } catch (err) {
+                //     print("WARNING: scabbard.js -- error reacting to Hifi-Object-Manipulation message: " + message);
+                //     print(err.message);
+                // }
             }
         }
     }
-
-
-    Messages.subscribe("Hifi-Object-Manipulation");
-    Messages.messageReceived.connect(handleMessages);
-
-    var mappingName = "Scabbard-Mapping-" + "-" + Math.random();
-    var triggerMapping = Controller.newMapping(mappingName);
-
-    triggerMapping.from(Controller.Standard.LT).peek().to(leftTrigger);
-    triggerMapping.from(Controller.Standard.RT).peek().to(rightTrigger);
-
-    Controller.enableMapping(mappingName);
 
     function cleanup() {
         Messages.unsubscribe("Hifi-Object-Manipulation");
@@ -248,9 +290,63 @@ Script.include("/~/system/libraries/controllers.js");
 
         triggerMapping.disable();
 
-        leftScabbard.cleanup();
-        rightScabbard.cleanup();
+        leftShoulderScabbard.cleanup();
+        rightShoulderScabbard.cleanup();
     }
+
+
+    function initUI() {
+        print("QQQQ ---- initUI ---");
+        leftShoulderScabbard.initUI();
+        rightShoulderScabbard.initUI();
+        leftHipScabbard.initUI();
+        rightHipScabbard.initUI();
+    }
+
+
+    ui = new AppUi({
+        buttonName: "Scabbard",
+        home: Script.resolvePath("scabbard.qml"),
+        onMessage: fromQml,
+        onOpened: initUI
+        // normalButton: "icons/tablet-icons/avatar-i.svg",
+        // activeButton: "icons/tablet-icons/avatar-a.svg",
+    });
+
+
+    // leftShoulderScabbard.debug();
+    // rightShoulderScabbard.debug();
+
+    Messages.subscribe("Hifi-Object-Manipulation");
+    Messages.messageReceived.connect(handleMessages);
+
+    mappingName = "Scabbard-Mapping-" + "-" + Math.random();
+    triggerMapping = Controller.newMapping(mappingName);
+
+    triggerMapping.from(Controller.Standard.LT).peek().to(leftTrigger);
+    triggerMapping.from(Controller.Standard.RT).peek().to(rightTrigger);
+
+    Controller.enableMapping(mappingName);
+
     Script.scriptEnding.connect(cleanup);
+
+
+    function fromQml(message) {
+        print("message from qml: " + JSON.stringify(message));
+        if (message.method == "leftShoulderEnabled") { leftShoulderScabbard.setEnabled(message.value); }
+        if (message.method == "leftShoulderLocked") { leftShoulderScabbard.setLocked(message.value); }
+        if (message.method == "rightShoulderEnabled") { rightShoulderScabbard.setEnabled(message.value); }
+        if (message.method == "rightShoulderLocked") { rightShoulderScabbard.setLocked(message.value); }
+        if (message.method == "leftHipEnabled") { leftHipScabbard.setEnabled(message.value); }
+        if (message.method == "leftHipLocked") { leftHipScabbard.setLocked(message.value); }
+        if (message.method == "rightHipEnabled") { rightHipScabbard.setEnabled(message.value); }
+        if (message.method == "rightHipLocked") { rightHipScabbard.setLocked(message.value); }
+
+        // if (message.method == "rez") {
+        // } else if (message.method == "derez") {
+        // }
+    }
+
+
 
 }());
