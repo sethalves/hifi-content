@@ -1,8 +1,13 @@
 
-/* globals Vec3, MyAvatar, Script, Entities, Quat */
+/* globals Vec3, MyAvatar, Script, Entities, Quat, Messages */
 
 
 (function () {
+
+    var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
+    var addEntityAuto = EUs.addEntityAuto;
+
+    var messagesEnabled = false;
 
     Script.include("/~/system/libraries/controllers.js");
 
@@ -63,7 +68,7 @@
         var targetPosition = MyAvatar.worldToJointPoint(props.position, handJointIndex);
         var targetRotation = MyAvatar.worldToJointRotation(props.rotation, handJointIndex);
 
-        var swordID = Entities.addEntity({
+        addEntityAuto({
             name: "Sword",
             type: "Shape",
             shape: "Cylinder",
@@ -81,18 +86,19 @@
             alpha: 1.0,
             ignorePickIntersection: true,
             grab: { grabbable: false }
-        });
-        puppetEntities.sword = swordID;
-
-        Entities.addAction("tractor", swordID, {
-            // targetRotation: Quat.fromPitchYawRollDegrees(0, 0, hand == RIGHT_HAND ? -70 : 70),
-            targetPosition: targetPosition,
-            targetRotation: targetRotation,
-            linearTimeScale: 0.6,
-            angularTimeScale: 0.2,
-            otherID: MyAvatar.sessionUUID,
-            otherJointIndex: handJointIndex,
-            tag: "sword spring"
+        }, function (swordID) {
+            print("QQQQ swordID = " + JSON.stringify(swordID));
+            puppetEntities.sword = swordID;
+            Entities.addAction("tractor", swordID, {
+                // targetRotation: Quat.fromPitchYawRollDegrees(0, 0, hand == RIGHT_HAND ? -70 : 70),
+                targetPosition: targetPosition,
+                targetRotation: targetRotation,
+                linearTimeScale: 0.6,
+                angularTimeScale: 0.2,
+                otherID: MyAvatar.sessionUUID,
+                otherJointIndex: handJointIndex,
+                tag: "sword spring"
+            });
         });
     }
 
@@ -102,7 +108,7 @@
         var targetPosition = { x: 0, y: lowerArmLength / 2 + elbowGap, z: -shieldOffset };
         var targetRotation = Quat.fromPitchYawRollDegrees(-90, 0, 0);
 
-        var shieldID = Entities.addEntity({
+        addEntityAuto({
             name: "Shield",
             type: "Shape",
             shape: "Cylinder",
@@ -119,27 +125,25 @@
             alpha: 1.0,
             ignorePickIntersection: true,
             grab: { grabbable: true, grabKinematic: false }
+        }, function (shieldID) {
+            puppetEntities.shield = shieldID;
+
+            Entities.addAction("tractor", shieldID, {
+                targetPosition: targetPosition,
+                linearTimeScale: 0.02,
+                otherID: MyAvatar.sessionUUID,
+                otherJointIndex: armJointIndex,
+                tag: "shield linear forearm spring"
+            });
+
+            Entities.addAction("tractor", shieldID, {
+                targetRotation: targetRotation,
+                angularTimeScale: 0.02,
+                otherID: MyAvatar.sessionUUID,
+                otherJointIndex: handJointIndex,
+                tag: "shield rotational forearm spring"
+            });
         });
-
-        puppetEntities.shield = shieldID;
-
-        Entities.addAction("tractor", shieldID, {
-            targetPosition: targetPosition,
-            linearTimeScale: 0.02,
-            otherID: MyAvatar.sessionUUID,
-            otherJointIndex: armJointIndex,
-            tag: "shield linear forearm spring"
-        });
-
-        Entities.addAction("tractor", shieldID, {
-            targetRotation: targetRotation,
-            angularTimeScale: 0.02,
-            otherID: MyAvatar.sessionUUID,
-            otherJointIndex: handJointIndex,
-            tag: "shield rotational forearm spring"
-        });
-
-        return shieldID;
     }
 
     function rezTargets(hiltID) {
@@ -147,7 +151,7 @@
         // body
         //
 
-        var bodyID = Entities.addEntity({
+        addEntityAuto({
             name: "puppet body main",
             type: "Box",
             color: { red: 20, green: 100, blue: 128 },
@@ -160,68 +164,154 @@
             lifetime: lifetime,
             alpha: alpha,
             grab: { grabbable: true, grabKinematic: false }
-        });
-        puppetEntities.body = bodyID;
+        }, function (bodyID) {
+            puppetEntities.body = bodyID;
 
-        Entities.addAction("tractor", bodyID, {
-            targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
-            // targetPosition: bodyOffsetFromSpine,
-            // linearTimeScale: 0.02,
-            angularTimeScale: 0.02,
-            otherID: MyAvatar.sessionUUID,
-            otherJointIndex: MyAvatar.getJointIndex("Spine"),
-            tag: "puppet to spine spring"
-        });
+            Entities.addAction("tractor", bodyID, {
+                targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
+                // targetPosition: bodyOffsetFromSpine,
+                // linearTimeScale: 0.02,
+                angularTimeScale: 0.02,
+                otherID: MyAvatar.sessionUUID,
+                otherJointIndex: MyAvatar.getJointIndex("Spine"),
+                tag: "puppet to spine spring"
+            });
 
-        //
-        // head
-        //
+            //
+            // head
+            //
 
-        var headID = Entities.addEntity({
-            name: "puppet body head",
-            type: "Box",
-            color: { red: 20, green: 100, blue: 128 },
-            dimensions: { x: headSize, y: headSize, z: headSize },
-            position: MyAvatar.jointToWorldPoint({x: 0, y: 0, z: 0}, MyAvatar.getJointIndex("Head")),
-            dynamic: true,
-            collisionless: false,
-            collidesWith: "static,dynamic,kinematic",
-            gravity: { x: 0, y: 0, z: 0 },
-            lifetime: lifetime,
-            alpha: alpha,
-            grab: { grabbable: true, grabKinematic: false }
-        });
-        puppetEntities.head = headID;
+            addEntityAuto({
+                name: "puppet body head",
+                type: "Box",
+                color: { red: 20, green: 100, blue: 128 },
+                dimensions: { x: headSize, y: headSize, z: headSize },
+                position: MyAvatar.jointToWorldPoint({x: 0, y: 0, z: 0}, MyAvatar.getJointIndex("Head")),
+                dynamic: true,
+                collisionless: false,
+                collidesWith: "static,dynamic,kinematic",
+                gravity: { x: 0, y: 0, z: 0 },
+                lifetime: lifetime,
+                alpha: alpha,
+                grab: { grabbable: true, grabKinematic: false }
+            }, function (headID) {
+                puppetEntities.head = headID;
 
-        Entities.addAction("cone-twist", headID, {
-            pivot: { x: 0, y: -headSize / 2 - neckLength / 2, z: 0 },
-            axis: { x: 0, y: 1, z: 0 },
-            otherEntityID: bodyID,
-            otherPivot: { x: 0, y: bodyHeight / 2 + neckLength / 2, z: 0 },
-            otherAxis: { x: 0, y: 1, z: 0 },
-            swingSpan1: Math.PI / 4,
-            swingSpan2: Math.PI / 4,
-            twistSpan: Math.PI / 2,
-            tag: "puppet neck joint"
-        });
+                Entities.addAction("cone-twist", headID, {
+                    pivot: { x: 0, y: -headSize / 2 - neckLength / 2, z: 0 },
+                    axis: { x: 0, y: 1, z: 0 },
+                    otherEntityID: bodyID,
+                    otherPivot: { x: 0, y: bodyHeight / 2 + neckLength / 2, z: 0 },
+                    otherAxis: { x: 0, y: 1, z: 0 },
+                    swingSpan1: Math.PI / 4,
+                    swingSpan2: Math.PI / 4,
+                    twistSpan: Math.PI / 2,
+                    tag: "puppet neck joint"
+                });
 
-        Entities.addAction("tractor", headID, {
-            targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
-            targetPosition: Vec3.ZERO,
-            linearTimeScale: 0.02,
-            angularTimeScale: 0.02,
-            otherID: MyAvatar.sessionUUID,
-            otherJointIndex: MyAvatar.getJointIndex("Head"),
-            tag: "puppet head tractor"
+                Entities.addAction("tractor", headID, {
+                    targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
+                    targetPosition: Vec3.ZERO,
+                    linearTimeScale: 0.02,
+                    angularTimeScale: 0.02,
+                    otherID: MyAvatar.sessionUUID,
+                    otherJointIndex: MyAvatar.getJointIndex("Head"),
+                    tag: "puppet head tractor"
+                });
+            });
         });
     }
 
 
-    function rezHealthBar(hand, shieldID) {
+    function rezHealthBar(hand) {
     }
 
 
-    function cleanUp() {
+    function handleHit(data) {
+        // var myID = data.myID;
+        var otherID = data.otherID;
+        // var hitType = data.collisionInfo.type;
+        // var penetration = data.collisionInfo.penetration;
+        var contactPoint = data.collisionInfo.contactPoint;
+        var velocityChange = data.collisionInfo.velocityChange;
+
+        // "collisionInfo": {
+        //     "type": 2,
+        //     "idA": "{10bfae34-02f8-4eca-a1cf-c5f8c07b9905}",
+        //     "idB": "{80188ac5-ebfa-4a0c-b95e-e84ea1d1516f}",
+        //     "penetration": {
+        //         "x": 0.006713929120451212,
+        //         "y": 0.0016198069788515568,
+        //         "z": -0.00239554513245821
+        //     },
+        //     "contactPoint": {
+        //         "x": 80.54314422607422,
+        //         "y": 1.6683143377304077,
+        //         "z": 75.14118957519531
+        //     },
+        //     "velocityChange": {
+        //         "x": 0.08970536291599274,
+        //         "y": -0.03307801112532616,
+        //         "z": -0.031879980117082596
+        //     }
+        // }
+
+        var otherProps = Entities.getEntityProperties(otherID, ["name"]);
+        var otherName = otherProps.name;
+        if (otherName && otherName.substring(0, 12) == "puppet body ") {
+            // var hitSize = Vec3.length(velocityChange) * 2;
+
+            var hitSize = Math.log(Vec3.length(velocityChange) + 1.0) / 4.0;
+
+            Entities.addEntity({
+                name: "puppet hit indicator",
+                type: "Sphere",
+                color: { red: 220, green: 140, blue: 0 },
+                dimensions: { x: hitSize, y: hitSize, z: hitSize },
+                position: contactPoint,
+                dynamic: false,
+                collisionless: true,
+                gravity: { x: 0, y: 0, z: 0 },
+                lifetime: 5,
+                alpha: 0.8,
+                grab: { grabbable: false }
+            });
+        }
+    }
+
+
+    function handleMessages(channel, message, sender) {
+        if (sender !== MyAvatar.sessionUUID) {
+            return;
+        }
+        if (channel !== "Puppet-Sword-Fight") {
+            return;
+        }
+
+        print("QQQQ message: " + JSON.stringify(message));
+
+        var data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            print("WARNING: error parsing 'Puppet-Sword-Fight' message: " + message);
+            return;
+        }
+
+        var method = data.method;
+        if (method == "hit") {
+            handleHit(data);
+        }
+    }
+
+
+    function cleanUp(_this) {
+        if (messagesEnabled) {
+            Messages.unsubscribe("Puppet-Sword-Fight");
+            Messages.messageReceived.disconnect(handleMessages);
+        }
+        messagesEnabled = false;
+
         for (var key in puppetEntities) {
             if (puppetEntities.hasOwnProperty(key)) {
                 var entityID = puppetEntities[key];
@@ -234,30 +324,35 @@
 
 
     this.preload = function (entityID) {
-        print("QQQQ preload");
         this.entityID = entityID;
     };
 
     this.unload = function() {
-        print("QQQQ unload");
-        cleanUp();
+        cleanUp(this);
     };
 
     this.startEquip = function (id, params) {
         this.hand = params[0] == "left" ? 0 : 1;
         this.equipperID = params[1];
-        print("QQQQ start equip");
         rezSword(this.hand, this.entityID);
-        var shieldID = rezShield(this.hand == LEFT_HAND ? RIGHT_HAND : LEFT_HAND, this.entityID);
+        rezShield(this.hand == LEFT_HAND ? RIGHT_HAND : LEFT_HAND, this.entityID);
         rezTargets(this.entityID);
-        rezHealthBar(this.hand, shieldID);
+        rezHealthBar(this.hand);
+
+        var _this = this;
+        Messages.messageReceived.connect(handleMessages);
+        Messages.subscribe("Puppet-Sword-Fight");
+        messagesEnabled = true;
     };
 
     this.releaseEquip = function (id, params) {
         this.hand = params[0] == "left" ? 0 : 1;
         this.equipperID = params[1];
-        print("QQQQ stop equip");
-        cleanUp();
+        cleanUp(this);
     };
+
+    Script.scriptEnding.connect(function () {
+        cleanup(this);
+    });
 
 });

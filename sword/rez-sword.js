@@ -3,7 +3,7 @@
 
 
 Entities.addEntity({
-    name: "puppet right hand",
+    name: "Sword Hilt",
     type: "Shape",
     shape: "Cylinder",
     color: { red: 200, green: 20, blue: 20 },
