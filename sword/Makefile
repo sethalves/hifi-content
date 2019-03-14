@@ -4,7 +4,7 @@
 
 all:
 
-upload: rez-sword.js sword.js hit-detector.js
+upload: rez-sword.js sword.js hit-detector.js painBody.wav painHead.wav shieldHit.wav swordHit.wav
 	rm -rf sword
 	mkdir -p sword
 	cp  $^ sword/

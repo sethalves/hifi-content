@@ -1,11 +1,20 @@
 
-/* globals Vec3, MyAvatar, Script, Entities, Quat, Messages */
+/* globals Vec3, MyAvatar, Script, Entities, Quat, Messages, SoundCache */
 
 
 (function () {
 
     var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
     var addEntityAuto = EUs.addEntityAuto;
+
+    var soundPainBody = SoundCache.getSound(Script.resolvePath("painBody.wav"));
+    var soundPainHead = SoundCache.getSound(Script.resolvePath("painHead.wav"));
+    var soundHitShield = SoundCache.getSound(Script.resolvePath("shieldHit.wav"));
+    var soundSwordHit = SoundCache.getSound(Script.resolvePath("swordHit.wav"));
+    var injector;
+    var audioVolume = 0.06;
+
+    var hitVelocityToHealthRatio = 80.0;
 
     var messagesEnabled = false;
 
@@ -23,6 +32,8 @@
     var scale = 1.1;
     var alpha = 0.3;
     var lifetime = 7000;
+
+    var health = 100;
 
     var neckLength = scale * 0.05;
     // var shoulderGap = scale * 0.1;
@@ -87,7 +98,6 @@
             ignorePickIntersection: true,
             grab: { grabbable: false }
         }, function (swordID) {
-            print("QQQQ swordID = " + JSON.stringify(swordID));
             puppetEntities.sword = swordID;
             Entities.addAction("tractor", swordID, {
                 // targetRotation: Quat.fromPitchYawRollDegrees(0, 0, hand == RIGHT_HAND ? -70 : 70),
@@ -102,7 +112,7 @@
         });
     }
 
-    function rezShield(hand, hiltID) {
+    function rezShield(hand, hiltID, doneThunk) {
         var armJointIndex = MyAvatar.getJointIndex(hand == LEFT_HAND ? "LeftForeArm" : "RightForeArm");
         var handJointIndex = MyAvatar.getJointIndex(hand == LEFT_HAND ? "LeftHand" : "RightHand");
         var targetPosition = { x: 0, y: lowerArmLength / 2 + elbowGap, z: -shieldOffset };
@@ -124,7 +134,7 @@
             lifetime: lifetime,
             alpha: 1.0,
             ignorePickIntersection: true,
-            grab: { grabbable: true, grabKinematic: false }
+            grab: { grabbable: false, grabKinematic: false }
         }, function (shieldID) {
             puppetEntities.shield = shieldID;
 
@@ -143,6 +153,7 @@
                 otherJointIndex: handJointIndex,
                 tag: "shield rotational forearm spring"
             });
+            doneThunk(shieldID);
         });
     }
 
@@ -223,7 +234,41 @@
     }
 
 
-    function rezHealthBar(hand) {
+    function getHealthBarDimensions() {
+        var shieldProps = Entities.getEntityProperties(puppetEntities.shield, ["dimensions"]);
+        var shieldDimensions = shieldProps.dimensions;
+
+        var barLength = (health / 100.0) * (shieldDimensions.z - 0.1);
+        return { x: 0.1, y: shieldDimensions.y + 0.05, z: barLength };
+    }
+
+
+    function rezHealthBar(hand, shieldID) {
+        addEntityAuto({
+            name: "sword fight health bar",
+            type: "Box",
+            color: { red: 220, green: 0, blue: 0 },
+            dimensions: getHealthBarDimensions(),
+            dynamic: false,
+            collisionless: true,
+            alpha: 0.8,
+            grab: { grabbable: false },
+            parentID: shieldID,
+            parentJointIndex: -1,
+            localPosition: { x: 0, y: 0, z: 0 },
+            localRotation: { x: 0, y: 0, z: 0, w: 1 },
+            localAngularVelocity: { x: 0, y: 0, z: 0 },
+            localVelocity: { x: 0, y: 0, z: 0 }
+        }, function (healthBarID) {
+            puppetEntities.healthbar = healthBarID;
+            // XXX why...?
+            Entities.editEntity(healthBarID, {
+                localPosition: { x: 0, y: 0, z: 0 },
+                localRotation: { x: 0, y: 0, z: 0, w: 1 },
+                localAngularVelocity: { x: 0, y: 0, z: 0 },
+                localVelocity: { x: 0, y: 0, z: 0 }
+            });
+        });
     }
 
 
@@ -256,14 +301,40 @@
         //     }
         // }
 
-        var otherProps = Entities.getEntityProperties(otherID, ["name"]);
-        var otherName = otherProps.name;
-        if (otherName && otherName.substring(0, 12) == "puppet body ") {
+
+        var injectorOptions;
+        if (otherID == puppetEntities.head) {
+            injectorOptions = { position: contactPoint, volume: audioVolume };
+            injector = Audio.playSound(soundPainHead, injectorOptions);
+        } else if (otherID == puppetEntities.body) {
+            injectorOptions = { position: contactPoint, volume: audioVolume };
+            injector = Audio.playSound(soundPainBody, injectorOptions);
+        } else if (otherID == puppetEntities.shield) {
+            injectorOptions = { position: contactPoint, volume: audioVolume };
+            injector = Audio.playSound(soundHitShield, injectorOptions);
+        } else {
+            injectorOptions = { position: contactPoint, volume: audioVolume };
+            injector = Audio.playSound(soundSwordHit, injectorOptions);
+        }
+
+        if (otherID == puppetEntities.head || otherID == puppetEntities.body) {
             // var hitSize = Vec3.length(velocityChange) * 2;
+            var hitSize = Math.log(Vec3.length(velocityChange) + 1.0) / 3.0;
 
-            var hitSize = Math.log(Vec3.length(velocityChange) + 1.0) / 4.0;
+            health -= (Vec3.length(velocityChange) * hitVelocityToHealthRatio);
+            if (health <= 0.0) {
+                cleanUp();
+            }
+            Entities.editEntity(puppetEntities.healthbar, {
+                dimensions: getHealthBarDimensions(),
+                // XXX why...?
+                localPosition: { x: 0, y: 0, z: 0 },
+                localRotation: { x: 0, y: 0, z: 0, w: 1 },
+                localAngularVelocity: { x: 0, y: 0, z: 0 },
+                localVelocity: { x: 0, y: 0, z: 0 }
+            });
 
-            Entities.addEntity({
+            addEntityAuto({
                 name: "puppet hit indicator",
                 type: "Sphere",
                 color: { red: 220, green: 140, blue: 0 },
@@ -288,8 +359,6 @@
             return;
         }
 
-        print("QQQQ message: " + JSON.stringify(message));
-
         var data;
         try {
             data = JSON.parse(message);
@@ -305,7 +374,7 @@
     }
 
 
-    function cleanUp(_this) {
+    function cleanUp() {
         if (messagesEnabled) {
             Messages.unsubscribe("Puppet-Sword-Fight");
             Messages.messageReceived.disconnect(handleMessages);
@@ -328,18 +397,19 @@
     };
 
     this.unload = function() {
-        cleanUp(this);
+        cleanUp();
     };
 
     this.startEquip = function (id, params) {
+        health = 100.0;
         this.hand = params[0] == "left" ? 0 : 1;
         this.equipperID = params[1];
         rezSword(this.hand, this.entityID);
-        rezShield(this.hand == LEFT_HAND ? RIGHT_HAND : LEFT_HAND, this.entityID);
+        rezShield(this.hand == LEFT_HAND ? RIGHT_HAND : LEFT_HAND, this.entityID, function (shieldID) {
+            rezHealthBar(this.hand, shieldID);
+        });
         rezTargets(this.entityID);
-        rezHealthBar(this.hand);
 
-        var _this = this;
         Messages.messageReceived.connect(handleMessages);
         Messages.subscribe("Puppet-Sword-Fight");
         messagesEnabled = true;
@@ -348,11 +418,11 @@
     this.releaseEquip = function (id, params) {
         this.hand = params[0] == "left" ? 0 : 1;
         this.equipperID = params[1];
-        cleanUp(this);
+        cleanUp();
     };
 
     Script.scriptEnding.connect(function () {
-        cleanup(this);
+        cleanUp();
     });
 
 });

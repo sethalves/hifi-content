@@ -3,8 +3,9 @@
 
 (function() {
 
-    var sound = SoundCache.getSound(Script.resourcesPath() + "sounds/short1.wav");
-    var injector;
+    // var sound = SoundCache.getSound(Script.resourcesPath() + "sounds/short1.wav");
+    // var sound = SoundCache.getSound(Script.resolvePath("swordHit.wav"));
+    // var injector;
 
     this.collisionWithEntity = function(myID, otherID, collisionInfo) {
         // var otherProps = Entities.getEntityProperties(otherID, ["name"]);
@@ -12,10 +13,11 @@
         // print("HIT: I am " + myProps.name + ", other is " + otherProps.name);
 
         if (collisionInfo.type == 0) { // 0 = start, 1 = continue, 2 = end
-            var injectorOptions = {
-                position: collisionInfo.contactPoint
-            };
-            injector = Audio.playSound(sound, injectorOptions);
+            // var injectorOptions = {
+            //     position: collisionInfo.contactPoint,
+            //     volume: 0.08
+            // };
+            // injector = Audio.playSound(sound, injectorOptions);
 
             Messages.sendLocalMessage("Puppet-Sword-Fight", JSON.stringify({
                 method: "hit",
