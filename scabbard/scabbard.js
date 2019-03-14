@@ -16,6 +16,8 @@ Script.include("/~/system/libraries/controllers.js");
     var getConnectedEntityIDs = EUs.getConnectedEntityIDs;
     var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
+    var scabbardActiveDistance = 0.22;
+
     var SCABBARD_SETTINGS = "io.highfidelity.scabbard";
     // var DOWN = { x: 0, y: -1, z: 0 };
     var LEFT_HAND = 0;
@@ -29,6 +31,20 @@ Script.include("/~/system/libraries/controllers.js");
 
     var mappingName;
     var triggerMapping;
+
+    var avatarEntitiesIRezzed = {};
+
+
+    function limitAvatarEntityLifetimes(droppedEntityID) {
+        if (avatarEntitiesIRezzed[droppedEntityID]) {
+            var droppedProps = Entities.getEntityProperties(droppedEntityID, ["age"]);
+            if (droppedProps) {
+                // if an avatar-entity was created by this script, and it's been dropped,
+                // schedule it to expire in the near future.
+                Entities.editEntity(droppedEntityID, { lifetime: droppedProps.age + 10 });
+            }
+        }
+    }
 
 
     // function detectShoulderGesture(controllerLocation, hand) {
@@ -60,7 +76,7 @@ Script.include("/~/system/libraries/controllers.js");
         if (hipOrShoulder == SHOULDER) {
             var eyeJointIndex = MyAvatar.getJointIndex("LeftEye");
             var avatarFrameEyePos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(eyeJointIndex);
-            var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightShoulder" : "LeftShoulder");
+            var shoulderIndex = MyAvatar.getJointIndex(hand === RIGHT_HAND ? "RightArm" : "LeftArm");
             var shoulderPos = MyAvatar.getAbsoluteJointTranslationInObjectFrame(shoulderIndex);
             return { x: shoulderPos.x, y: avatarFrameEyePos.y, z: 0.0 };
         } else {
@@ -82,7 +98,7 @@ Script.include("/~/system/libraries/controllers.js");
         var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
         // var avatarFrameControllerRot = MyAvatar.worldToJointRotation(controllerLocation.orientation, -1);
 
-        if (Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.2) {
+        if (Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < scabbardActiveDistance) {
             // var localHandUpAxis = hand === RIGHT_HAND ? { x: 1, y: 0, z: 0 } : { x: -1, y: 0, z: 0 };
             // var localHandUp = Vec3.multiplyQbyV(avatarFrameControllerRot, localHandUpAxis);
             // if (Vec3.dot(localHandUp, DOWN) > 0.0) {
@@ -101,7 +117,7 @@ Script.include("/~/system/libraries/controllers.js");
 
         var avatarFrameScabbardPoint = getAvatarFrameScabbardPoint(HIP, hand);
         var avatarFrameControllerPos = MyAvatar.worldToJointPoint(controllerLocation.position, -1);
-        return Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < 0.2;
+        return Vec3.length(Vec3.subtract(avatarFrameControllerPos, avatarFrameScabbardPoint)) < scabbardActiveDistance;
     }
 
 
@@ -150,7 +166,16 @@ Script.include("/~/system/libraries/controllers.js");
 
             if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) ||
                 (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand))) {
-                propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
+                propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation,
+                                         function (newEntityIDs) {
+                                             for (var i = 0; i < newEntityIDs.length; i++) {
+                                                 var newID = newEntityIDs[i];
+                                                 var newProps = Entities.getEntityProperties(newID, ["entityHostType"]);
+                                                 if (newProps.entityHostType == "avatar") {
+                                                     avatarEntitiesIRezzed[newID] = true;
+                                                 }
+                                             }
+                                         });
 
                 // this line would make the scabbard empty after an item is taken out:
                 // this.entityInScabbardProps = null;
@@ -281,6 +306,7 @@ Script.include("/~/system/libraries/controllers.js");
                 try {
                     data = JSON.parse(message);
                     if (data.action == "release") {
+                        limitAvatarEntityLifetimes(data.grabbedEntity);
                         if (data.joint == "RightHand") {
                             rightShoulderScabbard.checkRelease(data.grabbedEntity);
                             rightHipScabbard.checkRelease(data.grabbedEntity);
@@ -336,10 +362,12 @@ Script.include("/~/system/libraries/controllers.js");
     });
 
 
-    // leftShoulderScabbard.debug();
-    // rightShoulderScabbard.debug();
-    // leftHipScabbard.debug();
-    // rightHipScabbard.debug();
+    if (true) {
+        leftShoulderScabbard.debug();
+        rightShoulderScabbard.debug();
+        leftHipScabbard.debug();
+        rightHipScabbard.debug();
+    }
 
     Messages.subscribe("Hifi-Object-Manipulation");
     Messages.messageReceived.connect(handleMessages);
