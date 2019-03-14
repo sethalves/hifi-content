@@ -1,5 +1,5 @@
 
-/* globals Vec3, MyAvatar, Script, Entities, Quat, getGrabPointSphereOffset, Controller */
+/* globals Vec3, MyAvatar, Script, Entities, Quat */
 
 
 (function () {
@@ -20,7 +20,7 @@
     var lifetime = 7000;
 
     var neckLength = scale * 0.05;
-    var shoulderGap = scale * 0.1;
+    // var shoulderGap = scale * 0.1;
     var elbowGap = scale * 0.06;
     var wristGap = scale * 0.05;
 
@@ -32,10 +32,10 @@
 
     var bodyHeight = jointToJointDistance("Hips", "Neck"); // scale * 0.4;
     var bodyWidth = scale * 0.3; // jointToJointDistance("LeftShoulder", "RightShoulder")
-    // var bodyDepth = scale * 0.2;
+    var bodyDepth = scale * 0.2;
 
-    var upperArmThickness = scale * 0.05;
-    var upperArmLength = jointToJointDistance("LeftShoulder", "LeftForeArm") - (elbowGap / 2) - (shoulderGap / 2);
+    // var upperArmThickness = scale * 0.05;
+    // var upperArmLength = jointToJointDistance("LeftShoulder", "LeftForeArm") - (elbowGap / 2) - (shoulderGap / 2);
 
     var lowerArmThickness = scale * 0.05;
     var lowerArmLength = jointToJointDistance("LeftForeArm", "LeftHand") - (elbowGap / 2) - (wristGap / 2);
@@ -138,6 +138,86 @@
             otherJointIndex: handJointIndex,
             tag: "shield rotational forearm spring"
         });
+
+        return shieldID;
+    }
+
+    function rezTargets(hiltID) {
+        //
+        // body
+        //
+
+        var bodyID = Entities.addEntity({
+            name: "puppet body main",
+            type: "Box",
+            color: { red: 20, green: 100, blue: 128 },
+            dimensions: { x: bodyDepth, y: bodyHeight, z: bodyWidth },
+            position: MyAvatar.jointToWorldPoint({x: 0, y: 0, z: 0}, MyAvatar.getJointIndex("Spine")),
+            dynamic: true,
+            collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
+            gravity: { x: 0, y: 0, z: 0 },
+            lifetime: lifetime,
+            alpha: alpha,
+            grab: { grabbable: true, grabKinematic: false }
+        });
+        puppetEntities.body = bodyID;
+
+        Entities.addAction("tractor", bodyID, {
+            targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
+            // targetPosition: bodyOffsetFromSpine,
+            // linearTimeScale: 0.02,
+            angularTimeScale: 0.02,
+            otherID: MyAvatar.sessionUUID,
+            otherJointIndex: MyAvatar.getJointIndex("Spine"),
+            tag: "puppet to spine spring"
+        });
+
+        //
+        // head
+        //
+
+        var headID = Entities.addEntity({
+            name: "puppet body head",
+            type: "Box",
+            color: { red: 20, green: 100, blue: 128 },
+            dimensions: { x: headSize, y: headSize, z: headSize },
+            position: MyAvatar.jointToWorldPoint({x: 0, y: 0, z: 0}, MyAvatar.getJointIndex("Head")),
+            dynamic: true,
+            collisionless: false,
+            collidesWith: "static,dynamic,kinematic",
+            gravity: { x: 0, y: 0, z: 0 },
+            lifetime: lifetime,
+            alpha: alpha,
+            grab: { grabbable: true, grabKinematic: false }
+        });
+        puppetEntities.head = headID;
+
+        Entities.addAction("cone-twist", headID, {
+            pivot: { x: 0, y: -headSize / 2 - neckLength / 2, z: 0 },
+            axis: { x: 0, y: 1, z: 0 },
+            otherEntityID: bodyID,
+            otherPivot: { x: 0, y: bodyHeight / 2 + neckLength / 2, z: 0 },
+            otherAxis: { x: 0, y: 1, z: 0 },
+            swingSpan1: Math.PI / 4,
+            swingSpan2: Math.PI / 4,
+            twistSpan: Math.PI / 2,
+            tag: "puppet neck joint"
+        });
+
+        Entities.addAction("tractor", headID, {
+            targetRotation: Quat.fromPitchYawRollDegrees(0, -90, 0),
+            targetPosition: Vec3.ZERO,
+            linearTimeScale: 0.02,
+            angularTimeScale: 0.02,
+            otherID: MyAvatar.sessionUUID,
+            otherJointIndex: MyAvatar.getJointIndex("Head"),
+            tag: "puppet head tractor"
+        });
+    }
+
+
+    function rezHealthBar(hand, shieldID) {
     }
 
 
@@ -168,7 +248,9 @@
         this.equipperID = params[1];
         print("QQQQ start equip");
         rezSword(this.hand, this.entityID);
-        rezShield(this.hand == LEFT_HAND ? RIGHT_HAND : LEFT_HAND, this.entityID);
+        var shieldID = rezShield(this.hand == LEFT_HAND ? RIGHT_HAND : LEFT_HAND, this.entityID);
+        rezTargets(this.entityID);
+        rezHealthBar(this.hand, shieldID);
     };
 
     this.releaseEquip = function (id, params) {
