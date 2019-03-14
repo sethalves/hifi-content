@@ -1,5 +1,8 @@
 
-import QtQuick 2.0
+import QtQuick 2.10
+import QtQuick.Window 2.10
+import QtQuick.Controls 2.3
+
 
 Rectangle {
     id: root
@@ -16,50 +19,31 @@ Rectangle {
         }
     }
 
-    Text {
-        id: saveButtonText
-        text: "Save Domain"
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: parent.top
-        }
-        // anchors.centerIn: parent
-        font.pixelSize: 24
-        style: Text.Sunken
-        color: "white"
-        styleColor: "black"
+    Button {
+        id: saveButton
+        x: 31
+        y: 26
+        text: qsTr("Save Domain")
     }
 
-    MouseArea {
-        id: saveButtonMouseArea
-        anchors.fill: saveButtonText
+    Button {
+        id: restoreButton
+        x: 31
+        y: 87
+        text: qsTr("Restore Domain")
+    }
+
+    Connections {
+        target: saveButton
         onClicked: {
             emitSendToScript({'method' : 'save'});
         }
     }
 
-    Text {
-        id: restoreButtonText
-        text: "Restore Domain"
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: saveButtonText.bottom
-        }
-        // anchors.centerIn: parent
-        font.pixelSize: 24
-        style: Text.Sunken
-        color: "white"
-        styleColor: "black"
-    }
-
-    MouseArea {
-        id: restoreButtonMouseArea
-        anchors.fill: restoreButtonText
+    Connections {
+        target: restoreButton
         onClicked: {
             emitSendToScript({'method' : 'restore'});
         }
     }
-
 }
