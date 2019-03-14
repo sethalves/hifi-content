@@ -5,6 +5,7 @@
 # VHACD=~/src/hifi/build/tools/vhacd-util/vhacd-util
 N=-n
 TEX_SCALE=1.8
+OPENSCAD=openscad-nightly
 
 %.obj: %.stl
 	wavefront-obj-tool -m ${TEX_SCALE} ${N} -c $^ -o $@
@@ -12,11 +13,11 @@ TEX_SCALE=1.8
 
 table-hull-parts/%.stl: table.scad
 	mkdir -p table-hull-parts
-	openscad -D output_table_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
+	$(OPENSCAD) -D output_table_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
 
 drawer-hull-parts/%.stl: table.scad
 	mkdir -p drawer-hull-parts
-	openscad -D output_drawer_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
+	$(OPENSCAD) -D output_drawer_hull=1 -D n="`basename -s .stl $@`" -o $@ $^
 
 TARGETS=table.obj table-hull.obj table-drawer.obj table-drawer-hull.obj table.mtl build-table.js table.json tex_189913.png
 
@@ -32,7 +33,7 @@ all: ${TARGETS}
 #
 
 table.stl: table.scad
-	openscad -D output_table_visual=1 -o $@ $^
+	$(OPENSCAD) -D output_table_visual=1 -o $@ $^
 
 table.obj: table.stl
 	wavefront-obj-tool -m ${TEX_SCALE} ${N} -c $^ -o $@ -S table_wood_mtl -L table.mtl
@@ -42,7 +43,7 @@ table.obj: table.stl
 #
 
 table-drawer.stl: table.scad
-	openscad -D output_drawer_visual=1 -o $@ $^
+	$(OPENSCAD) -D output_drawer_visual=1 -o $@ $^
 
 table-drawer.obj: table-drawer.stl
 	wavefront-obj-tool -m ${TEX_SCALE} ${N} -c $^ -o $@ -S table_wood_mtl -L table.mtl

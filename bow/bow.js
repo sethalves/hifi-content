@@ -7,8 +7,7 @@
 //
 //  Previous version by James B. Pollack @imgntn on 10/19/2015
 
-/* global Script, MyAvatar, Vec3, Controller, Quat, Uuid, getControllerWorldLocation,
-   SoundCache, Entities, Messages, getEntityCustomData, setEntityCustomData */
+/* global Script, MyAvatar, Vec3, Controller, Quat, Uuid, getControllerWorldLocation, SoundCache, Entities, Messages  */
 
 
 function getControllerLocation(controllerHand) {
@@ -143,12 +142,9 @@ function getControllerLocation(controllerHand) {
             this.stringHand = this.bowHand === "right" ? "left" : "right";
 
             Entities.editEntity(_this.entityID, {
-                collidesWith: "",
+                grab: { grabbable: false },
+                collidesWith: ""
             });
-
-            var data = getEntityCustomData("grabbableKey", this.entityID, {});
-            data.grabbable = false;
-            setEntityCustomData("grabbableKey", this.entityID, data);
 
             this.initString();
 
@@ -166,13 +162,11 @@ function getControllerLocation(controllerHand) {
 
             Messages.sendLocalMessage("Hifi-Hand-Disabler", "none");
 
-            var data = getEntityCustomData("grabbableKey", this.entityID, {});
-            data.grabbable = true;
-            setEntityCustomData("grabbableKey", this.entityID, data);
             Entities.deleteEntity(this.arrow);
             this.resetStringToIdlePosition();
             this.destroyArrow();
             Entities.editEntity(_this.entityID, {
+                grab: { grabbable: true },
                 collidesWith: "static,dynamic,kinematic,otherAvatar,myAvatar"
             });
         },
@@ -274,10 +268,8 @@ function getControllerLocation(controllerHand) {
                 collisionless: true,
                 collisionSoundURL: ARROW_HIT_SOUND_URL,
                 damping: 0.01,
+                grab: { grabbable: false },
                 userData: JSON.stringify({
-                    grabbableKey: {
-                        grabbable: false
-                    },
                     creatorSessionUUID: MyAvatar.sessionUUID
                 })
             }, avatarEntity);
@@ -332,11 +324,7 @@ function getControllerLocation(controllerHand) {
                 localPosition: { "x": 0, "y": 0.6, "z": 0.1 },
                 localRotation: { "w": 1, "x": 0, "y": 0, "z": 0 },
                 type: "Line",
-                userData: JSON.stringify({
-                    grabbableKey: {
-                        grabbable: false
-                    }
-                })
+                grab: { grabbable: false }
             }, avatarEntity);
 
             this.resetStringToIdlePosition();
@@ -515,7 +503,8 @@ function getControllerLocation(controllerHand) {
         },
 
         scaleArrowShotStrength: function(value) {
-            var pct = (value - MIN_ARROW_DISTANCE_FROM_BOW_REST) / (MAX_ARROW_DISTANCE_FROM_BOW_REST - MIN_ARROW_DISTANCE_FROM_BOW_REST);
+            var pct = (value - MIN_ARROW_DISTANCE_FROM_BOW_REST) /
+                (MAX_ARROW_DISTANCE_FROM_BOW_REST - MIN_ARROW_DISTANCE_FROM_BOW_REST);
             return MIN_ARROW_SPEED + (pct * (MAX_ARROW_SPEED - MIN_ARROW_SPEED)) ;
         },
 

@@ -35,7 +35,8 @@
         modelURL: clockModelURL,
         position: Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 0.2, z: -4 })),
         rotation: Quat.multiply(Quat.fromVec3Degrees({ x: 0, y: avRotEulers.y, z: 0 }),
-                                Quat.fromVec3Degrees({ x: 90, y: 0, z: 0 }))
+                                Quat.fromVec3Degrees({ x: 90, y: 0, z: 0 })),
+        grab: { grabbable: true }
     });
 
     var hourHandID = Entities.addEntity({
@@ -76,7 +77,6 @@
             hourHandID: hourHandID,
             minuteHandID: minuteHandID,
             secondHandID: secondHandID,
-            grabbableKey: { grabbable: true },
             soundKey: {
                 url: "http://headache.hungry.com/~seth/hifi/sound/clock-ticking-3.wav",
                 volume: 0.4,

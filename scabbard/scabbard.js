@@ -178,7 +178,19 @@ Script.include("/~/system/libraries/controllers.js");
                 return;
             }
 
+            // var nonTmpEntities = [];
+            // for (var i = 0; i < props.Entities.length; i++) {
+            //     var entityProps = props.Entities[i];
+            //     // if something's lifetime will be over in under 5 minutes, skip it
+            //     if (!entityProps.lifetime || entityProps.lifetime == -1 || entityProps.lifetime > 300) {
+            //         nonTmpEntities.push(entityProps);
+            //     }
+            // }
+            // props.Entities = nonTmpEntities;
+
+            print("QQQQ start");
             var areSimilar = this.entityInScabbardProps && propertySetsAreSimilar(this.entityInScabbardProps, props);
+            print("QQQQ end");
 
             if (!this.locked && this.entityInScabbardProps && !areSimilar) {
                 // the scabbard already had something in it.  if they don't mostly match, kick the old thing
@@ -193,8 +205,8 @@ Script.include("/~/system/libraries/controllers.js");
             }
 
             if (areSimilar) {
-                for (var i = 0; i < entityIDs.length; i++) {
-                    Entities.deleteEntity(entityIDs[i]);
+                for (var j = 0; j < entityIDs.length; j++) {
+                    Entities.deleteEntity(entityIDs[j]);
                 }
             }
         };
@@ -266,7 +278,7 @@ Script.include("/~/system/libraries/controllers.js");
         var data;
         if (sender === MyAvatar.sessionUUID) {
             if (channel === "Hifi-Object-Manipulation") {
-                // try {
+                try {
                     data = JSON.parse(message);
                     if (data.action == "release") {
                         if (data.joint == "RightHand") {
@@ -285,10 +297,10 @@ Script.include("/~/system/libraries/controllers.js");
                             leftHipScabbard.noteGrab(data.grabbedEntity);
                         }
                     }
-                // } catch (err) {
-                //     print("WARNING: scabbard.js -- error reacting to Hifi-Object-Manipulation message: " + message);
-                //     print(err.message);
-                // }
+                } catch (err) {
+                    print("WARNING: scabbard.js -- error reacting to Hifi-Object-Manipulation message: " + message);
+                    print(err.message);
+                }
             }
         }
     }

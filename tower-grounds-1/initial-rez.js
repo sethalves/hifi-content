@@ -1,35 +1,31 @@
 "use strict";
 
-/* global Vec3, Quat, Entities, Script, Uuid */
+/* global Vec3, Entities, Script, Uuid,
+   plotSize, worldCenter,
+   voxelVolumeSize,
+   lowPlotIndex, highPlotIndex,
+   worldLowCoords, worldSize, oneOverWorldSize
+ */
+
 
 (function() {
 
-    var plotSize = { x: 128, y: 64, z: 128 }; // dimensions of one polyvox entity
-    var halfPlotSize = Vec3.multiply(plotSize, 0.5);
-    // var worldCenter = { x: 450, y: 1.5 + plotSize.y / 2, z: 100 };
-    var worldCenter = { x: 0, y: 0, z: 0 };
-    // var voxelVolumeSize = { x: 12, y: 48, z: 12 };
-    var voxelVolumeSize = { x: 16, y: 120, z: 16 };
-    var lowPlotIndex = { x: -2, y: 0, z: -2 }; // inclusive
-    var highPlotIndex = { x: 2, y: 0, z: 2 }; // inclusive
-    var funcLow = { x: -5, y: -0.5, z: -5 };
-    var funcHigh = { x: 5, y: 0.5, z: 5 };
+    Script.include(Script.resolvePath("common.js"));
+
+    var funcLow = { x: -5, y: -1, z: -5 };
+    var funcHigh = { x: 5, y: 1, z: 5 };
     var funcSize = Vec3.subtract(funcHigh, funcLow);
-    var lifetime = 12000;
-
-    var worldLowCoords = Vec3.sum(Vec3.subtract(Vec3.multiplyVbyV(lowPlotIndex, plotSize), halfPlotSize), worldCenter);
-    var worldHighCoords = Vec3.sum(Vec3.sum(Vec3.multiplyVbyV(highPlotIndex, plotSize), halfPlotSize), worldCenter);
-    var worldSize = Vec3.subtract(worldHighCoords, worldLowCoords);
-
-    var oneOverWorldSize = { x: 1.0 / worldSize.x, y: 1.0 / worldSize.y, z: 1.0 / worldSize.z };
     var oneOverFuncSize = { x: 1.0 / funcSize.x, y: 1.0 / funcSize.y, z: 1.0 / funcSize.z };
 
+    var lifetime = 12000;
+
     var polyVoxIDsByIndex = {};
+    var needed = {};
 
     function heightFunction(worldCoords) {
 
-        if (Vec3.length(worldCoords) < 80) {
-            return -5;
+        if (Vec3.length(worldCoords) < 110) {
+            return -6.2;
         }
 
         var worldOffset = Vec3.subtract(worldCoords, worldLowCoords);
@@ -37,10 +33,15 @@
         var funcOffset = Vec3.multiplyVbyV(funcSize, inputRatio);
         var funcCoords = Vec3.sum(funcLow, funcOffset);
 
+        var x = funcCoords.x;
+        var z = funcCoords.z;
+
         var funcResult = {
             x: funcCoords.x,
-            // y: Math.cos(funcCoords.x) + Math.cos(funcCoords.z),
-            y: Math.cos(funcCoords.x) * Math.sin(funcCoords.z - 5) / (funcCoords.x - 5),
+            // y: Math.cos(x) + Math.cos(z),
+            // y: Math.cos(x) * Math.sin(z - 5) / (x - 5),
+            // y: Math.cos(x) * Math.sin(z) * Math.pow(0.8, x - 2),
+            y: Math.cos(x) * Math.sin(z - Math.PI / 2),
             z: funcCoords.z
         };
 
@@ -75,27 +76,27 @@
     }
 
 
-    function worldPositionToPolyVoxIndex(pos, polyVoxPos, polyVoxRot) {
-        var posOffsetFromAether = Vec3.subtract(pos, polyVoxPos);
-        var polyVoxToWorldRotation = polyVoxRot;
-        var worldToPolyVox = Quat.inverse(polyVoxToWorldRotation);
-        var posInAetherFrame = Vec3.multiplyQbyV(worldToPolyVox, posOffsetFromAether);
-        return {
-            x: Math.floor(posInAetherFrame.x / plotSize.x),
-            y: Math.floor(posInAetherFrame.y / plotSize.y),
-            z: Math.floor(posInAetherFrame.z / plotSize.z)
-        };
-    }
+    // function worldPositionToPolyVoxIndex(pos, polyVoxPos, polyVoxRot) {
+    //     var posOffsetFromAether = Vec3.subtract(pos, polyVoxPos);
+    //     var polyVoxToWorldRotation = polyVoxRot;
+    //     var worldToPolyVox = Quat.inverse(polyVoxToWorldRotation);
+    //     var posInAetherFrame = Vec3.multiplyQbyV(worldToPolyVox, posOffsetFromAether);
+    //     return {
+    //         x: Math.floor(posInAetherFrame.x / plotSize.x),
+    //         y: Math.floor(posInAetherFrame.y / plotSize.y),
+    //         z: Math.floor(posInAetherFrame.z / plotSize.z)
+    //     };
+    // }
 
 
-    function polyVoxIndextoLocalPosition(voxelIndex) {
-        var posInAetherFrame = {
-            x: voxelIndex.x * plotSize.x + (plotSize.x / 2.0),
-            y: voxelIndex.y * plotSize.y + (plotSize.y / 2.0),
-            z: voxelIndex.z * plotSize.z + (plotSize.z / 2.0)
-        };
-        return posInAetherFrame;
-    }
+    // function polyVoxIndextoLocalPosition(voxelIndex) {
+    //     var posInAetherFrame = {
+    //         x: voxelIndex.x * plotSize.x + (plotSize.x / 2.0),
+    //         y: voxelIndex.y * plotSize.y + (plotSize.y / 2.0),
+    //         z: voxelIndex.z * plotSize.z + (plotSize.z / 2.0)
+    //     };
+    //     return posInAetherFrame;
+    // }
 
 
     function forEachPlotIndex(thunk) {
@@ -135,13 +136,13 @@
     }
 
 
-    function forEachXZIndex(thunk) {
-        for (var x = 0; x < voxelVolumeSize.x; x++) {
-            for (var z = 0; z < voxelVolumeSize.z; z++) {
-                thunk({ x: x, y: 0, z: z });
-            }
-        }
-    }
+    // function forEachXZIndex(thunk) {
+    //     for (var x = 0; x < voxelVolumeSize.x; x++) {
+    //         for (var z = 0; z < voxelVolumeSize.z; z++) {
+    //             thunk({ x: x, y: 0, z: z });
+    //         }
+    //     }
+    // }
 
 
     function slowForEachXZIndex(delayMS, thunk, continuation) {
@@ -224,6 +225,18 @@
             if (emptyHeight > 0) {
                 var emptySize = { x: 1, y: emptyHeight, z: 1 };
                 Entities.setVoxelsInCuboid(plotID, topFilledVoxelCoord, emptySize, 0);
+                needed[plotID] = true;
+            }
+        });
+    };
+
+    var cleanups = function() {
+        forEachPlotIndex(function (plotIndex) {
+            var plotID = getPolyVox(plotIndex);
+            if (needed[plotID]) {
+                print("QQQQ " + plotID + " is needed.");
+            } else {
+                print("QQQQ " + plotID + " is not needed.");
             }
         });
     };
@@ -234,7 +247,7 @@
                              slowForEachPlotIndex(600, linkPolyVox,
                                                   // continue...
                                                   function () {
-                                                      slowForEachXZIndex(300, setHeights);
+                                                      slowForEachXZIndex(300, setHeights, cleanups);
                                                   });
                          });
 

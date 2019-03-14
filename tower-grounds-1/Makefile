@@ -4,7 +4,7 @@
 
 all:
 
-upload: initial-rez.js
+upload: initial-rez.js common.js on-tool.js on-tool.json off-tool.js
 	rm -rf tower-grounds-1
 	mkdir -p tower-grounds-1
 	cp  $^ tower-grounds-1/

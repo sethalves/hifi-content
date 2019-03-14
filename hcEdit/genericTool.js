@@ -73,91 +73,11 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
             this.barrelPoint = Vec3.sum(this.position, Vec3.multiply(upVec, this.laserOffsets.y));
             this.laserTip = Vec3.sum(this.barrelPoint, Vec3.multiply(this.firingDirection, this.laserLength));
             this.barrelPoint = Vec3.sum(this.barrelPoint, Vec3.multiply(this.firingDirection, this.firingOffsets.z));
-        },
-
-        toggleWithTriggerPressure: function() {
-            this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[this.hand]);
-
-            if (this.triggerValue < RELOAD_THRESHOLD) {
-                this.targetEntity = null;
-                this.targetAvatar = null;
-                this.triggerHasReset = true;
-                if (this.active && this.toolFunctionStop) {
-                    this.toolFunctionStop();
-                }
-                this.active = false;
-            }
-            if (this.enabled && this.triggerHasReset === true && this.triggerValue > 0.55) {
-                this.triggerHasReset = false;
-                this.updateProps();
-                this.activate();
-            }
-        },
-
-        releaseEquip: function(id, params) {
-            this.equipperID = null;
-            if (this.equipStopped) {
-                this.equipStopped(id, params);
-            }
-            this.hand = null;
-            this.equipped = false;
-            Overlays.editOverlay(this.laser, {
-                visible: false
-            });
-        },
-
-        // triggerPress: function(hand, value) {
-        //     if (this.hand === hand && value > 0.5) {
-        //         // We are pulling trigger on the hand we have the tool in, so activate
-        //         this.activate();
-        //     }
-        // },
-
-        activate: function() {
-            if (this.activateSound) {
-                Audio.playSound(this.activateSound, {
-                    position: this.barrelPoint,
-                    volume: this.activateSoundVolume
-                });
-            }
 
             this.pickRay = {
                 origin: this.barrelPoint,
                 direction: this.firingDirection
             };
-
-            // print("pickRay direction =" + this.firingDirection.x + " " + this.firingDirection.y + " " + this.firingDirection.z);
-            // Entities.addEntity({
-            //     type: "Sphere",
-            //     position: this.pickRay.origin,
-            //     color: {red: 200, green: 0, blue: 0},
-            //     dimensions: 0.02,
-            //     lifetime: 1.0
-            // });
-            // Entities.addEntity({
-            //     type: "Sphere",
-            //     position: Vec3.sum(this.pickRay.origin, this.pickRay.direction),
-            //     color: {red: 0, green: 200, blue: 0},
-            //     dimensions: 0.02,
-            //     lifetime: 1.0
-            // });
-
-
-            // var indicator = Overlays.addOverlay("line3d", {
-            //     position: this.pickRay.origin,
-            //     start: { x: 0, y: 0, z: 0 },
-            //     end: Vec3.multiply(Vec3.normalize(this.pickRay.direction), 3.0),
-            //     color: { red: 0, green: 40, blue: 255 },
-            //     alpha: 0.8,
-            //     solid: true,
-            //     visible: true,
-            //     ignoreRayIntersection: true,
-            //     drawInFront: false
-            // });
-            // Script.setTimeout(function() {
-            //     Overlays.deleteOverlay(indicator);
-            // }, 2000);
-
 
             var intersection = Entities.findRayIntersection(this.pickRay, true);
             if (intersection.intersects) {
@@ -180,6 +100,47 @@ function genericTool(toolFunctionStart, toolFunctionContinue, toolFunctionStop) 
             } else {
                 this.targetAvatar = null;
                 this.avatarDistance = -1;
+            }
+        },
+
+        toggleWithTriggerPressure: function() {
+            this.triggerValue = Controller.getValue(TRIGGER_CONTROLS[this.hand]);
+
+            if (this.triggerValue < RELOAD_THRESHOLD) {
+                if (this.active && this.toolFunctionStop) {
+                    this.updateProps();
+                    this.toolFunctionStop();
+                }
+                this.targetEntity = null;
+                this.targetAvatar = null;
+                this.triggerHasReset = true;
+                this.active = false;
+            }
+            if (this.enabled && this.triggerHasReset === true && this.triggerValue > 0.55) {
+                this.triggerHasReset = false;
+                this.updateProps();
+                this.activate();
+            }
+        },
+
+        releaseEquip: function(id, params) {
+            this.equipperID = null;
+            if (this.equipStopped) {
+                this.equipStopped(id, params);
+            }
+            this.hand = null;
+            this.equipped = false;
+            Overlays.editOverlay(this.laser, {
+                visible: false
+            });
+        },
+
+        activate: function() {
+            if (this.activateSound) {
+                Audio.playSound(this.activateSound, {
+                    position: this.barrelPoint,
+                    volume: this.activateSoundVolume
+                });
             }
 
             this.active = true;

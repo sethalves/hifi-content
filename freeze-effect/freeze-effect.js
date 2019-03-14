@@ -55,7 +55,7 @@ function applyMaterial(targetID, opacity, lifetime, andChildren, materialsDict) 
                         priority: topMaterial.priority + 1,
                         parentMaterialName: m.toString(),
                         lifetime: lifetime
-                    }, true);
+                    }, "avatar");
 
                     newEntityIDs["material-" + m + "-" + targetID] = materialEntityID;
                 }
@@ -64,9 +64,9 @@ function applyMaterial(targetID, opacity, lifetime, andChildren, materialsDict) 
     }
 
     if (andChildren) {
-        var children = Entities.getChildrenIDs(targetID);
-        for (var c = 0; c < children.length; c++) {
-            var childID = children[c];
+        var childrenIDs = Entities.getChildrenIDs(targetID);
+        for (var c = 0; c < childrenIDs.length; c++) {
+            var childID = childrenIDs[c];
             var moreIDs = applyMaterial(childID, opacity, lifetime, andChildren, materialsDict);
             mergeIntoAssociativeArray(newEntityIDs, moreIDs);
         }
@@ -132,9 +132,19 @@ function addLockdownEntity(avatarID, position, rotation, lifetime) {
         }),
         ignorePickIntersection: true,
         grab: { grabbable: false }
-    });
+    }, "avatar");
 }
 
+function isAvatarFrozen(avatarID) {
+    var childrenIDs = Entities.getChildrenIDs(avatarID);
+    for (var c = 0; c < childrenIDs.length; c++) {
+        var props = Entities.getEntityProperties(childrenIDs[c], ["name"]);
+        if (props && props.name == "frozen-" + avatarID) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function freezeAvatar(avatarID, lifetime) {
     print("QQQQ freezing avatar " + JSON.stringify(avatarID) + " for " + lifetime + " seconds.");
@@ -178,7 +188,7 @@ function freezeAvatar(avatarID, lifetime) {
                 lifetime: lifetime + 2
                 // jointRotations: jointRotations,
                 // jointRotationsSet: jointRotationsSet
-            });
+            }, "avatar");
             newEntityIDs.doppleganger = dopplegangerID;
 
             addLockdownEntity(avatarID, position, rotation, lifetime);
@@ -223,5 +233,6 @@ module.exports = {
     getTopMaterial: getTopMaterial,
     fadeTarget: fadeTarget,
     colorTarget: colorTarget,
+    isAvatarFrozen: isAvatarFrozen,
     freezeAvatar: freezeAvatar
 };

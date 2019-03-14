@@ -2,8 +2,8 @@
 /* global Entities, Script, Vec3, Messages, Controller */
 
 (function() {
-    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js?v=2");
-    var freezeEffect = Script.require("http://headache.hungry.com/~seth/hifi/freeze-effect/freeze-effect.js?v=2");
+    var genericTool = Script.require("http://headache.hungry.com/~seth/hifi/hcEdit/genericTool.js?v=6");
+    var freezeEffect = Script.require("http://headache.hungry.com/~seth/hifi/freeze-effect/freeze-effect.js?v=6");
 
     var rayGun;
     var freezeTime = 5.0;
@@ -28,9 +28,11 @@
             var distance = -1;
             var hitCoords;
             if (this.targetAvatar) {
+                if (!freezeEffect.isAvatarFrozen(this.targetAvatar)) {
+                    freezeEffect.freezeAvatar(this.targetAvatar, freezeTime);
+                }
                 hitCoords = Vec3.sum(origin, Vec3.multiply(this.avatarDistance, direction));
                 distance = this.avatarDistance;
-                freezeEffect.freezeAvatar(this.targetAvatar, freezeTime);
             }
             if (this.targetEntity && (distance < 0 || this.entityDistance < distance)) {
                 hitCoords = Vec3.sum(origin, Vec3.multiply(this.entityDistance, direction));
@@ -46,7 +48,7 @@
                     dimensions: { x: 0.5, y: 0.5, z: 0.5 },
                     lifetime: 1.0,
                     alpha: 0.4
-                });
+                }, "avatar");
             } else {
                 distance = 20;
             }
@@ -84,7 +86,7 @@
             localRotation: {x: 0, y: 0, z: 0, w: 1},
             localPosition: {x: 0, y: 0.008, z: 0.12},
             lifetime: 0.35
-        });
+        }, "avatar");
     };
 
     rayGun.updateRay = function() {

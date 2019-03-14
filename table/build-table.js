@@ -39,7 +39,10 @@
         collisionless: false,
         gravity: { x: 0, y: -1, z: 0 },
         lifetime: lifetime,
-        userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        grab: {
+            grabbable: true,
+            grabKinematic: false
+        }
     });
 
     var leftDrawerOffset = { x: left_drawer_center_x, y: drawer_center_y, z: drawer_center_z };
@@ -56,7 +59,10 @@
         collisionless: false,
         gravity: { x: 0, y: 0, z: 0 },
         lifetime: lifetime,
-        userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        grab: {
+            grabbable: true,
+            grabKinematic: false
+        }
     });
 
     var rightDrawerOffset = { x: right_drawer_center_x, y: drawer_center_y, z: drawer_center_z };
@@ -73,7 +79,10 @@
         collisionless: false,
         gravity: { x: 0, y: 0, z: 0 },
         lifetime: lifetime,
-        userData: "{ \"grabbableKey\": { \"grabbable\": true, \"kinematic\": false } }"
+        grab: {
+            grabbable: true,
+            grabKinematic: false
+        }
     });
 
     Entities.addAction("slider", leftDrawerID, {
@@ -89,12 +98,12 @@
         tag: "left drawer slider"
     });
 
-    // Entities.addAction("tractor", leftDrawerID, {
-    //     targetPosition: leftDrawerOffset,
-    //     linearTimeScale: 1.0,
-    //     otherID: tableID,
-    //     tag: "left drawer spring"
-    // });
+    Entities.addAction("tractor", leftDrawerID, {
+        targetPosition: leftDrawerOffset,
+        linearTimeScale: 1.0,
+        otherID: tableID,
+        tag: "left drawer spring"
+    });
 
     Entities.addAction("slider", rightDrawerID, {
         point: { x: 0, y: 0, z: 0 },
@@ -109,11 +118,11 @@
         tag: "right drawer slider"
     });
 
-    // Entities.addAction("tractor", rightDrawerID, {
-    //     targetPosition: rightDrawerOffset,
-    //     linearTimeScale: 1.0,
-    //     otherID: tableID,
-    //     tag: "right drawer spring"
-    // });
+    Entities.addAction("tractor", rightDrawerID, {
+        targetPosition: rightDrawerOffset,
+        linearTimeScale: 1.0,
+        otherID: tableID,
+        tag: "right drawer spring"
+    });
 
 }()); // END LOCAL_SCOPE

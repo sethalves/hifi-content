@@ -743,7 +743,7 @@ function propertySetsAreSimilar(propsA, propsB) {
     // { Entities: [ ... ], Actions: [ ... ] }
     // TODO -- examine the parent/child and neighbor relationships and the actions
 
-    var debugPrints = false;
+    var debugPrints = true;
 
 
     if (propsA.Entities.length != propsB.Entities.length) {

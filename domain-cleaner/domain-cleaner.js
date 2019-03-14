@@ -1,107 +1,26 @@
 "use strict";
 
-/* global Entities, Script, Messages, Tablet, Assets, MyAvatar, Vec3 */
+/* global Entities, Script, Assets, MyAvatar, Vec3 */
 
 (function() { // BEGIN LOCAL_SCOPE
+    var AppUi = Script.require("appUi");
+    var ui;
 
-    var DOMAIN_CLEANER_URL = Script.resolvePath("domain-cleaner.html");
+    var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
+    var entitiesIDsToProperties = EUs.entitiesIDsToProperties;
+    var propertiesToEntities = EUs.propertiesToEntities;
+    var getIDsFromProperties = EUs.getIDsFromProperties;
+    var deleteEntities = EUs.deleteEntities;
 
-    var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
+    var saveIsRunning = false;
+    var restoreIsRunning = false;
 
-    var button = tablet.addButton({
-        icon: Script.resolvePath("domain-cleaner.svg"),
-        text: "Cleaner",
-        sortOrder: 30
-    });
 
-    var handleMessages = function(channel, message, sender) {
-        if (channel !== 'Domain-Cleaner') {
-            return;
-        }
+    function saveEntities(entityIDsToSave) {
+        print("found " + entityIDsToSave.length + " entities.");
+        var savedEntitiesProps = entitiesIDsToProperties(entityIDsToSave, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 });
 
-        var parsedMessage = {};
-        try {
-            parsedMessage = JSON.parse(message);
-        }  catch (e) {
-            print(e);
-        }
-
-        print("got Domain-Cleaner message: " + JSON.stringify(parsedMessage));
-    };
-
-    function cleanProperties(props) {
-        // delete props.id;
-        delete props.clientOnly;
-        delete props.created;
-        delete props.lastEdited;
-        delete props.lastEditedBy;
-        delete props.owningAvatarID;
-        delete props.queryAACube;
-        delete props.age;
-        delete props.ageAsText;
-        delete props.naturalDimensions;
-        delete props.naturalPosition;
-        delete props.acceleration;
-        delete props.scriptTimestamp;
-        delete props.boundingBox;
-        delete props.position;
-        delete props.rotation;
-        delete props.velocity;
-        delete props.angularVelocity;
-        delete props.dimensions;
-        delete props.renderInfo;
-        // delete props.parentID;
-        // delete props.parentJointIndex;
-        // delete props.localPosition;
-        // delete props.localRotation;
-        delete props.lifetime;
-        // delete props.actionData; // XXX need to handle these differently for ID remapping
-        delete props.localVelocity;
-        delete props.localAngularVelocity;
-
-        props.actions = [];
-        var actionIDs = Entities.getActionIDs(props.id);
-        for (var i = 0; i < actionIDs.length; i++) {
-            var actionArguments = Entities.getActionArguments(props.id, actionIDs[i]);
-
-            if (actionArguments.type == "none" ||
-                actionArguments.type == "hold" ||
-                actionArguments.type == "fargrab") {
-                continue;
-            }
-
-            delete actionArguments[":active"];
-            delete actionArguments["::active"];
-            delete actionArguments[":motion-type"];
-            delete actionArguments["::motion-type"];
-            delete actionArguments.isMine;
-
-            props.actions.push(actionArguments);
-            print("ACTION -- " + JSON.stringify(actionArguments));
-        }
-
-        return props;
-    }
-
-    function saveDomain(params) {
-        var entitiesToSave = [];
-        var entityIDs = Entities.findEntities(MyAvatar.position, 1000);
-        for (var j = 0; j < entityIDs.length; j++) {
-            var entityID = entityIDs[j];
-            var props = Entities.getEntityProperties(entityID);
-            if (props.locked) {
-                continue;
-            }
-            if (props.clientOnly) {
-                continue;
-            }
-
-            props = cleanProperties(props);
-            entitiesToSave.push(props);
-        }
-
-        print("found " + entitiesToSave.length + " entities.");
-        var data = JSON.stringify(entitiesToSave);
+        var data = JSON.stringify(savedEntitiesProps);
         Assets.uploadData(data, function(url, hash) {
             print("save-data uploaded: " + hash);
             Assets.setMapping("/domain-cleaner-data.json", hash, function() {
@@ -110,32 +29,72 @@
         });
     }
 
-    function restoreDomain(params) {
 
-        Messages.sendMessage('Domain-Cleaner', JSON.stringify({
-            action: 'restore',
-            position: MyAvatar.position
-        }));
+    function saveDomain() {
+        if (saveIsRunning) {
+            print("domain save is already in progress...");
+            return;
+        }
+        saveIsRunning = true;
 
-        // Assets.getMapping("/domain-cleaner-data.json", function (hash, success) {
-        //     if (!success || hash === "") {
-        //         print("failed to get mapping for /domain-cleaner-data.json");
-        //         return;
-        //     }
-        //     Assets.downloadData("atp:" + hash, function (data) {
-        //         var savedEntityProps = JSON.parse(data);
-        //         for (var i = 0; i < savedEntityProps.length; i++) {
-        //             var props = savedEntityProps[i];
-        //             var entityID = props.id;
-        //             delete props.id;
-        //             // delete props.type;
-        //             Entities.editEntity(entityID, props);
-        //         }
-        //     });
-        // });
+        var entityIDs = Entities.findEntities(MyAvatar.position, 1000);
+        var entityIDsToSave = [];
+
+        for (var j = 0; j < entityIDs.length; j++) {
+            var entityID = entityIDs[j];
+            var props = Entities.getEntityProperties(entityID, ["entityHostType", "locked"]);
+            if (props.locked) {
+                continue;
+            }
+            if (props.entityHostType != "domain") {
+                continue;
+            }
+            entityIDsToSave.push(entityID);
+        }
+
+        saveEntities(entityIDsToSave);
+        saveIsRunning = false;
     }
 
-    function deleteUnknown(params) {
+
+    function restoreDomain() {
+        if (restoreIsRunning) {
+            print("domain restoration is already in progress...");
+            return;
+        }
+        restoreIsRunning = true;
+
+        print("Restoring saved domain...");
+        Assets.getMapping("/domain-cleaner-data.json", function (error, hash) {
+            print("Assets.getMapping callback: " + error + " " + hash);
+            if (error || hash === "") {
+                print("failed to get mapping for /domain-cleaner-data.json -- " + error);
+                restoreIsRunning = false;
+                return;
+            }
+            print("Calling Assets.downloadData...");
+            Assets.downloadData("atp:" + hash, function (data) {
+                print("Download of /domain-cleaner-data.json is done.");
+
+                var savedEntitiesProps = JSON.parse(data);
+
+                var oldEntityIDs = getIDsFromProperties(savedEntitiesProps);
+                print("Deleting IDs: " + JSON.stringify(oldEntityIDs));
+                deleteEntities(oldEntityIDs, 30, function () {
+                    print("Done deleting.");
+                    var newEntityIDs = propertiesToEntities(savedEntitiesProps,
+                                                            { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 }, false);
+                    print("Resaving...");
+                    saveEntities(newEntityIDs);
+                    print("Done Resaving.");
+                    restoreIsRunning = false;
+                });
+            });
+        });
+    }
+
+
+    function deleteUnknown() {
         var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -2}));
         Entities.addEntity({
             name: "domain-cleaner test",
@@ -150,62 +109,37 @@
         });
     }
 
-    function onWebEventReceived(eventString) {
-        print("received web event: " + JSON.stringify(eventString));
-        if (typeof eventString === "string") {
-            var event;
-            try {
-                event = JSON.parse(eventString);
-            } catch(e) {
-                return;
-            }
 
-            if (event["domain-cleaner-command"]) {
-                var commandToFunctionMap = {
-                    "save-domain": saveDomain,
-                    "restore-domain": restoreDomain,
-                    "delete-unknown": deleteUnknown
-                };
-
-                var cmd = event["domain-cleaner-command"];
-                if (commandToFunctionMap.hasOwnProperty(cmd)) {
-                    var func = commandToFunctionMap[cmd];
-                    func(event);
-                }
-            }
+    function fromQml(message) {
+        print("message from qml: " + JSON.stringify(message));
+        if (message.method == "save") {
+            saveDomain();
+        } else if (message.method == "restore") {
+            restoreDomain();
+        } else if (message.method == "delete-unknown") {
+            deleteUnknown();
         }
     }
 
-    var onDomainCleanerScreen = false;
-    var shouldActivateButton = false;
-
-    function onClicked() {
-        if (onDomainCleanerScreen) {
-            tablet.gotoHomeScreen();
-        } else {
-            shouldActivateButton = true;
-            tablet.gotoWebScreen(DOMAIN_CLEANER_URL);
-            onDomainCleanerScreen = true;
-        }
-    }
-
-    function onScreenChanged() {
-        // for toolbar mode: change button to active when window is first openend, false otherwise.
-        button.editProperties({isActive: shouldActivateButton});
-        onDomainCleanerScreen = shouldActivateButton;
-        shouldActivateButton = false;
-    }
 
     function cleanup() {
-        button.clicked.disconnect(onClicked);
-        tablet.removeButton(button);
-        Messages.messageReceived.disconnect(handleMessages);
     }
 
-    Messages.messageReceived.connect(handleMessages);
-
-    button.clicked.connect(onClicked);
-    tablet.webEventReceived.connect(onWebEventReceived);
-    tablet.screenChanged.connect(onScreenChanged);
     Script.scriptEnding.connect(cleanup);
+
+
+    function startup() {
+        ui = new AppUi({
+            buttonName: "CLEANER",
+            home: Script.resolvePath("domain-clean.qml"),
+            onMessage: fromQml,
+            normalButton: Script.resolvePath("domain-clean.svg"),
+            activeButton: Script.resolvePath("domain-clean.svg")
+        });
+
+        Script.scriptEnding.connect(cleanup);
+    }
+
+    startup();
+
 }()); // END LOCAL_SCOPE

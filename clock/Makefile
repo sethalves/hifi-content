@@ -4,6 +4,7 @@
 
 ATP_CLIENT=../../hifi/build/tools/atp-client/atp-client
 WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+OPENSCAD=openscad-nightly
 
 
 # these are related to outer_radius and inner_radius in clock.scad -- (* (- 0.5 0.05) 2)
@@ -19,7 +20,7 @@ all: clock.obj hour-hand.obj minute-hand.obj second-hand.obj clock-face.png
 
 
 clock.stl: clock.scad
-	openscad -o $@ $^
+	$(OPENSCAD) -o $@ $^
 
 clock-untextured.obj: clock.stl
 	$(WAVEFRONT_OBJ_TOOL) -n $^ -o $@ -L clock.mtl -S clock_body_mtl
@@ -36,7 +37,7 @@ hour-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
 	./$< --length 0.25 > $@
 
 hour-hand.stl: hour-hand.scad
-	openscad -o $@ $^
+	$(OPENSCAD) -o $@ $^
 
 hour-hand.obj: hour-hand.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
@@ -48,7 +49,7 @@ minute-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
 	./$< --length 0.4 > $@
 
 minute-hand.stl: minute-hand.scad
-	openscad -o $@ $^
+	$(OPENSCAD) -o $@ $^
 
 minute-hand.obj: minute-hand.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
@@ -59,7 +60,7 @@ second-hand.scad: make-clock-hand-gauche.scm make-clock-hand.sld
 	./$< --length 0.41 --base-width 0.01 > $@
 
 second-hand.stl: second-hand.scad
-	openscad -o $@ $^
+	$(OPENSCAD) -o $@ $^
 
 second-hand.obj: second-hand.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c $^ -o $@
