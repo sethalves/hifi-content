@@ -608,8 +608,7 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
     return newEntityIDs;
 }
 
-
-function propertiesToEntitiesAuto(jsonDecoded, basePosition, baseRotation) {
+function propertiesToEntitiesAuto(jsonDecoded, basePosition, baseRotation, doneThunk) {
     // attempt to rez domain-entities (perhaps tmp), and if that fails, use avatar-entities
     var makeAvatarEntities = !(Entities.canRez() || Entities.canRezTmp());
     var newEntityIDs = propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvatarEntities);
@@ -622,10 +621,30 @@ function propertiesToEntitiesAuto(jsonDecoded, basePosition, baseRotation) {
                 for (var i = 0; i < newEntityIDs.length; i++) {
                     Entities.deleteEntity(newEntityIDs[i]);
                 }
-                propertiesToEntities(jsonDecoded, basePosition, baseRotation, true);
+                var newNewEntityIDs = propertiesToEntities(jsonDecoded, basePosition, baseRotation, true);
+                if (doneThunk) {
+                    doneThunk(newNewEntityIDs);
+                }
+            } else {
+                if (doneThunk) {
+                    doneThunk(newEntityIDs);
+                }
             }
         }, 200);
+    } else {
+        if (doneThunk) {
+            doneThunk(newEntityIDs);
+        }
     }
+}
+
+
+function addEntityAuto(entityProperties, doneThunk) {
+    var jsonDecoded = { Entities: [entityProperties] };
+    propertiesToEntitiesAuto(jsonDecoded, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 },
+                             function (newEntityIDs) {
+                                 doneThunk(newEntityIDs[0]);
+                             });
 }
 
 
@@ -743,7 +762,7 @@ function propertySetsAreSimilar(propsA, propsB) {
     // { Entities: [ ... ], Actions: [ ... ] }
     // TODO -- examine the parent/child and neighbor relationships and the actions
 
-    var debugPrints = true;
+    var debugPrints = false;
 
 
     if (propsA.Entities.length != propsB.Entities.length) {
@@ -864,6 +883,7 @@ module.exports = {
     checkRezSuccess: checkRezSuccess,
     propertiesToEntities: propertiesToEntities,
     propertiesToEntitiesAuto: propertiesToEntitiesAuto,
+    addEntityAuto: addEntityAuto,
     getRootIDOfParentingTree: getRootIDOfParentingTree,
     getConnectedEntityIDs: getConnectedEntityIDs,
     propertySetsAreSimilar: propertySetsAreSimilar,
