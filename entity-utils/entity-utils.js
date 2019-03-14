@@ -643,7 +643,9 @@ function addEntityAuto(entityProperties, doneThunk) {
     var jsonDecoded = { Entities: [entityProperties] };
     propertiesToEntitiesAuto(jsonDecoded, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, w: 1 },
                              function (newEntityIDs) {
-                                 doneThunk(newEntityIDs[0]);
+                                 if (doneThunk) {
+                                     doneThunk(newEntityIDs[0]);
+                                 }
                              });
 }
 
