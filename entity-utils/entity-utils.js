@@ -168,6 +168,7 @@ var defaultProperties = {
     "editionNumber": 0,
     "entityInstanceNumber": 0,
     "certificateID": "",
+    "certificateType": "",
     "staticCertificateVersion": 0,
     "name": "",
     "collisionSoundURL": "",
@@ -222,8 +223,9 @@ var defaultProperties = {
     "xPNeighborID": "{00000000-0000-0000-0000-000000000000}",
     "yPNeighborID": "{00000000-0000-0000-0000-000000000000}",
     "zPNeighborID": "{00000000-0000-0000-0000-000000000000}",
-
-};
+    "modelScale": { "x": 1, "y": 1, "z": 1 }
+}
+;
 
 
 function cleanProperties(props, removeDefaults) {
@@ -247,8 +249,13 @@ function cleanProperties(props, removeDefaults) {
         }
     }
 
+    if (props.entityHostType == "avatar") {
+        delete props.entityHostType;
+    }
+
     // remove redundant and read-only properties.
     delete props.clientOnly;
+    delete props.avatarEntity;
     delete props.created;
     delete props.lastEdited;
     delete props.lastEditedBy;
@@ -434,11 +441,13 @@ function checkRezSuccess(entityIDs) {
     for (var i = 0; i < entityIDs.length; i++) {
         var entityID = entityIDs[i];
         var posCheck = Entities.getEntityProperties(entityID, ["localPosition"]).localPosition;
-        if (!posCheck || !posCheck.x) {
-            return false;
+        if (posCheck && posCheck.x) {
+            // if any of them survived, consider this a success.  sometimes scripts on the rezzed thing
+            // delete or change children, or whatever.
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 
@@ -611,16 +620,20 @@ function propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvata
 function propertiesToEntitiesAuto(jsonDecoded, basePosition, baseRotation, doneThunk) {
     // attempt to rez domain-entities (perhaps tmp), and if that fails, use avatar-entities
     var makeAvatarEntities = !(Entities.canRez() || Entities.canRezTmp());
+    print("QQQQ makeAvatarEntities = " + makeAvatarEntities);
     var newEntityIDs = propertiesToEntities(jsonDecoded, basePosition, baseRotation, makeAvatarEntities);
     if (!makeAvatarEntities) {
         // some domains allow rezzing but then block it with server-side filters.
         // wait 1/5 of a second and make sure the entities made it.
         Script.setTimeout(function () {
             var success = checkRezSuccess(newEntityIDs);
+            print("QQQQ checkRezSuccess --> " + success);
             if (!success) {
                 for (var i = 0; i < newEntityIDs.length; i++) {
+                    print("QQQQ deleting for retry -- " + newEntityIDs[i]);
                     Entities.deleteEntity(newEntityIDs[i]);
                 }
+                print("QQQQ rezzing as avatar entities...");
                 var newNewEntityIDs = propertiesToEntities(jsonDecoded, basePosition, baseRotation, true);
                 if (doneThunk) {
                     doneThunk(newNewEntityIDs);
@@ -764,7 +777,7 @@ function propertySetsAreSimilar(propsA, propsB) {
     // { Entities: [ ... ], Actions: [ ... ] }
     // TODO -- examine the parent/child and neighbor relationships and the actions
 
-    var debugPrints = false;
+    var debugPrints = true;
 
 
     if (propsA.Entities.length != propsB.Entities.length) {
