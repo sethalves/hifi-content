@@ -16,7 +16,9 @@ Script.include("/~/system/libraries/controllers.js");
     var getConnectedEntityIDs = EUs.getConnectedEntityIDs;
     var propertySetsAreSimilar = EUs.propertySetsAreSimilar;
 
-    var scabbardActiveDistance = 0.22;
+    var scabbardTakeDistance = 0.22;
+    var scabbardDropDistance = 0.3;
+    var avatarEntityExpireSeconds = 3600;
 
     var SCABBARD_SETTINGS = "io.highfidelity.scabbard";
     // var DOWN = { x: 0, y: -1, z: 0 };
@@ -32,16 +34,16 @@ Script.include("/~/system/libraries/controllers.js");
     var mappingName;
     var triggerMapping;
 
-    var avatarEntitiesIRezzed = {};
+    var entitiesRezzedByScabbard = {};
 
 
     function limitAvatarEntityLifetimes(droppedEntityID) {
-        if (avatarEntitiesIRezzed[droppedEntityID]) {
-            var droppedProps = Entities.getEntityProperties(droppedEntityID, ["age"]);
-            if (droppedProps) {
+        if (entitiesRezzedByScabbard[droppedEntityID]) {
+            var droppedProps = Entities.getEntityProperties(droppedEntityID, ["age", "entityHostType"]);
+            if (droppedProps && droppedProps.entityHostType == "avatar") {
                 // if an avatar-entity was created by this script, and it's been dropped,
                 // schedule it to expire in the near future.
-                Entities.editEntity(droppedEntityID, { lifetime: droppedProps.age + 10 });
+                Entities.editEntity(droppedEntityID, { lifetime: droppedProps.age + avatarEntityExpireSeconds });
             }
         }
     }
@@ -89,7 +91,7 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function detectShoulderGesture(controllerLocation, hand) {
+    function detectShoulderGesture(controllerLocation, hand, scabbardActiveDistance) {
         if (! controllerLocation.valid) {
             return false;
         }
@@ -110,7 +112,7 @@ Script.include("/~/system/libraries/controllers.js");
     }
 
 
-    function detectHipGesture(controllerLocation, hand) {
+    function detectHipGesture(controllerLocation, hand, scabbardActiveDistance) {
         if (! controllerLocation.valid) {
             return false;
         }
@@ -164,17 +166,28 @@ Script.include("/~/system/libraries/controllers.js");
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
 
-            if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) ||
-                (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand))) {
+            if ((this.hipOrShoulder == SHOULDER &&
+                 detectShoulderGesture(controllerLocation, this.hand, scabbardTakeDistance)) ||
+                (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand, scabbardTakeDistance))) {
+                print("QQQQ " + this.idStr + " calling propertiesToEntitiesAuto");
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation,
                                          function (newEntityIDs) {
+                                             print("QQQQ propertiesToEntitiesAuto done: " + newEntityIDs.length);
                                              for (var i = 0; i < newEntityIDs.length; i++) {
                                                  var newID = newEntityIDs[i];
-                                                 var newProps = Entities.getEntityProperties(newID, ["entityHostType"]);
-                                                 if (newProps.entityHostType == "avatar") {
-                                                     avatarEntitiesIRezzed[newID] = true;
-                                                 }
+                                                 entitiesRezzedByScabbard[newID] = true;
+
+                                                 // var props = this.entityInScabbardProps[i];
+                                                 // if (props.grab && props.grab.equippable) {
+                                                 //     Messages.sendMessage("Hifi-Hand-Grab", JSON.stringify({
+                                                 //         action: 'release',
+                                                 //         hand: this.hand == LEFT_HAND ? "left" : "right",
+                                                 //         entityID: newID
+                                                 //     }));
+                                                 // }
                                              }
+
+
                                          });
 
                 // this line would make the scabbard empty after an item is taken out:
@@ -184,18 +197,20 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.handleTriggerValue = function (value) {
+            var prevValue = this.previousTriggerValue;
+            this.previousTriggerValue = value;
             if (this.inHandID) {
                 return;
             }
 
-            if (this.enabled && this.previousTriggerValue < TRIGGER_ON_VALUE && value >= TRIGGER_ON_VALUE) {
+            if (this.enabled && prevValue < TRIGGER_ON_VALUE && value >= TRIGGER_ON_VALUE) {
                 this.takeEntityFromScabbard();
             }
-            this.previousTriggerValue = value;
         };
 
 
         this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
+            print("QQQQ " + this.idStr + "saveEntityInScabbard starting");
             var entityIDs = getConnectedEntityIDs(targetEntityID);
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
             if (!props) {
@@ -213,13 +228,18 @@ Script.include("/~/system/libraries/controllers.js");
             // }
             // props.Entities = nonTmpEntities;
 
-            print("QQQQ start");
-            var areSimilar = this.entityInScabbardProps && propertySetsAreSimilar(this.entityInScabbardProps, props);
-            print("QQQQ end");
+            if (this.entityInScabbardProps) {
+                print("QQQQ start -- " +
+                      (this.entityInScabbardProps[0] ? this.entityInScabbardProps[0].entityHostType : "null") + " " +
+                      (props[0] ? props[0].entityHostType : "null"));
+                var areSimilar = this.entityInScabbardProps && propertySetsAreSimilar(this.entityInScabbardProps, props);
+                print("QQQQ end");
+            }
 
             if (!this.locked && this.entityInScabbardProps && !areSimilar) {
                 // the scabbard already had something in it.  if they don't mostly match, kick the old thing
                 // out into the world.
+                print("QQQQ evicting something");
                 propertiesToEntitiesAuto(this.entityInScabbardProps, controllerLocation.position, controllerLocation.rotation);
                 areSimilar = true;
             }
@@ -230,6 +250,7 @@ Script.include("/~/system/libraries/controllers.js");
             }
 
             if (areSimilar) {
+                print("QQQQ deleting dropped entity");
                 for (var j = 0; j < entityIDs.length; j++) {
                     Entities.deleteEntity(entityIDs[j]);
                 }
@@ -238,14 +259,25 @@ Script.include("/~/system/libraries/controllers.js");
 
 
         this.checkRelease = function (droppedEntityID) {
+            print("QQQQ checkRelease");
+
             this.inHandID = null;
             if (!this.enabled) {
                 return;
             }
             var controllerName = (this.hand === LEFT_HAND) ? Controller.Standard.LeftHand : Controller.Standard.RightHand;
             var controllerLocation = getControllerWorldLocation(controllerName, true);
-            if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand)) ||
-                (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand))) {
+
+            var dropRadius;
+            if (entitiesRezzedByScabbard[droppedEntityID]) {
+                // make it very easy to drop something back into scabbard
+                dropRadius = scabbardDropDistance * 1.5;
+            } else {
+                dropRadius = scabbardDropDistance;
+            }
+
+            if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand, dropRadius)) ||
+                (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand, dropRadius))) {
                 this.saveEntityInScabbard(droppedEntityID, controllerLocation);
             }
         };
@@ -305,6 +337,7 @@ Script.include("/~/system/libraries/controllers.js");
             if (channel === "Hifi-Object-Manipulation") {
                 try {
                     data = JSON.parse(message);
+                    print("QQQQ got message: " + message);
                     if (data.action == "release") {
                         limitAvatarEntityLifetimes(data.grabbedEntity);
                         if (data.joint == "RightHand") {
@@ -362,13 +395,14 @@ Script.include("/~/system/libraries/controllers.js");
     });
 
 
-    if (true) {
+    if (false) {
         leftShoulderScabbard.debug();
         rightShoulderScabbard.debug();
         leftHipScabbard.debug();
         rightHipScabbard.debug();
     }
 
+    print("QQQQ scabbard starting");
     Messages.subscribe("Hifi-Object-Manipulation");
     Messages.messageReceived.connect(handleMessages);
 
@@ -394,7 +428,5 @@ Script.include("/~/system/libraries/controllers.js");
         if (message.method == "rightHipEnabled") { rightHipScabbard.setEnabled(message.value); }
         if (message.method == "rightHipLocked") { rightHipScabbard.setLocked(message.value); }
     }
-
-
 
 }());
