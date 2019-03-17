@@ -17,7 +17,7 @@ L_SYSTEM_TREE=../L-system-tree/L-system-tree
 
 ###
 
-all: trees-skybox.png
+all: trees-skybox.png trees-skybox-night.png
 
 clouds-with-shadows0.png clouds-with-shadows1.png clouds-with-shadows2.png clouds-with-shadows3.png clouds-with-shadows4.png clouds-with-shadows5.png: clouds-with-shadows.pov clouds-with-shadows.ini
 	povray +W${WIDTH} +H${HEIGTH} clouds-with-shadows.ini
@@ -39,14 +39,15 @@ skybox.pnm: row0.pnm row1.pnm row2.pnm
 	pnmcat -tb $^ > $@
 
 
-###
-
-
-trees0.png trees1.png trees2.png trees3.png trees4.png trees5.png: trees.pov trees.ini
-	povray +W${WIDTH} +H${HEIGTH} trees.ini
+### trees
 
 trees.pov: skybox-header.pov make-trees-pov.sh
 	./make-trees-pov.sh
+
+### day
+
+trees0.png trees1.png trees2.png trees3.png trees4.png trees5.png: trees.pov trees.ini
+	povray +W${WIDTH} +H${HEIGTH} trees.ini
 
 trees-row0.pnm: trees0.pnm blank.pnm
 	pnmcat -lr blank.pnm $^ blank.pnm > $@
@@ -64,11 +65,30 @@ grass.png: trees5.png
 	cp $^ $@
 
 
+### night
+
+trees-night0.png trees-night1.png trees-night2.png trees-night3.png trees-night4.png trees-night5.png: trees-night.pov trees-night.ini
+	povray +W${WIDTH} +H${HEIGTH} trees-night.ini
+
+trees-night-row0.pnm: trees-night0.pnm blank.pnm
+	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+trees-night-row1.pnm: trees-night1.pnm trees-night2.pnm trees-night3.pnm trees-night4.pnm
+	pnmcat -lr $^ > $@
+
+trees-night-row2.pnm: trees-night5.pnm blank.pnm
+	pnmcat -lr blank.pnm $^ blank.pnm > $@
+
+trees-skybox-night.pnm: trees-row0.pnm trees-row1.pnm trees-row2.pnm
+	pnmcat -tb $^ > $@
+
+
 ###
 
 clean:
 	rm -f *~ *.pnm *.png
 	rm -f tree.pov trees.pov
+	rm -f *.pov-state
 
 upload: trees-skybox.png grass.png # skybox.png
 	scp $^ headache:public_html/hifi/

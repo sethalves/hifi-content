@@ -37,6 +37,37 @@ camera {
     look_at camloc + -y
 #end
 
+
+
+//
+// night
+//
+
+#if(frame_number=6)
+    look_at camloc + y
+#end
+
+#if(frame_number=7)
+    look_at camloc + -x
+#end
+
+#if(frame_number=8)
+    look_at camloc + z
+#end
+
+#if(frame_number=9)
+    look_at camloc + x
+#end
+
+#if(frame_number=10)
+    look_at camloc + -z
+#end
+
+#if(frame_number=11)
+    look_at camloc + -y
+#end
+
+
 }
 
 
@@ -57,8 +88,18 @@ global_settings { noise_generator 1 }
 #include "colors.inc"
 #include "textures.inc"
 
+
+#if(frame_number<6)
+// sun height over the clouds produces cloud shadows
 light_source { <3000, 5000, -3500>  rgb<1,1,1> }
-   // sun height over the clouds produces cloud shadows
+#end
+
+#if(frame_number>5)
+// sun height over the clouds produces cloud shadows
+// light_source { <3000, 0, -3500>  rgb<0.1,0.1,0.1> }
+#end
+
+
 
 // ***************************************************************
 // a brighter version of Darin Dugger's T_Clouds from "skies.inc"
