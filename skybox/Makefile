@@ -98,8 +98,8 @@ trees-skybox-night.pnm: trees-night-row0.pnm trees-night-row1.pnm trees-night-ro
 
 clean:
 	rm -f *~ *.pnm *.png
-	rm -f tree.pov trees-day.pov trees-twilight.pov trees-night.pov
+	rm -f tree.pov trees.pov trees-day.pov trees-twilight.pov trees-night.pov
 	rm -f *.pov-state
 
-upload: trees-skybox.png grass.png # skybox.png
+upload: trees-skybox.png trees-skybox-twilight.png trees-skybox-night.png grass.png
 	scp $^ headache:public_html/hifi/

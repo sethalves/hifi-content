@@ -57,89 +57,26 @@ global_settings { noise_generator 1 }
 #include "colors.inc"
 #include "textures.inc"
 
-
-// sun height over the clouds produces cloud shadows
-// light_source { <3000, 0, -3500>  rgb<0.1,0.1,0.1> }
-
-
-
-// ***************************************************************
-// a brighter version of Darin Dugger's T_Clouds from "skies.inc"
-// modified by Friedrich A. Lohmueller for using with "fog":
-// ***************************************************************
-#declare T_Cloud2_Lo =
-texture {
-    pigment { bozo
-        turbulence 1.5
-        octaves 10
-        omega 0.5
-        lambda 2.5
-        color_map { [0.0 color rgbf<0.85, 0.85, 0.85, 0.00>*1.0 ]
-                    [0.5 color rgbf<0.95, 0.95, 0.95, 0.90>*1.12  ]
-                    [0.7 color rgbf<0.1, 0.1, 0.1, 0.1> ]
-                    [1.0 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
-    }
-    finish {emission 0.95 diffuse 0}
-}
-//---------------------------
-
-
-#declare T_Cloud3_Lo =
-texture {
-    pigment { bozo
-        turbulence 0.8 //0.6
-        octaves 10
-        omega 0.5
-        lambda 2.5
-        color_map { [0.0 color rgbf<0.95, 0.95, 0.95, 0.00>*0.2]
-                    [0.4 color rgbf<0.90, 0.90, 0.90, 0.90>*0.1]
-                    [0.7 color rgbf<0.1, 0.1, 0.1, 0.1> ]
-                    [1.0 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
-           }
-        finish {emission 0.1 diffuse 0}
-}
-texture {
-    pigment { bozo
-        turbulence 0.8 //0.6
-        octaves 10
-        omega 0.5
-        lambda 2.5
-        color_map { [0.00 color rgbf<.85, .85, .85, 0.5>*0.3]
-                    [0.35 color rgbf<.95, .95, .95, .95>*0.1]
-                    [0.50 color rgbf<0.1, 0.1, 0.1, 0.1> ]
-                    [1.00 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
+sky_sphere {
+    pigment {
+        crackle form <1,1,0>
+        color_map {
+            [.4 rgb 10]
+            [.5 rgb 0]
         }
-        finish {emission 0.1 diffuse 0}
-scale 0.9
-translate y*-0.15
+        scale .002
+    }
 }
 
 
-// Darin Dugger's DD_Cloud_Sky texture mapped onto a pair of planes
-//  first cloud level  500
-// second cloud level 3000
+// #include "stars.inc"
+// sphere { <0,0,0>, 1
+//     texture { Starfield6 //  1, 2, ... , 6
+//     } // end of texture
+//
+//     scale 10000
+// } //end of sphere
 
-// "hollow" added by Friedrich A.Lohmueller,2000
-// for using together with fog!
-
-#declare O_Cloud2_Lo =
-union {
- plane { <0,1,0>, 500 hollow //!!!!
-        texture { T_Cloud3_Lo  scale 500}}
-
- plane { <0,1,0>, 3000 hollow  //!!!!
-        texture {T_Cloud2_Lo scale <900,1,3000>
-                 translate <3000,0,0> rotate <0,-30,0>}}
-
- plane { <0,1,0> , 10000  hollow
-        texture{ pigment {color SkyBlue*0.20}
-                 finish {ambient 0.1 diffuse 0}}}
-scale<1.5,1,1.25>
-}//--------------------------------------------------
-
-
-
-object{O_Cloud2_Lo rotate<0,0,0> translate<0,0,0>}
 
 
 //---------------------------------------------------
@@ -147,7 +84,7 @@ object{O_Cloud2_Lo rotate<0,0,0> translate<0,0,0>}
 // fog at the horizon
 fog{fog_type   2
     distance   100
-    color      rgb<1,1,1>*0.2
+    color      rgb<1,1,1>*0.05
     fog_offset 0.1
     fog_alt    5
     turbulence 0.8}
