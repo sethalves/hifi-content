@@ -6,8 +6,6 @@
 WIDTH=900
 HEIGTH=900
 
-L_SYSTEM_TREE=../L-system-tree/L-system-tree
-
 %.pnm: %.png
 	pngtopnm $^ > $@
 
@@ -17,34 +15,15 @@ L_SYSTEM_TREE=../L-system-tree/L-system-tree
 
 ###
 
-all: trees-skybox.png trees-skybox-night.png
-
-clouds-with-shadows0.png clouds-with-shadows1.png clouds-with-shadows2.png clouds-with-shadows3.png clouds-with-shadows4.png clouds-with-shadows5.png: clouds-with-shadows.pov clouds-with-shadows.ini
-	povray +W${WIDTH} +H${HEIGTH} clouds-with-shadows.ini
+all: trees-skybox.png trees-skybox-twilight.png # trees-skybox-night.png
 
 blank.pnm:
 	pbmmake -black ${WIDTH} ${HEIGTH} > $@
 
-row0.pnm: clouds-with-shadows0.pnm blank.pnm
-	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-row1.pnm: clouds-with-shadows1.pnm clouds-with-shadows2.pnm clouds-with-shadows3.pnm clouds-with-shadows4.pnm
-	pnmcat -lr $^ > $@
-
-row2.pnm: clouds-with-shadows5.pnm blank.pnm
-	pnmcat -lr blank.pnm $^ blank.pnm > $@
-
-
-skybox.pnm: row0.pnm row1.pnm row2.pnm
-	pnmcat -tb $^ > $@
-
-
-### trees
+### day
 
 trees.pov: skybox-header.pov make-trees-pov.sh
-	./make-trees-pov.sh
-
-### day
+	./make-trees-pov.sh $< $@
 
 trees0.png trees1.png trees2.png trees3.png trees4.png trees5.png: trees.pov trees.ini
 	povray +W${WIDTH} +H${HEIGTH} trees.ini
@@ -65,25 +44,25 @@ grass.png: trees5.png
 	cp $^ $@
 
 
-### night
+### twilight
 
-trees-night.pov: trees.pov
-	cp $^ $@
+trees-twilight.pov: skybox-twilight-header.pov make-trees-pov.sh
+	./make-trees-pov.sh $< $@
 
-trees-night06.png trees-night07.png trees-night08.png trees-night09.png trees-night10.png trees-night11.png: \
-	trees-night.pov trees-night.ini
-	povray +W${WIDTH} +H${HEIGTH} trees-night.ini
+trees-twilight0.png trees-twilight1.png trees-twilight2.png trees-twilight3.png trees-twilight4.png trees-twilight5.png: \
+	trees-twilight.pov trees-twilight.ini
+	povray +W${WIDTH} +H${HEIGTH} trees-twilight.ini
 
-trees-night-row0.pnm: trees-night06.pnm blank.pnm
+trees-twilight-row0.pnm: trees-twilight0.pnm blank.pnm
 	pnmcat -lr blank.pnm $^ blank.pnm > $@
 
-trees-night-row1.pnm: trees-night07.pnm trees-night08.pnm trees-night09.pnm trees-night10.pnm
+trees-twilight-row1.pnm: trees-twilight1.pnm trees-twilight2.pnm trees-twilight3.pnm trees-twilight4.pnm
 	pnmcat -lr $^ > $@
 
-trees-night-row2.pnm: trees-night11.pnm blank.pnm
+trees-twilight-row2.pnm: trees-twilight5.pnm blank.pnm
 	pnmcat -lr blank.pnm $^ blank.pnm > $@
 
-trees-skybox-night.pnm: trees-night-row0.pnm trees-night-row1.pnm trees-night-row2.pnm
+trees-skybox-twilight.pnm: trees-twilight-row0.pnm trees-twilight-row1.pnm trees-twilight-row2.pnm
 	pnmcat -tb $^ > $@
 
 
@@ -91,7 +70,7 @@ trees-skybox-night.pnm: trees-night-row0.pnm trees-night-row1.pnm trees-night-ro
 
 clean:
 	rm -f *~ *.pnm *.png
-	rm -f tree.pov trees.pov trees-night.pov
+	rm -f tree.pov trees.pov trees-twilight.pov
 	rm -f *.pov-state
 
 upload: trees-skybox.png grass.png # skybox.png
