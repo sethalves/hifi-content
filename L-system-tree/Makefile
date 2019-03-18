@@ -2,9 +2,10 @@
 #
 #
 
-# WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
-WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
+# WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 L_SYSTEM_TREE=./L-system-tree
+OPENSCAD=openscad-nightly
 
 OPENSCAD_FN=16
 COMBINE_DISTANCE=0.3

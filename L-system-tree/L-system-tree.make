@@ -1,6 +1,6 @@
 
 %.stl: %.scad
-	openscad -o $@ $^
+	$(OPENSCAD) -o $@ $^
 
 %-trunk.obj: %-trunk.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -C $(COMBINE_DISTANCE) -c $^ -o $@ --color 0.65 0.16 0.16
