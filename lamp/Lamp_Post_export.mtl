@@ -1,0 +1,10 @@
+newmtl Material__47
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 1.000 1.000 1.000
+Ns 0.0
+d 1.0
+illum 2
+map_Ka Diffuse_Map.jpg
+map_Kd Diffuse_Map.jpg
+map_Ks Specular_map.jpg

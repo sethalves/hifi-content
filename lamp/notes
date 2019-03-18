@@ -1,0 +1,5 @@
+
+ - Ka - material ambient is multiplied by the texture value
+ - Kd - material diffuse is multiplied by the texture value
+ - Ks - material specular is multiplied by the texture value
+
