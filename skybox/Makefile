@@ -101,5 +101,5 @@ clean:
 	rm -f tree.pov trees.pov trees-day.pov trees-twilight.pov trees-night.pov
 	rm -f *.pov-state
 
-upload: trees-skybox.png trees-skybox-twilight.png trees-skybox-night.png grass.png
+upload: trees-skybox.png trees-skybox-twilight.png trees-skybox-night.png grass.png cycle-sky.js
 	scp $^ headache:public_html/hifi/
