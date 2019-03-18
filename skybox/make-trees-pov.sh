@@ -2,9 +2,9 @@
 
 L_SYSTEM_TREE=../L-system-tree/L-system-tree
 
-cat $1 > $2
-
 pi=`echo "4*a(1)" | bc -l`
+
+cp /dev/null $1
 
 for ((i=1;i<=400;i++));
 do
@@ -23,6 +23,6 @@ do
     S=$(( ( RANDOM % 2 )  + 2))
 
     ${L_SYSTEM_TREE} -s 0.$S -p $X $Y $Z -r 0 $R 0 -v -w $W -t iixxyiO -o tree.pov
-    cat tree.pov >> $2
+    cat tree.pov >> $1
     rm tree.pov
 done

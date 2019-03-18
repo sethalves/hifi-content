@@ -59,7 +59,8 @@ global_settings { noise_generator 1 }
 
 
 // sun height over the clouds produces cloud shadows
-light_source { <3000, 5000, -3500>  rgb<1,1,1> }
+// light_source { <3000, 0, -3500>  rgb<0.1,0.1,0.1> }
+
 
 
 // ***************************************************************
@@ -75,8 +76,8 @@ texture {
         lambda 2.5
         color_map { [0.0 color rgbf<0.85, 0.85, 0.85, 0.00>*1.0 ]
                     [0.5 color rgbf<0.95, 0.95, 0.95, 0.90>*1.12  ]
-                    [0.7 color rgbf<1, 1, 1, 1> ]
-                    [1.0 color rgbf<1, 1, 1, 1> ] }
+                    [0.7 color rgbf<0.1, 0.1, 0.1, 0.1> ]
+                    [1.0 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
     }
     finish {emission 0.95 diffuse 0}
 }
@@ -90,12 +91,12 @@ texture {
         octaves 10
         omega 0.5
         lambda 2.5
-        color_map { [0.0 color rgbf<0.95, 0.95, 0.95, 0.00>*1.2]
-                    [0.4 color rgbf<0.90, 0.90, 0.90, 0.90>*1]
-                    [0.7 color rgbf<1, 1, 1, 1> ]
-                    [1.0 color rgbf<1, 1, 1, 1> ] }
+        color_map { [0.0 color rgbf<0.95, 0.95, 0.95, 0.00>*0.2]
+                    [0.4 color rgbf<0.90, 0.90, 0.90, 0.90>*0.1]
+                    [0.7 color rgbf<0.1, 0.1, 0.1, 0.1> ]
+                    [1.0 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
            }
-        finish {emission 1 diffuse 0}
+        finish {emission 0.1 diffuse 0}
 }
 texture {
     pigment { bozo
@@ -103,12 +104,12 @@ texture {
         octaves 10
         omega 0.5
         lambda 2.5
-        color_map { [0.00 color rgbf<.85, .85, .85, 0.5>*1.5]
-                    [0.35 color rgbf<.95, .95, .95, .95>*1.1]
-                    [0.50 color rgbf<1, 1, 1, 1> ]
-                    [1.00 color rgbf<1, 1, 1, 1> ] }
+        color_map { [0.00 color rgbf<.85, .85, .85, 0.5>*0.3]
+                    [0.35 color rgbf<.95, .95, .95, .95>*0.1]
+                    [0.50 color rgbf<0.1, 0.1, 0.1, 0.1> ]
+                    [1.00 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
         }
-        finish {emission 1 diffuse 0}
+        finish {emission 0.1 diffuse 0}
 scale 0.9
 translate y*-0.15
 }
@@ -121,7 +122,6 @@ translate y*-0.15
 // "hollow" added by Friedrich A.Lohmueller,2000
 // for using together with fog!
 
-
 #declare O_Cloud2_Lo =
 union {
  plane { <0,1,0>, 500 hollow //!!!!
@@ -133,9 +133,10 @@ union {
 
  plane { <0,1,0> , 10000  hollow
         texture{ pigment {color SkyBlue*0.20}
-                 finish {ambient 1 diffuse 0}}}
+                 finish {ambient 0.1 diffuse 0}}}
 scale<1.5,1,1.25>
 }//--------------------------------------------------
+
 
 
 object{O_Cloud2_Lo rotate<0,0,0> translate<0,0,0>}
@@ -146,7 +147,7 @@ object{O_Cloud2_Lo rotate<0,0,0> translate<0,0,0>}
 // fog at the horizon
 fog{fog_type   2
     distance   100
-    color      rgb<1,1,1>*0.75
+    color      rgb<1,1,1>*0.2
     fog_offset 0.1
     fog_alt    5
     turbulence 0.8}
