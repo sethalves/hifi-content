@@ -91,7 +91,7 @@ trees-skybox-night.pnm: trees-night-row0.pnm trees-night-row1.pnm trees-night-ro
 
 clean:
 	rm -f *~ *.pnm *.png
-	rm -f tree.pov trees.pov
+	rm -f tree.pov trees.pov trees-night.pov
 	rm -f *.pov-state
 
 upload: trees-skybox.png grass.png # skybox.png
