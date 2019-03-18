@@ -1,9 +1,5 @@
 #version 3.7;
 
-global_settings {
-  assumed_gamma 1.0
-}
-
 #declare camloc = <0,1,-3>;
 camera {
  location camloc
@@ -79,8 +75,12 @@ camera {
 // homepage: http://www.f-lohmueller.de
 //-----------------------------------------------------------------------------
 #version 3.7; // 3.6;
+
 global_settings{ assumed_gamma 1.0 }
+
 #default{ finish{ ambient 0.1 diffuse 0.9 }}
+
+
 //-----------------------------------------------------------------------------
 global_settings { noise_generator 1 }
 
@@ -105,6 +105,7 @@ light_source { <3000, 5000, -3500>  rgb<1,1,1> }
 // a brighter version of Darin Dugger's T_Clouds from "skies.inc"
 // modified by Friedrich A. Lohmueller for using with "fog":
 // ***************************************************************
+#if(frame_number<6)
 #declare T_Cloud2_Lo =
 texture {
     pigment { bozo
@@ -117,11 +118,30 @@ texture {
                     [0.7 color rgbf<1, 1, 1, 1> ]
                     [1.0 color rgbf<1, 1, 1, 1> ] }
     }
-        #if (version = 3.7 )  finish {emission 0.95 diffuse 0}
-        #else                 finish { ambient 0.95 diffuse 0}
-        #end
+    finish {emission 0.95 diffuse 0}
 }
+#end
+
+#if(frame_number>5)
+#declare T_Cloud2_Lo =
+texture {
+    pigment { bozo
+        turbulence 1.5
+        octaves 10
+        omega 0.5
+        lambda 2.5
+        color_map { [0.0 color rgbf<0.85, 0.85, 0.85, 0.00>*1.0 ]
+                    [0.5 color rgbf<0.95, 0.95, 0.95, 0.90>*1.12  ]
+                    [0.7 color rgbf<0.1, 0.1, 0.1, 0.1> ]
+                    [1.0 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
+    }
+    finish {emission 0.95 diffuse 0}
+}
+#end
 //---------------------------
+
+
+#if(frame_number<6)
 #declare T_Cloud3_Lo =
 texture {
     pigment { bozo
@@ -134,9 +154,7 @@ texture {
                     [0.7 color rgbf<1, 1, 1, 1> ]
                     [1.0 color rgbf<1, 1, 1, 1> ] }
            }
-        #if (version = 3.7 )  finish {emission 1 diffuse 0}
-        #else                 finish { ambient 1 diffuse 0}
-        #end
+        finish {emission 1 diffuse 0}
 }
 texture {
     pigment { bozo
@@ -153,6 +171,39 @@ texture {
 scale 0.9
 translate y*-0.15
 }
+#end
+
+#if(frame_number>5)
+#declare T_Cloud3_Lo =
+texture {
+    pigment { bozo
+        turbulence 0.8 //0.6
+        octaves 10
+        omega 0.5
+        lambda 2.5
+        color_map { [0.0 color rgbf<0.95, 0.95, 0.95, 0.00>*0.2]
+                    [0.4 color rgbf<0.90, 0.90, 0.90, 0.90>*0.1]
+                    [0.7 color rgbf<0.1, 0.1, 0.1, 0.1> ]
+                    [1.0 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
+           }
+        finish {emission 0.1 diffuse 0}
+}
+texture {
+    pigment { bozo
+        turbulence 0.8 //0.6
+        octaves 10
+        omega 0.5
+        lambda 2.5
+        color_map { [0.00 color rgbf<.85, .85, .85, 0.5>*0.3]
+                    [0.35 color rgbf<.95, .95, .95, .95>*0.1]
+                    [0.50 color rgbf<0.1, 0.1, 0.1, 0.1> ]
+                    [1.00 color rgbf<0.1, 0.1, 0.1, 0.1> ] }
+        }
+        finish {emission 0.1 diffuse 0}
+scale 0.9
+translate y*-0.15
+}
+#end
 
 
 // Darin Dugger's DD_Cloud_Sky texture mapped onto a pair of planes
@@ -163,6 +214,7 @@ translate y*-0.15
 // for using together with fog!
 
 
+#if(frame_number<6)
 #declare O_Cloud2_Lo =
 union {
  plane { <0,1,0>, 500 hollow //!!!!
@@ -177,6 +229,24 @@ union {
                  finish {ambient 1 diffuse 0}}}
 scale<1.5,1,1.25>
 }//--------------------------------------------------
+#end
+
+#if(frame_number>5)
+#declare O_Cloud2_Lo =
+union {
+ plane { <0,1,0>, 500 hollow //!!!!
+        texture { T_Cloud3_Lo  scale 500}}
+
+ plane { <0,1,0>, 3000 hollow  //!!!!
+        texture {T_Cloud2_Lo scale <900,1,3000>
+                 translate <3000,0,0> rotate <0,-30,0>}}
+
+ plane { <0,1,0> , 10000  hollow
+        texture{ pigment {color SkyBlue*0.20}
+                 finish {ambient 0.1 diffuse 0}}}
+scale<1.5,1,1.25>
+}//--------------------------------------------------
+#end
 
 
 
@@ -186,12 +256,23 @@ object{O_Cloud2_Lo rotate<0,0,0> translate<0,0,0>}
 //---------------------------------------------------
 
 // fog at the horizon
+#if(frame_number<6)
 fog{fog_type   2
     distance   100
     color      rgb<1,1,1>*0.75
     fog_offset 0.1
     fog_alt    5
     turbulence 0.8}
+#end
+
+#if(frame_number>5)
+fog{fog_type   2
+    distance   100
+    color      rgb<1,1,1>*0.2
+    fog_offset 0.1
+    fog_alt    5
+    turbulence 0.8}
+#end
 
 //----------------------------------------------------
 

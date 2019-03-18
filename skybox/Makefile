@@ -67,19 +67,23 @@ grass.png: trees5.png
 
 ### night
 
-trees-night0.png trees-night1.png trees-night2.png trees-night3.png trees-night4.png trees-night5.png: trees-night.pov trees-night.ini
+trees-night.pov: trees.pov
+	cp $^ $@
+
+trees-night06.png trees-night07.png trees-night08.png trees-night09.png trees-night10.png trees-night11.png: \
+	trees-night.pov trees-night.ini
 	povray +W${WIDTH} +H${HEIGTH} trees-night.ini
 
-trees-night-row0.pnm: trees-night0.pnm blank.pnm
+trees-night-row0.pnm: trees-night06.pnm blank.pnm
 	pnmcat -lr blank.pnm $^ blank.pnm > $@
 
-trees-night-row1.pnm: trees-night1.pnm trees-night2.pnm trees-night3.pnm trees-night4.pnm
+trees-night-row1.pnm: trees-night07.pnm trees-night08.pnm trees-night09.pnm trees-night10.pnm
 	pnmcat -lr $^ > $@
 
-trees-night-row2.pnm: trees-night5.pnm blank.pnm
+trees-night-row2.pnm: trees-night11.pnm blank.pnm
 	pnmcat -lr blank.pnm $^ blank.pnm > $@
 
-trees-skybox-night.pnm: trees-row0.pnm trees-row1.pnm trees-row2.pnm
+trees-skybox-night.pnm: trees-night-row0.pnm trees-night-row1.pnm trees-night-row2.pnm
 	pnmcat -tb $^ > $@
 
 
