@@ -22,14 +22,26 @@
     // Handles avatar being solo'd
     pickRayController
         .registerEventHandler(selectAvatar)
-        .setType("avatar")
+        .setType("avatar+local")
         .setMapName("hifi_nametags")
         .setShouldDoublePress(true)
         .create();
 
+    function selectAvatar(uuid, intersection, type) {
+        if (type == "avatar") {
+            nameTagListManager.handleSelect(uuid, intersection);
+        } else if (type == "local") {
+            var overlayProps = Overlays.getProperties(uuid, ["name"])
+            var buttonInfo = nameTagListManager.overlayIDToVoteButton(uuid);
+            if (buttonInfo) {
+                print("QQQQ rep button pressed: " + JSON.stringify(buttonInfo));
+                Users.changeReputation(buttonInfo.avatarID, buttonInfo.isUpRep, false);
+            }
+        }
+    }
 
-    function selectAvatar(uuid, intersection) {
-        nameTagListManager.handleSelect(uuid, intersection);
+    function selectRepButton(uuid, intersection) {
+        print("QQQQ in selectRepButton " + uuid);
     }
 
 

@@ -11,6 +11,9 @@
     Helps manage the list of avatars added to the nametag list
 
 */
+
+/* global Script, Vec3, AvatarManager, Users, Quat, Camera, module, Account */
+
 var LocalEntity = Script.require('./entityMaker.js?' + Date.now());
 var entityProps = Script.require('./defaultLocalEntityProps.js?' + Date.now());
 var textHelper = new (Script.require('./textHelper.js?' + Date.now()));
@@ -21,7 +24,7 @@ var Z = 2;
 var HALF = 0.5;
 var SHOULD_QUERY_ENTITY = true;
 var CLEAR_ENTITY_EDIT_PROPS = true;
-var LIFETIME_ADD = 10;
+// var LIFETIME_ADD = 10;
 
 // *************************************
 // START UTILTY
@@ -32,17 +35,24 @@ var LIFETIME_ADD = 10;
 // properties to give new avatars added to the list
 function NewAvatarProps(intersection) {
     return {
+        id: null,
         avatarInfo: null,
         created: null,
         localEntityMain: new LocalEntity('local')
             .add(entityProps),
         localEntitySub: new LocalEntity('local')
             .add(entityProps),
+        localEntityUpVote: new LocalEntity('local')
+            .add(entityProps),
+        localEntityDownVote: new LocalEntity('local')
+            .add(entityProps),
         intersection: intersection.intersection,
         previousDistance: null,
         currentDistance: null,
         initialDistance: null,
         mainInitialDimensions: null,
+        upVoteInitialDimensions: null,
+        downVoteInitialDimensions: null,
         subInitialDimensions: null,
         previousName: null,
         localPositionOfIntersection: null,
@@ -128,8 +138,10 @@ function remove(uuid){
 // Remove all the current LocalEntities.
 function removeAllLocalEntities(){
     for (var uuid in _this.selectedAvatars) {
-        removeLocalEntity(uuid);
-        delete _this.selectedAvatars[uuid];
+        if (_this.selectedAvatars.hasOwnProperty(uuid)) {
+            removeLocalEntity(uuid);
+            delete _this.selectedAvatars[uuid];
+        }
     }
 
     return _this;
@@ -146,6 +158,12 @@ function removeLocalEntity(uuid, shouldDestory){
     if (avatar.localEntitySub) {
         avatar.localEntitySub[type]();
     }
+    if (avatar.localEntityUpVote) {
+        avatar.localEntityUpVote[type]();
+    }
+    if (avatar.localEntityDownVote) {
+        avatar.localEntityDownVote[type]();
+    }
 
     return _this;
 }
@@ -157,15 +175,13 @@ function handleUserName(uuid, username) {
         try {
             var avatar = _this.avatars[uuid];
             var avatarInfo = avatar.avatarInfo;
+            avatarInfo.username = username.trim();
+            makeNameTag(uuid, CREATE, "sub");
+            // Check to see if they are also a friend
+            getInfoAboutUser(uuid);
         } catch (e) {
             return;
         }
-
-
-        avatarInfo.username = username.trim();
-        makeNameTag(uuid, CREATE, "sub");
-        // Check to see if they are also a friend
-        getInfoAboutUser(uuid);
     }
 }
 
@@ -260,6 +276,12 @@ function calculateInitialProperties(uuid, type) {
     if (type === "main") {
         localEntity = avatar.localEntityMain;
         name = avatarInfo.displayName;
+    } else if (type === "upvote") {
+        localEntity = avatar.localEntityUpVote;
+        name = "up";
+    } else if (type === "downvote") {
+        localEntity = avatar.localEntityDownVote;
+        name = "down";
     } else {
         localEntity = avatar.localEntitySub;
         name = avatarInfo.username;
@@ -271,9 +293,9 @@ function calculateInitialProperties(uuid, type) {
         .setLineHeight(DEFAULT_LINE_HEIGHT);
 
     // Calculate the distance from the camera to the target avatar
-    target = avatarInfo.position;    
+    target = avatarInfo.position;
     distance = getDistance(uuid, target);
-    
+
     // Adjust the distance by the distance scaler
     adjustedScaler = distance * DISTANCE_SCALER;
     // Get the new dimensions from the text helper
@@ -286,8 +308,8 @@ function calculateInitialProperties(uuid, type) {
         scaledDimensions,
         type === "main" ? MAIN_SCALER : SUB_SCALER
     );
-    
-    // Adjust the lineheight to be the new scaled dimensions Y 
+
+    // Adjust the lineheight to be the new scaled dimensions Y
     lineHeight = scaledDimensions[Y] * LINE_HEIGHT_SCALER;
 
     return {
@@ -307,11 +329,15 @@ var RIGHT_MARGIN_SCALER = 0.10;
 var TOP_MARGIN_SCALER = 0.07;
 var BOTTOM_MARGIN_SCALER = 0.03;
 function makeNameTag(uuid, shouldCreate, type) {
+    print("QQQQ make name tag " + uuid + " " + type);
+
     var avatar = _this.avatars[uuid];
     var avatarInfo = avatar.avatarInfo;
 
     var localEntityMain = avatar.localEntityMain;
     var localEntitySub = avatar.localEntitySub;
+    var localEntityUpVote = avatar.localEntityUpVote;
+    var localEntityDownVote = avatar.localEntityDownVote;
 
     var name = null;
     var localEntity = null;
@@ -347,6 +373,16 @@ function makeNameTag(uuid, shouldCreate, type) {
         avatar.initialDistance = distance;
         name = avatarInfo.displayName;
         parentID = uuid;
+    } else if (type === "upvote") {
+        localEntity = localEntityUpVote;
+        avatar.upVoteInitialDimensions = scaledDimensions;
+        name = "up";
+        parentID = localEntityMain.id;
+    } else if (type === "downvote") {
+        localEntity = localEntityDownVote;
+        avatar.downVoteInitialDimensions = scaledDimensions;
+        name = "down";
+        parentID = localEntityMain.id;
     } else {
         localEntity = localEntitySub;
         avatar.subInitialDimensions = scaledDimensions;
@@ -381,13 +417,26 @@ function makeNameTag(uuid, shouldCreate, type) {
             localEntity
                 .add("position", position);
         } else {
-            // Get the localPosition offset
             var localEntityMainDimensions = avatar.localEntityMain.get('dimensions', SHOULD_QUERY_ENTITY);
-            localPositionOffset = [
-                0,
-                getLocalPositionOffset(localEntityMainDimensions, scaledDimensions),
-                0
-            ];
+            if (type === "upvote") {
+                localPositionOffset = [
+                    0,
+                    -2.5 * getLocalPositionOffset(localEntityMainDimensions, scaledDimensions),
+                    0
+                ];
+            } else if (type === "downvote") {
+                localPositionOffset = [
+                    0,
+                    -1.3 * getLocalPositionOffset(localEntityMainDimensions, scaledDimensions),
+                    0
+                ];
+            } else {
+                localPositionOffset = [
+                    0,
+                    getLocalPositionOffset(localEntityMainDimensions, scaledDimensions),
+                    0
+                ];
+            }
 
             localEntity
                 .add("localPosition", localPositionOffset)
@@ -425,7 +474,7 @@ function maybeRedraw(uuid){
     var avatar = _this.avatars[uuid];
     var avatarInfo = avatar.avatarInfo;
     getAvatarData(uuid);
-    
+
     if (maybeDelete(uuid)) {
         remove(uuid);
 
@@ -445,8 +494,10 @@ function maybeRedraw(uuid){
         updateName(uuid, avatarInfo.displayName);
     } else {
         reDraw(uuid, "main");
+        reDraw(uuid, "upvote");
+        reDraw(uuid, "downvote");
     }
-    
+
     if (avatarInfo.username) {
         reDraw(uuid, "sub");
     }
@@ -471,12 +522,18 @@ function reDraw(uuid, type) {
     if (type === "main") {
         localEntity = avatar.localEntityMain;
         initialDimensions = avatar.mainInitialDimensions;
+    } else if (type === "upvote") {
+        localEntity = avatar.localEntityUpVote;
+        initialDimensions = avatar.upVoteInitialDimensions;
+    } else if (type === "downvote") {
+        localEntity = avatar.localEntityDownVote;
+        initialDimensions = avatar.downVoteInitialDimensions;
     } else {
         localEntity = avatar.localEntitySub;
         initialDimensions = avatar.subInitialDimensions;
     }
 
-    // Find our new dimensions from the new distance 
+    // Find our new dimensions from the new distance
     newDimensions = [
         (initialDimensions[X] / initialDistance) * currentDistance,
         (initialDimensions[Y] / initialDistance) * currentDistance,
@@ -521,30 +578,36 @@ function reDraw(uuid, type) {
 // Go through the selected avatar list and see if any of the avatars need a redraw.
 function checkAllSelectedForRedraw(){
     for (var avatar in _this.selectedAvatars) {
-        if (AvatarManager.getAvatar(avatar)) {
-
+        if (_this.selectedAvatars.hasOwnProperty(avatar)) {
+            if (AvatarManager.getAvatar(avatar)) {
+            }
+            maybeRedraw(avatar);
         }
-
-        maybeRedraw(avatar);
     }
 }
 
 
-// Remake the nametags if the display name changes.  
+// Remake the nametags if the display name changes.
 function updateName(uuid) {
     var avatar = _this.avatars[uuid];
     var avatarInfo = avatar.avatarInfo;
 
     avatar.localEntityMain.destroy();
     avatar.localEntitySub.destroy();
+    avatar.localEntityUpVote.destroy();
+    avatar.localEntityDownVote.destroy();
 
     avatar.localEntityMain = new LocalEntity('local').add(entityProps);
     avatar.localEntitySub = new LocalEntity('local').add(entityProps);
+    avatar.localEntityUpVote = new LocalEntity('local').add(entityProps);
+    avatar.localEntityDownVote = new LocalEntity('local').add(entityProps);
 
     var localOffset = avatar.localPositionOfIntersection;
     avatar.intersection = localToWorld(localOffset, avatarInfo.position, avatarInfo.orientation);
 
     makeNameTag(uuid, CREATE, "main");
+    makeNameTag(uuid, CREATE, "upvote");
+    makeNameTag(uuid, CREATE, "downvote");
     makeNameTag(uuid, CREATE, "sub");
 }
 
@@ -604,7 +667,7 @@ function getInfoAboutUser(uuid) {
         var users = connectionsData.users;
         for (var i = 0; i < users.length; i++) {
             var user = users[i];
-            if (user.location && user.location.node_id === uuid.replace(REG_EX_FOR_ID_FORMATTING, "")) { 
+            if (user.location && user.location.node_id === uuid.replace(REG_EX_FOR_ID_FORMATTING, "")) {
                 handleFriend(uuid, user.username);
                 break;
             }
@@ -626,8 +689,12 @@ function shouldShowOrCreate(uuid){
     // If we have the display name entity, then we show it, if not then we create it.
     if (localEntityMainID) {
         makeNameTag(uuid, SHOW, "main");
+        makeNameTag(uuid, SHOW, "upvote");
+        makeNameTag(uuid, SHOW, "downvote");
     } else {
         makeNameTag(uuid, CREATE, "main");
+        makeNameTag(uuid, CREATE, "upvote");
+        makeNameTag(uuid, CREATE, "downvote");
     }
 
     // If we have both the display and username entity, then we show it.  If we have the mainID and also a username in the avatar info, then we create it.
@@ -636,7 +703,7 @@ function shouldShowOrCreate(uuid){
     } else if (localEntityMainID && avatarInfo.username) {
         makeNameTag(uuid, CREATE, "sub");
     } else if (localEntityMainID && !avatarInfo.username && Users.canKick) {
-        console.log("retrying user name")
+        console.log("retrying user name");
         Users.requestUsernameFromID(uuid);
     }
 }
@@ -678,7 +745,7 @@ function toggleInterval(){
     if (_this.redrawTimeout){
         maybeClearInterval();
     } else {
-        _this.redrawTimeout = 
+        _this.redrawTimeout =
             Script.setInterval(checkAllSelectedForRedraw, INTERVAL_CHECK_MS);
     }
 }
@@ -687,13 +754,21 @@ function toggleInterval(){
 function returnCurrentListOfEntities(){
     var entities = [];
     for (var uuid in _this.avatars) {
-        var avatar = _this.avatars[uuid];
-        if (avatar.localEntityMain.id) {
-            entities.push(avatar.localEntityMain.id);
-        }
+        if (_this.avatars.hasOwnProperty(uuid)) {
+            var avatar = _this.avatars[uuid];
+            if (avatar.localEntityMain.id) {
+                entities.push(avatar.localEntityMain.id);
+            }
 
-        if (avatar.localEntitySub.id) {
-            entities.push(avatar.localEntitySub.id);
+            if (avatar.localEntitySub.id) {
+                entities.push(avatar.localEntitySub.id);
+            }
+            if (avatar.localEntityUpVote.id) {
+                entities.push(avatar.localEntityUpVote.id);
+            }
+            if (avatar.localEntityDownVote.id) {
+                entities.push(avatar.localEntityDownVote.id);
+            }
         }
     }
 
@@ -766,15 +841,32 @@ function registerInitialScaler(initalScaler) {
 function updateUserScaler(newUSerScaler) {
     userScaler = newUSerScaler;
     for (var avatar in _this.selectedAvatars) {
-        var avatarInfo = _this.avatars[avatar].avatarInfo;
-        reDraw(avatar, "main");
+        if (_this.selectedAvatars.hasOwnProperty(avatar)) {
+            var avatarInfo = _this.avatars[avatar].avatarInfo;
+            reDraw(avatar, "main");
+            reDraw(avatar, "upvote");
+            reDraw(avatar, "downvote");
 
-        if (avatarInfo.username) {
-            reDraw(avatar, "sub");
+            if (avatarInfo.username) {
+                reDraw(avatar, "sub");
+            }
         }
     }
 }
 
+function overlayIDToVoteButton(overlayID) {
+    for (var uuid in _this.avatars) {
+        if (_this.avatars.hasOwnProperty(uuid)) {
+            var avatar = _this.avatars[uuid];
+            if (overlayID == avatar.localEntityUpVote.id) {
+                return { avatarID: uuid, isUpRep: true };
+            } else if (overlayID == avatar.localEntityDownVote.id) {
+                return { avatarID: uuid, isUpRep: false };
+            }
+        }
+    }
+    return null;
+}
 
 // Reset the avatar list.
 function reset() {
@@ -794,10 +886,11 @@ function reset() {
 nameTagListManager.prototype = {
     create: create,
     destroy: destroy,
-    handleSelect: handleSelect, 
-    maybeRemove: maybeRemove, 
+    handleSelect: handleSelect,
+    maybeRemove: maybeRemove,
     registerInitialScaler: registerInitialScaler,
     updateUserScaler: updateUserScaler,
+    overlayIDToVoteButton: overlayIDToVoteButton,
     reset: reset
 };
 

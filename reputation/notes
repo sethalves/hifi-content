@@ -1,0 +1,6 @@
+-*- org -*-
+
+sudo apt-get install libsqlite3-dev
+
+https://github.com/kazuho/picojson
+

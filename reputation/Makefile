@@ -2,14 +2,27 @@
 #
 #
 
-all:
+CPPFLAGS=-std=c++11 -Wall -pedantic -g
+LDLIBS=-lstdc++ -lm
 
-upload:
+all: reputation-server.cgi
+
+reputation-server.cgi: reputation-server.o
+
+reputation-server.o: reputation-server.cpp
+
+reputation-server.cgi: reputation-server
+	cp $< $@
+
+
+
+upload: reputation-server.cgi
 	rm -rf reputation
 	mkdir -p reputation/resources/modules
 	mkdir -p reputation/resources/images/icons
 	mkdir -p reputation/resources/css
 	mkdir -p reputation/resources/js
+	cp reputation-server.cgi reputation/
 	cp nameTag.js reputation/
 	cp resources/nameTag_ui.html reputation/resources/
 	cp resources/modules/pickRayController.js reputation/resources/modules/
@@ -27,4 +40,5 @@ upload:
 
 clean:
 	rm -f *~
+	rm -f reputation-server.o reputation-server reputation-server.cgi
 	rm -rf reputation

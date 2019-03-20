@@ -22,6 +22,7 @@ function PickRayController(){
     _this.intersection = null;
     _this.lastPick = null;
     _this.currentPick = null;
+    _this.currentType = null;
     _this.mappingName = null;
     _this.mapping = null;
     _this._boundMousePressHandler = null;
@@ -50,7 +51,7 @@ function getUUIDFromLaser(hand) {
     pickRayTypeHandler(start, direction);
 
     if (_this.currentPick) {
-        _this.eventHandler(_this.currentPick, _this.intersection);
+        _this.eventHandler(_this.currentPick, _this.intersection, _this.currentType);
     }
 }
 
@@ -138,21 +139,40 @@ function pickRayTypeHandler(pickRay){
     }
 
     // Each different ray pick type needs a different findRayIntersection function
+    var avatarIntersection;
+    var overlayIntersection;
+    var entityIntersection;
     switch (_this.rayType) {
+        case 'avatar+local':
+            avatarIntersection = AvatarList.findRayIntersection(pickRay, [], [MyAvatar.sessionUUID]);
+            if (avatarIntersection.intersects) {
+                _this.intersection = avatarIntersection;
+                handleUUID(avatarIntersection.avatarID);
+                _this.currentType = 'avatar';
+            } else {
+                overlayIntersection = Overlays.findRayIntersection(pickRay, [], []);
+                _this.intersection = overlayIntersection;
+                handleUUID(overlayIntersection.overlayID);
+                _this.currentType = 'local';
+            }
+            break;
         case 'avatar':
-            var avatarIntersection = AvatarList.findRayIntersection(pickRay, [], [MyAvatar.sessionUUID]);
+            avatarIntersection = AvatarList.findRayIntersection(pickRay, [], [MyAvatar.sessionUUID]);
             _this.intersection = avatarIntersection;
             handleUUID(avatarIntersection.avatarID);
+            _this.currentType = 'avatar';
             break;
         case 'local':
-            var overlayIntersection = Overlays.findRayIntersection(pickRay, [], []);
+            overlayIntersection = Overlays.findRayIntersection(pickRay, [], []);
             _this.intersection = overlayIntersection;
             handleUUID(overlayIntersection.overlayID);
+            _this.currentType = 'local';
             break;
         case 'entity':
-            var entityIntersection = Entities.findRayIntersection(pickRay, [], []);
+            entityIntersection = Entities.findRayIntersection(pickRay, [], []);
             _this.intersection = entityIntersection;
             handleUUID(entityIntersection.avatarID);
+            _this.currentType = 'entity';
             break;
         default:
             console.log("ray type not handled");
@@ -168,7 +188,7 @@ function mousePressHandler(event) {
     var pickRay = Camera.computePickRay(event.x, event.y);
     pickRayTypeHandler(pickRay);
     if (_this.currentPick) {
-        _this.eventHandler(_this.currentPick, _this.intersection);
+        _this.eventHandler(_this.currentPick, _this.intersection, _this.currentType);
     }
 }
 
