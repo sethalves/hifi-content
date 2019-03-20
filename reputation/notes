@@ -1,6 +1,26 @@
 -*- org -*-
 
-sudo apt-get install libsqlite3-dev
+sudo apt-get install libsqlite3-dev sqlite3
 
 https://github.com/kazuho/picojson
 
+http://www.mnuwer.dbasedeveloper.co.uk/dlearn/web/session03.htm
+
+
+* database setup
+
+https://www.quackit.com/sqlite/tutorial/create_a_database.cfm
+
+sqlite3 /var/tmp/rep.db
+
+CREATE TABLE Votes(
+    voter TEXT NOT NULL,
+    votee TEXT NOT NULL,
+    isUp BOOLEAN,
+    isCancel BOOLEAN,
+    timestamp INTEGER);
+
+CREATE INDEX voterIndex ON Votes(voter);
+CREATE INDEX voteeIndex ON Votes(votee);
+
+chown www-data:www-data /var/tmp/rep.db

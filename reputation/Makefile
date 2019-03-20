@@ -3,7 +3,7 @@
 #
 
 CPPFLAGS=-std=c++11 -Wall -pedantic -g
-LDLIBS=-lstdc++ -lm
+LDLIBS=-lsqlite3 -lstdc++ -lm
 
 all: reputation-server.cgi
 
