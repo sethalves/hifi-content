@@ -44,6 +44,7 @@ void updateDB(time_t now, std::string voter, std::string votee, bool isUp, bool 
         return;
     }
 
+    // FIXME http://www.adp-gmbh.ch/sqlite/bind_insert.html
     std::string updateSQL = std::string("INSERT INTO Votes (voter, votee, isUp, isCancel, timestamp) VALUES ")
         + "('" + sanitize(voter) + "','" + sanitize(votee) + "'," +
         (isUp ? "1" : "0") + "," +
@@ -140,6 +141,7 @@ int main (int argc, char *argv[]) {
     std::string jsonBody;
     bool isCancel { false };
     bool isUp { false };
+    bool isChange { false };
     std::string votee;
     std::string voter;
 
@@ -165,7 +167,7 @@ int main (int argc, char *argv[]) {
             const picojson::object &o = v.get<picojson::object>();
             for (picojson::object::const_iterator i = o.begin(); i != o.end(); ++i) {
                 if (i->first == "isCancel") isCancel = i->second.get<bool>();
-                else if (i->first == "isUp") isUp = i->second.get<bool>();
+                else if (i->first == "isUp") {isUp = i->second.get<bool>(); isChange = true; }
                 else if (i->first == "votee") votee = i->second.get<std::string>();
                 else if (i->first == "voter") voter = i->second.get<std::string>();
                 // cerr << i->first << "  " << i->second << std::endl;
@@ -186,7 +188,9 @@ int main (int argc, char *argv[]) {
     //      << "voter=" << voter;
 
 
-    updateDB(now, voter, votee, isUp, isCancel);
+    if (isChange) {
+        updateDB(now, voter, votee, isUp, isCancel);
+    }
 
     float reputation = getUsersReputation(votee);
 
