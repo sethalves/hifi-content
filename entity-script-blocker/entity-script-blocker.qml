@@ -21,8 +21,9 @@ Rectangle {
         if (message.method === "whitelist") {
             message.value.forEach(function (url) {
                 var data = {
-                    name: url,
-                    colorCode: "green"
+                    url: url,
+                    colorCode: "green",
+                    status: "white"
                 }
                 urlsListModel.append(data);
             });
@@ -30,8 +31,9 @@ Rectangle {
         if (message.method === "greylist") {
             message.value.forEach(function (url) {
                 var data = {
-                    name: url,
-                    colorCode: "grey"
+                    url: url,
+                    colorCode: "red",
+                    status: "grey"
                 }
                 urlsListModel.append(data);
             });
@@ -39,8 +41,9 @@ Rectangle {
         if (message.method === "blacklist") {
             message.value.forEach(function (url) {
                 var data = {
-                    name: url,
-                    colorCode: "red"
+                    url: url,
+                    colorCode: "red",
+                    status: "black"
                 }
                 urlsListModel.append(data);
             });
@@ -84,46 +87,52 @@ Rectangle {
         anchors.topMargin: 1
         model: ListModel {
             id: urlsListModel
-
-            ListElement {
-                name: "Grey"
-                colorCode: "grey"
-            }
-
-            ListElement {
-                name: "Red"
-                colorCode: "red"
-            }
-
-            ListElement {
-                name: "Blue"
-                colorCode: "blue"
-            }
-
-            ListElement {
-                name: "Green"
-                colorCode: "green"
-            }
         }
         delegate: Item {
             x: 5
-            width: 80
-            height: 40
+            // width: 80
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 20
             Row {
-                id: row1
+                id: urlListRow
                 spacing: 10
                 Rectangle {
-                    width: 40
-                    height: 40
+                    width: 480
+                    height: 20
                     color: colorCode
-                }
 
-                Text {
-                    text: name
-                    font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
+                    Text {
+                        text: url
+                        font.bold: false
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.leftMargin: 5
+                        anchors.left: parent.left
+                    }
+
+                    MouseArea {
+                        id: urlListMouseArea
+                        z: 1
+                        hoverEnabled: false
+                        anchors.fill: parent
+                        onClicked: {
+                            print("QQQQ HERE " + status + " " + url);
+                            if (status === "white") {
+                                status = "black";
+                                colorCode = "red";
+                            } else {
+                                status = "white";
+                                colorCode = "green";
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    Connections {
+        target: urlListRow
+        onClicked: print("url clicked")
     }
 }

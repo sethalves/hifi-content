@@ -38,7 +38,7 @@
     }
 
     ui = new AppUi({
-        buttonName: "EntSrips",
+        buttonName: "Entity Scripts",
         home: Script.resolvePath("entity-script-blocker.qml"),
         onMessage: fromQml,
         onOpened: initUI
