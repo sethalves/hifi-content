@@ -158,7 +158,7 @@ Script.include("/~/system/libraries/controllers.js");
         };
 
 
-        this.takeEntityFromScabbard = function () {
+        this.takeObjectFromScabbard = function () {
             if (!this.entityInScabbardProps) {
                 return;
             }
@@ -204,13 +204,13 @@ Script.include("/~/system/libraries/controllers.js");
             }
 
             if (this.enabled && prevValue < TRIGGER_ON_VALUE && value >= TRIGGER_ON_VALUE) {
-                this.takeEntityFromScabbard();
+                this.takeObjectFromScabbard();
             }
         };
 
 
-        this.saveEntityInScabbard = function (targetEntityID, controllerLocation) {
-            print("QQQQ " + this.idStr + "saveEntityInScabbard starting");
+        this.saveObjectInScabbard = function (targetEntityID, controllerLocation) {
+            print("QQQQ " + this.idStr + "saveObjectInScabbard starting");
             var entityIDs = getConnectedEntityIDs(targetEntityID);
             var props = entitiesIDsToProperties(entityIDs, controllerLocation.position, controllerLocation.rotation);
             if (!props) {
@@ -228,11 +228,12 @@ Script.include("/~/system/libraries/controllers.js");
             // }
             // props.Entities = nonTmpEntities;
 
+            var areSimilar = false;
             if (this.entityInScabbardProps) {
                 print("QQQQ start -- " +
                       (this.entityInScabbardProps[0] ? this.entityInScabbardProps[0].entityHostType : "null") + " " +
                       (props[0] ? props[0].entityHostType : "null"));
-                var areSimilar = this.entityInScabbardProps && propertySetsAreSimilar(this.entityInScabbardProps, props);
+                areSimilar = this.entityInScabbardProps && propertySetsAreSimilar(this.entityInScabbardProps, props);
                 print("QQQQ end");
             }
 
@@ -247,6 +248,15 @@ Script.include("/~/system/libraries/controllers.js");
             if (!this.locked) {
                 this.entityInScabbardProps = props;
                 Settings.setValue(SCABBARD_SETTINGS + "." + this.idStr, JSON.stringify(props));
+            }
+
+            // if this script rezzed (some of?) these entities, assume we can put them back.
+            for (var k = 0; k < entityIDs.length; k++) {
+                var thisRezzedID = entityIDs[k];
+                if (entitiesRezzedByScabbard[thisRezzedID]) {
+                    areSimilar = true;
+                    delete entitiesRezzedByScabbard[thisRezzedID];
+                }
             }
 
             if (areSimilar) {
@@ -278,7 +288,7 @@ Script.include("/~/system/libraries/controllers.js");
 
             if ((this.hipOrShoulder == SHOULDER && detectShoulderGesture(controllerLocation, this.hand, dropRadius)) ||
                 (this.hipOrShoulder == HIP && detectHipGesture(controllerLocation, this.hand, dropRadius))) {
-                this.saveEntityInScabbard(droppedEntityID, controllerLocation);
+                this.saveObjectInScabbard(droppedEntityID, controllerLocation);
             }
         };
 
@@ -402,7 +412,7 @@ Script.include("/~/system/libraries/controllers.js");
         rightHipScabbard.debug();
     }
 
-    print("QQQQ scabbard starting");
+    // print("QQQQ scabbard starting");
     Messages.subscribe("Hifi-Object-Manipulation");
     Messages.messageReceived.connect(handleMessages);
 
