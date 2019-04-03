@@ -1,7 +1,7 @@
 
 "use strict";
 
-/* global Script, Entities */
+/* global Script, Entities, Messages */
 
 (function() {
 
@@ -21,43 +21,90 @@
     var nightURL = "http://headache.hungry.com/~seth/hifi/trees-skybox-night.png";
 
     var params = [
-        { skyboxURL: dayURL, lightIntensity: 1.0 },
-        { skyboxURL: dayURL, lightIntensity: 1.0 },
-        { skyboxURL: dayURL, lightIntensity: 1.0 },
-        { skyboxURL: dayURL, lightIntensity: 1.0 },
-        { skyboxURL: twilightURL, lightIntensity: 0.5 },
-        { skyboxURL: nightURL, lightIntensity: 0.1 },
-        { skyboxURL: nightURL, lightIntensity: 0.1 },
-        { skyboxURL: nightURL, lightIntensity: 0.1 },
-        { skyboxURL: twilightURL, lightIntensity: 0.5 },
+        { skyboxURL: dayURL, lightIntensity: 1.0 }, // 0
+        { skyboxURL: dayURL, lightIntensity: 1.0 }, // 1
+        { skyboxURL: dayURL, lightIntensity: 0.8 }, // 2
+        { skyboxURL: twilightURL, lightIntensity: 0.5 }, // 3
+        { skyboxURL: nightURL, lightIntensity: 0.3 }, // 4
+        { skyboxURL: nightURL, lightIntensity: 0.1 }, // 5
+        { skyboxURL: nightURL, lightIntensity: 0.1 }, // 6
+        { skyboxURL: nightURL, lightIntensity: 0.3 }, // 7
+        { skyboxURL: twilightURL, lightIntensity: 0.5 }, // 8
     ];
 
 
-    Script.setInterval(function () {
-
-        skyType++;
-        if (skyType > params.length) {
-            skyType = 0;
+    function handleMessages(channel, message, sender) {
+        // if (sender !== MyAvatar.sessionUUID) {
+        //     return;
+        // }
+        if (channel !== "Day-Night-Cycle") {
+            return;
+        }
+        var data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            print("WARNING: error parsing \"Day-Night-Cycle\" message: " + message);
+            return;
         }
 
-        var skyboxURL = params[skyType].skyboxURL;
-        var lightIntensity = params[skyType].lightIntensity;
+        var method = data.method;
+        if (method == "set-cycle-stage") {
+            var cycleStage = data.value;
+            if (cycleStage >= 0 && cycleStage < params.length) {
+                var skyboxURL = params[cycleStage].skyboxURL;
+                var lightIntensity = params[cycleStage].lightIntensity;
 
-        Entities.editEntity(skyboxID, { locked: false });
+                Entities.editEntity(skyboxID, { locked: false });
 
-        Entities.editEntity(skyboxID, {
-            ambientLight: {
-                ambientURL: skyboxURL
-            },
-            skybox: {
-                url: skyboxURL
-            },
-            keyLight: {
-                intensity: lightIntensity
+                Entities.editEntity(skyboxID, {
+                    ambientLight: {
+                        ambientURL: skyboxURL
+                    },
+                    skybox: {
+                        url: skyboxURL
+                    },
+                    keyLight: {
+                        intensity: lightIntensity
+                    }
+                });
+
+                Entities.editEntity(skyboxID, { locked: true });
+
+                skyType = cycleStage; // in case some other script sent the message
+            } else {
+                print("WARNING: error bad \"Day-Night-Cycle\" message: " + message);
             }
-        });
+        }
+    }
 
-        Entities.editEntity(skyboxID, { locked: true });
+    function cleanup() {
+        Messages.unsubscribe("Day-Night-Cycle");
+        Messages.messageReceived.disconnect(handleMessages);
+    }
 
-    }, 300000); // 5 minutes
+
+    function startup() {
+        Script.scriptEnding.connect(cleanup);
+        Messages.messageReceived.connect(handleMessages);
+        Messages.subscribe("Day-Night-Cycle");
+
+        Script.setInterval(function () {
+
+            skyType++;
+            if (skyType >= params.length) {
+                skyType = 0;
+            }
+
+            Messages.sendMessage("Day-Night-Cycle", JSON.stringify({
+                method: "set-cycle-stage",
+                value: skyType
+            }));
+
+        // }, 60000); // 1 minutes
+        }, 300000); // 5 minutes
+    }
+
+    startup();
+
 });
