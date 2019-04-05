@@ -3,7 +3,7 @@
 /* global module */
 
 
-function getRateLimit() {
+function getRateLimit(thunk) {
 
     var url = "https://api.github.com/rate_limit";
     try {
@@ -11,13 +11,7 @@ function getRateLimit() {
         request.onreadystatechange = function() {
             if (request.readyState === request.DONE) {
                 var data = JSON.parse(request.responseText);
-
-                var d = new Date();
-                var seconds = d.getTime() / 1000;
-
-                print("Github Rate Limiting: " +
-                      data.resources.core.remaining + " / " + data.resources.core.limit + ", " +
-                      (data.resources.core.reset - seconds) + " seconds");
+                thunk(data);
             }
         };
         request.onerror = function () {
