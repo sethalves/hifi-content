@@ -111,6 +111,9 @@ function getLabelNames(detailsResponse) {
 
 
 function getPRDetails(prNumber, dataCache, thunk) {
+
+    // getRateLimit();
+
     var url = "https://api.github.com/repos/highfidelity/hifi/pulls/" + prNumber;
     cachingGithubAPIRequest(url, dataCache, function (detailsResponse) {
         detailsResponse.labelNames = getLabelNames(detailsResponse);

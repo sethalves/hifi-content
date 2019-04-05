@@ -10,6 +10,11 @@
     var dataCache = {};
 
     self.updateVisuals = function () {
+        if (!self.response) {
+            // error state
+            Entities.editEntity(self.entityID, { color: { red: 255, green: 165, blue: 0 }});
+            return;
+        }
         if (self.response.mergeable) {
             self.status = "good";
         } else {
