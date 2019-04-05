@@ -5,7 +5,7 @@
 (function() {
     var self = this;
 
-    var prUtils = Script.require(Script.resolvePath("pr-utils.js"));
+    var prUtils = Script.require(Script.resolvePath("pr-utils.js?v=2"));
 
     var dataCache = {};
 

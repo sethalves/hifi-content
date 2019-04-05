@@ -14,20 +14,23 @@ var bezelID = Entities.addEntity({
     shapeType: "box",
     gravity: { x: 0, y: -1, z: 0 },
     name: "github throttling status bezel",
-    modelURL: Script.resolvePath("bezel.obj")
+    modelURL: Script.resolvePath("bezel.obj.gz")
 });
 
+var lineHeight = 0.021;
 Entities.addEntity({
     type: "Text",
     name: "github throttling status text",
-    localPosition: { x: 0, y: 0, z: 0 },
+    localPosition: { x: 0, y: 0.01, z: 0 },
     localRotation: Quat.fromPitchYawRollDegrees(-90, 0, 0),
     text: "",
     textAlpha: 1,
     textColor: { red: 255, green: 255, blue: 255 },
     backgroundAlpha: 1,
-    backgroundColor: { red: 0, green: 0, blue: 0 },
-    lineHeight: 0.021,
+    backgroundColor: { red: 10, green: 10, blue: 10 },
+    lineHeight: lineHeight,
+    leftMargin: lineHeight,
+    topMargin: lineHeight,
     billboardMode: "none",
     dimensions: { x: 0.18, y: 0.18 },
     visible: true,
@@ -38,5 +41,5 @@ Entities.addEntity({
     ignoreRayIntersection: true,
     drawInFront: false,
     parentID: bezelID,
-    serverScripts: Script.resolvePath("status-page.js")
+    serverScripts: Script.resolvePath("status-page.js?v=1")
 });
