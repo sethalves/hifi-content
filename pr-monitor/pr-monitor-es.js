@@ -34,43 +34,58 @@
             }
         }
 
+        if (self.response.state == "closed") {
+            self.status = "closed";
+        }
+
+        if (self.response.state == "merged") { // this doesn't actually work.
+            self.status = "merged";
+        }
+
         if (self.previousStatus != self.status) {
             if (self.status == "good") {
                 Entities.editEntity(self.entityID, { color: { red: 0, green: 255, blue: 0 }});
             } else if (self.status == "pending") {
                 Entities.editEntity(self.entityID, { color: { red: 255, green: 255, blue: 0 }});
+            } else if (self.status == "closed") {
+                Entities.editEntity(self.entityID, { color: { red: 120, green: 120, blue: 120 }});
+            } else if (self.status == "merged") {
+                Entities.editEntity(self.entityID, { color: { red: 250, green: 250, blue: 250 }});
             } else {
                 Entities.editEntity(self.entityID, { color: { red: 255, green: 0, blue: 0 }});
             }
             self.previousStatus = self.status;
         }
-
     };
 
+
     self.updateStatus = function () {
-        try {
+        prUtils.getRateLimit(function (rateLimitData) {
+            var d = new Date();
+            var epochTime = d.getTime() / 1000;
+            var seconds = rateLimitData.resources.core.reset - epochTime;
+            var remainingSecondsPerRequests = seconds / rateLimitData.resources.core.remaining;
+
             var userData = Entities.getEntityProperties(self.entityID, "userData").userData;
             var data = JSON.parse(userData);
             self.prNumber = data.prNumber;
             prUtils.getPRDetails(self.prNumber, dataCache, function (response) {
                 self.response = response;
                 self.updateVisuals();
+
+                // most requests don't end up counting against the throttling / rate-limit, because
+                // they are requests for pages that haven't changed.  This slows down
+                // the requests if we are using them up too quickly.
+                Script.setTimeout(function () {
+                    self.updateStatus();
+                }, remainingSecondsPerRequests * 500.0);
             });
-        } catch (err) {
-            print("pr-monitor-es.js -- updateStatus failed: " + JSON.stringify(err));
-        }
+        });
     };
 
 
     self.preload = function (entityID) {
         self.entityID = entityID;
-
-        Script.setInterval(function () {
-            self.updateStatus();
-        // }, 180000); // 180 second
-        }, 20000); // 20 second
-
         self.updateStatus();
     };
-
 });
