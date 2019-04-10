@@ -8,11 +8,12 @@ SOURCE="$(readlink "$SOURCE")"
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 exec gosh \
--ptime \
 -e '(set! *load-suffixes* (cons ".sld" *load-suffixes*))' \
 -e "(append! *load-path* (list \"$DIR\" \".\"))" \
 -r7 "$0" "$@"
 |#
+
+;; -ptime \
 
 
 (import (scheme base)
