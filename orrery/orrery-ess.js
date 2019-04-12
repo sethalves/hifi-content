@@ -28,7 +28,7 @@
     };
 
     var speed = 1/12;
-    var lifetime = 60;
+    var lifetime = 600;
 
     var bodyKeys = [
         "SUN",
