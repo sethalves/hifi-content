@@ -1,10 +1,34 @@
 "use strict";
 
-/* global Script, Messages, print, Vec3, Math, Entities, Quat, MyAvatar, Mat4 */
+/* global Script, Messages, print, Vec3, Math, Entities, Quat, Mat4, MyAvatar */
 
 (function() {
 
+    var self = this;
+
+    var modelRadius = 4;
+
+    // var sizeScaleForBody = {
+    //     "SUN": modelRadius / 400000,
+    //     "MOON": modelRadius / 100000,
+    //     "default": modelRadius / 100000
+    // };
+
+    var sizeScaleForBody = {
+        "SUN": modelRadius / 400000,
+        "MOON": modelRadius / 50000,
+        "default": modelRadius / 50000
+    };
+
+
+    var distanceScaleForOrbit = {
+        "NONE": 1,
+        "SUN": 5100000000,
+        "EARTH": 70000000
+    };
+
     var speed = 1/12;
+    var lifetime = 60;
 
     var bodyKeys = [
         "SUN",
@@ -108,14 +132,6 @@
             return orreryBaseLocation;
         }
 
-        var distanceScaleForOrbit = {
-            "NONE": 1,
-            "SUN": 5100000000,
-            "EARTH": 150000000
-        };
-
-        var modelRadius = 250;
-
         var bodyData = bodies[bodyKey];
         var distanceScale = modelRadius / distanceScaleForOrbit[bodyData.orbits];
         var position = Vec3.multiply(Vec3.multiplyQbyV(toHifiAxis, bodyData.position), distanceScale);
@@ -132,14 +148,11 @@
             y: Math.pow(bodySize.y, expValue),
             z: Math.pow(bodySize.z, expValue)
         };
-        var sizeScaleForBody = {
-            "SUN": 1 / 1600,
-            // "MOON": 1 / 600
-            "MOON": 1 / 400
-        };
         var sizeScale = 1.0 / 400.0;
         if (sizeScaleForBody[bodyKey]) {
             sizeScale = sizeScaleForBody[bodyKey];
+        } else {
+            sizeScale = sizeScaleForBody["default"];
         }
         return Vec3.multiply(expSize, sizeScale);
     }
@@ -191,123 +204,123 @@
     }
 
     function spinBodies(bodies, orreryEpochSeconds) {
-        bodyKeys.forEach(function(bodyKey) {
-            if (bodyKey == "SUN") {
-                // pivotSpin.SUN = { x: 0, y: 0, z: 0 };
-                return;
-            }
+        return;
+        Script.setTimeout(function () {
+            bodyKeys.forEach(function (bodyKey) {
+                if (bodyKey == "SUN") {
+                    // pivotSpin.SUN = { x: 0, y: 0, z: 0 };
+                    return;
+                }
 
-            var bodyData = bodies[bodyKey];
+                var bodyData = bodies[bodyKey];
 
-            var rotation = cspiceQuatToHifi(bodyData.orientation);
-            var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
-            var bodyAngularVelocity = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
-            bodyAngularVelocity = Vec3.multiply(bodyAngularVelocity, speed);
+                var rotation = cspiceQuatToHifi(bodyData.orientation);
+                var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
+                var bodyAngularVelocity = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
+                bodyAngularVelocity = Vec3.multiply(bodyAngularVelocity, speed);
 
-            Entities.editEntity(bodyEntityIDs[bodyKey], {
-                // localAngularVelocity: bodyAngularVelocity,
-                angularVelocity: bodyAngularVelocity,
+                Entities.editEntity(bodyEntityIDs[bodyKey], {
+                    // localAngularVelocity: bodyAngularVelocity,
+                    angularVelocity: bodyAngularVelocity,
+                });
+
+                // Entities.editEntity(bodyAnchorIDs[bodyKey], {
+                //     // XXX spin opposite of pivot?
+                // });
+
+                var relativePosition = Vec3.multiplyQbyV(toHifiAxis, bodyData.position);
+                var relativePositionInOneHour = Vec3.multiplyQbyV(toHifiAxis, bodyData.positionInOneHour);
+
+                // bring the relative positions into the frame of the anchor of what this orbits around
+                var parentAnchorProps = Entities.getEntityProperties(bodyAnchorIDs[bodyData.orbits],
+                                                                     ["position", "rotation"]);
+                var basePosition = parentAnchorProps.position;
+                var baseRotation = parentAnchorProps.rotation;
+                var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
+                var baseMatInv = Mat4.inverse(baseMat);
+                // var baseMatInvRot = Mat4.extractRotation(baseMatInv);
+
+                var localPosition = Mat4.transformPoint(baseMatInv, relativePosition);
+                var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
+
+                // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
+                var changeInHour = Quat.rotationBetween(localPositionInOneHour, localPosition);
+                var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
+                pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
+
+                if (bodyKey == "MOON") {
+                    pivotAngularVelocity = { x: 0, y: 0.1, z: 0 };
+                }
+
+                Entities.editEntity(bodyPivotIDs[bodyKey], {
+                    localAngularVelocity: pivotAngularVelocity,
+                });
             });
 
-            // Entities.editEntity(bodyAnchorIDs[bodyKey], {
-            //     // XXX spin opposite of pivot?
-            // });
-
-            var relativePosition = Vec3.multiplyQbyV(toHifiAxis, bodyData.position);
-            var relativePositionInOneHour = Vec3.multiplyQbyV(toHifiAxis, bodyData.positionInOneHour);
-
-            // bring the relative positions into the frame of the anchor of what this orbits around
-            var parentAnchorProps = Entities.getEntityProperties(bodyAnchorIDs[bodyData.orbits],
-                                                                 ["position", "rotation"]);
-            var basePosition = parentAnchorProps.position;
-            var baseRotation = parentAnchorProps.rotation;
-            var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
-            var baseMatInv = Mat4.inverse(baseMat);
-            // var baseMatInvRot = Mat4.extractRotation(baseMatInv);
-
-            var localPosition = Mat4.transformPoint(baseMatInv, relativePosition);
-            var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
-
-            // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
-            var changeInHour = Quat.rotationBetween(localPositionInOneHour, localPosition);
-            var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
-            pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
-
-            if (bodyKey == "MOON") {
-                pivotAngularVelocity = { x: 0, y: 0.1, z: 0 };
-            }
-
-            Entities.editEntity(bodyPivotIDs[bodyKey], {
-                localAngularVelocity: pivotAngularVelocity,
-            });
-        });
-
-        // Script.setInterval(function() {
-        //     for (var bodyKey in bodyKeys) {
-        //         if (bodies.hasOwnProperty(bodyKey)) {
-        //             // var bodyData = bodies[bodyKey];
-        //             var rotation = Quat.slerp(rot0s[bodyKey], rot1s[bodyKey], spins[bodyKey]);
-        //             spins[bodyKey] += 0.5;
-        //             Entities.editEntity(bodyEntityIDs[bodyKey], {
-        //                 rotation: rotation
-        //             });
-        //         }
-        //     }
-        // }, 300);
+            // Script.setInterval(function() {
+            //     for (var bodyKey in bodyKeys) {
+            //         if (bodies.hasOwnProperty(bodyKey)) {
+            //             // var bodyData = bodies[bodyKey];
+            //             var rotation = Quat.slerp(rot0s[bodyKey], rot1s[bodyKey], spins[bodyKey]);
+            //             spins[bodyKey] += 0.5;
+            //             Entities.editEntity(bodyEntityIDs[bodyKey], {
+            //                 rotation: rotation
+            //             });
+            //         }
+            //     }
+            // }, 300);
 
 
-        updateClock(orreryEpochSeconds);
+            updateClock(orreryEpochSeconds);
+        }, 2000);
     }
 
     function createOrrery() {
 
-        orreryBaseLocation = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 1, z: -5 }));
+        // orreryBaseLocation = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, { x: 0, y: 1, z: -5 }));
+        orreryBaseLocation = Entities.getEntityProperties(self.entityID, ["position"]).position;
 
         Entities.addEntity({
             cutoff: 0,
             damping: 0,
-            dimensions: { x: 20, y: 20, z: 20 },
+            dimensions: { x: modelRadius, y: modelRadius, z: modelRadius },
             falloffRadius: 1000,
             intensity: 8,
             name: "Orrery Sun Light",
             position: orreryBaseLocation,
             type: "Light",
-            userData: JSON.stringify({
-                grabbableKey: { grabbable: false },
-                orrery: true
-            }),
-            lifetime: 600
+            grab: { grabbable: false },
+            userData: JSON.stringify({ orrery: true }),
+            lifetime: lifetime
         });
 
-        Entities.addEntity({
-            ambientLight: {
-                ambientIntensity: 1
-            },
-            ambientLightMode: "enabled",
-            bloomMode: "disabled",
-            collisionless: true,
-            dimensions: { x: 100, y: 100, z: 100 },
-            haze: {
-                hazeBackgroundBlend: 0.7400000095367432,
-                hazeCeiling: 1000,
-                hazeColor: { blue: 59, green: 23, red: 14 },
-                hazeGlareAngle: 36,
-                hazeRange: 300
-            },
-            hazeMode: "enabled",
-            ignoreForCollisions: true,
-            keyLightMode: "disabled",
-            name: "Orrery Zone",
-            position: orreryBaseLocation,
-            shapeType: "box",
-            skyboxMode: "disabled",
-            type: "Zone",
-            userData: JSON.stringify({
-                grabbableKey: { grabbable: false },
-                orrery: true
-            }),
-            lifetime: 600
-        });
+        // Entities.addEntity({
+        //     ambientLight: {
+        //         ambientIntensity: 1
+        //     },
+        //     ambientLightMode: "enabled",
+        //     bloomMode: "disabled",
+        //     collisionless: true,
+        //     dimensions: { x: 100, y: 100, z: 100 },
+        //     haze: {
+        //         hazeBackgroundBlend: 0.7400000095367432,
+        //         hazeCeiling: 1000,
+        //         hazeColor: { blue: 59, green: 23, red: 14 },
+        //         hazeGlareAngle: 36,
+        //         hazeRange: 300
+        //     },
+        //     hazeMode: "enabled",
+        //     ignoreForCollisions: true,
+        //     keyLightMode: "disabled",
+        //     name: "Orrery Zone",
+        //     position: orreryBaseLocation,
+        //     shapeType: "box",
+        //     skyboxMode: "disabled",
+        //     type: "Zone",
+        //     grab: { grabbable: false },
+        //     userData: JSON.stringify({ orrery: true }),
+        //     lifetime: lifetime
+        // });
 
 
         apiRequest(function(bodies, orreryEpochSeconds) {
@@ -332,6 +345,7 @@
                     bodyPivotIDs[bodyKey] = Entities.addEntity({
                         name: "Orrery " + bodyData.name + " pivot",
                         type: "Box",
+                        alpha: 0,
                         color: { blue: 255, green: 255, red: 255 },
                         dimensions: { x: 0.02, y: 0.02, z: 0.02 },
                         localPosition: { x: 0, y: 0, z: 0 },
@@ -339,13 +353,11 @@
                         parentID: bodyAnchorIDs[bodyData.orbits],
                         dynamic: false,
                         collisionless: true,
-                        userData: JSON.stringify({
-                            grabbableKey: { grabbable: false },
-                            orrery: true
-                        }),
+                        grab: { grabbable: false },
+                        userData: JSON.stringify({ orrery: true }),
                         angularDamping: 0,
                         damping: 0,
-                        lifetime: 600
+                        lifetime: lifetime
                     });
 
                     Entities.editEntity(bodyPivotIDs[bodyKey], {
@@ -361,6 +373,7 @@
                     bodyAnchorIDs[bodyKey] = Entities.addEntity({
                         name: "Orrery " + bodyData.name + " anchor",
                         type: "Box",
+                        alpha: 0,
                         color: { blue: 255, green: 255, red: 255 },
                         dimensions: { x: 0.02, y: 0.02, z: 0.02 },
                         position: position,
@@ -368,13 +381,11 @@
                         parentID: bodyPivotIDs[bodyKey],
                         dynamic: false,
                         collisionless: true,
-                        userData: JSON.stringify({
-                            grabbableKey: { grabbable: false },
-                            orrery: true
-                        }),
+                        grab: { grabbable: false },
+                        userData: JSON.stringify({ orrery: true }),
                         angularDamping: 0,
                         damping: 0,
-                        lifetime: 600
+                        lifetime: lifetime
                     });
 
                     Entities.editEntity(bodyAnchorIDs[bodyKey], {
@@ -383,7 +394,6 @@
                 }
 
                 userDataParsed.orrery = true;
-                userDataParsed.grabbableKey = { grabbable: false };
                 var userData = JSON.stringify(userDataParsed);
 
                 if (bodyEntityIDs[bodyKey]) {
@@ -403,17 +413,18 @@
 
                         dimensions: size,
                         collisionless: true,
+                        grab: { grabbable: false },
                         userData: userData,
                         angularDamping: 0,
                         damping: 0,
-                        lifetime: 600
+                        lifetime: lifetime
                     });
 
                     if (bodyKey == "SATURN") {
                         Entities.addEntity({
                             name: "Orrery Saturn Ring",
                             color: { red: 200, green: 200, blue: 200 },
-                            dimensions: { x: 6, y: 0.1, z: 6 },
+                            dimensions: { x: size.x * 2, y: modelRadius * 0.0004, z: size.z * 2 },
                             shape: "Cylinder",
                             type: "Shape",
                             dynamic: false,
@@ -422,11 +433,9 @@
                             parentID: bodyAnchorIDs[bodyKey],
                             localPosition: { x: 0, y: 0, z: 0 },
                             localRotation: Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 }),
-                            userData: JSON.stringify({
-                                grabbableKey: { grabbable: false },
-                                orrery: true
-                            }),
-                            lifetime: 600
+                            grab: { grabbable: false },
+                            userData: JSON.stringify({ orrery: true }),
+                            lifetime: lifetime
                         });
                     }
 
@@ -445,76 +454,74 @@
 
 
     function updateClock(orreryEpochSeconds) {
-        if (!clockEntityID) {
-            var entityIDs = Entities.findEntities(orreryBaseLocation, 1000);
-            var fastForwardButtonID = null;
-            for (var i = 0; i < entityIDs.length; i++) {
-                var entityProps = Entities.getEntityProperties(entityIDs[i], ["userData", "name"]);
-                if (entityProps && entityProps.name == "Orrery Fast Forward Button") {
-                    fastForwardButtonID = entityIDs[i];
-                }
+        // if (!clockEntityID) {
+        //     var entityIDs = Entities.findEntities(orreryBaseLocation, 1000);
+        //     var fastForwardButtonID = null;
+        //     for (var i = 0; i < entityIDs.length; i++) {
+        //         var entityProps = Entities.getEntityProperties(entityIDs[i], ["userData", "name"]);
+        //         if (entityProps && entityProps.name == "Orrery Fast Forward Button") {
+        //             fastForwardButtonID = entityIDs[i];
+        //         }
 
-                if (entityProps && entityProps.name == "Orrery Date/Time") {
-                    clockEntityID = entityIDs[i];
-                    break;
-                }
-            }
+        //         if (entityProps && entityProps.name == "Orrery Date/Time") {
+        //             clockEntityID = entityIDs[i];
+        //             break;
+        //         }
+        //     }
 
-            clockEntityID = Entities.addEntity({
-                name: "Orrery Date/Time",
-                type: "Text",
-                text: "",
-                parentID: fastForwardButtonID,
-                localPosition: { x: 0, y: 0.5, z: 0 },
-                localRotation: { x: 0, y: 0, z: 0, w: 1 },
-                dimensions: { x: 0.5, y: 0.2, z: 0.5 },
-                collisionless: true,
-                userData: JSON.stringify({
-                    grabbableKey: { grabbable: false },
-                    orrery: true
-                }),
-                lifetime: 600
-            });
-        }
+        //     clockEntityID = Entities.addEntity({
+        //         name: "Orrery Date/Time",
+        //         type: "Text",
+        //         text: "",
+        //         parentID: fastForwardButtonID,
+        //         localPosition: { x: 0, y: 0.5, z: 0 },
+        //         localRotation: { x: 0, y: 0, z: 0, w: 1 },
+        //         dimensions: { x: 0.5, y: 0.2, z: 0.5 },
+        //         collisionless: true,
+        //         grab: { grabbable: false },
+        //         userData: JSON.stringify({ orrery: true }),
+        //         lifetime: lifetime
+        //     });
+        // }
 
-        print("orreryEpochSeconds=" + orreryEpochSeconds);
-        var orreryDate = new Date(orreryEpochSeconds * 1000);
-        var clockString = orreryDate.toGMTString();
-        print("clockString=" + clockString);
+        // print("orreryEpochSeconds=" + orreryEpochSeconds);
+        // var orreryDate = new Date(orreryEpochSeconds * 1000);
+        // var clockString = orreryDate.toGMTString();
+        // print("clockString=" + clockString);
 
-        Entities.editEntity(clockEntityID, { text: orreryEpochSeconds });
+        // Entities.editEntity(clockEntityID, { text: orreryEpochSeconds });
     }
 
 
-    // var handleMessages = function(channel, message, sender) {
-    //     if (channel !== "Orrery Controls") {
-    //         return;
-    //     }
-    //     if (sender != MyAvatar.sessionUUID) {
-    //         return;
-    //     }
+    var handleMessages = function(channel, message, sender) {
+        if (channel !== "Orrery Controls") {
+            return;
+        }
+        if (sender != MyAvatar.sessionUUID) {
+            return;
+        }
 
-    //     var parsedMessage = {};
-    //     try {
-    //         parsedMessage = JSON.parse(message);
-    //         print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
-    //         if (parsedMessage.action == "reset") {
-    //             startTime = null;
-    //             cleanupEntities();
-    //             createOrrery();
-    //         } else if (parsedMessage.action == "spin") {
-    //             startTime = null;
-    //             cleanupEntities();
-    //             createOrrery();
-    //             apiRequest(spinBodies);
-    //         }
-    //     } catch (e) {
-    //         print(e);
-    //     }
-    // };
+        var parsedMessage = {};
+        try {
+            parsedMessage = JSON.parse(message);
+            print("[0] Orrery got message: " + JSON.stringify(parsedMessage));
+            if (parsedMessage.action == "reset") {
+                startTime = null;
+                cleanupEntities();
+                createOrrery();
+            } else if (parsedMessage.action == "spin") {
+                startTime = null;
+                cleanupEntities();
+                createOrrery();
+                apiRequest(spinBodies);
+            }
+        } catch (e) {
+            print(e);
+        }
+    };
 
-    // Messages.messageReceived.connect(handleMessages);
-    // Messages.subscribe("Orrery Controls");
+    Messages.messageReceived.connect(handleMessages);
+    Messages.subscribe("Orrery Controls");
 
     Script.scriptEnding.connect(function () {
         cleanupEntities();
