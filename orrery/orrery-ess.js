@@ -45,7 +45,6 @@
     ];
 
 
-    var orreryBaseLocation = { x: 12000, y: 11998.5, z: 12000 };
     var toHifiAxis = Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 });
     // var toHifiAxis = { x: 0, y: 0, z: 0, w: 1 };
 
@@ -55,6 +54,9 @@
 
     var startTime = null;
 
+    self.preload = function (entityID) {
+        self.entityID = entityID;
+    };
 
     function getSunSurface() {
         // return [ { red: 255, green: 255, blue: 0 }, "" ];
@@ -113,7 +115,7 @@
 
 
     function cleanupEntities() {
-        var entityIDs = Entities.findEntities(orreryBaseLocation, 1000);
+        var entityIDs = Entities.findEntities(self.orreryBaseLocation, 1000);
         for (var i = 0; i < entityIDs.length; i++) {
             var entityProps = Entities.getEntityProperties(entityIDs[i], ["userData"]);
             try {
@@ -130,7 +132,7 @@
     function getBodyPosition(bodies, bodyKey) {
         // distances from sun range from 376632 to 5023876112
         if (bodyKey == "SUN") {
-            return orreryBaseLocation;
+            return self.orreryBaseLocation;
         }
 
         var bodyData = bodies[bodyKey];
@@ -208,8 +210,7 @@
 
 
     function createOrrery() {
-
-        orreryBaseLocation = Entities.getEntityProperties(self.entityID, ["position"]).position;
+        self.orreryBaseLocation = Entities.getEntityProperties(self.entityID, ["position"]).position;
 
         Entities.addEntity({
             cutoff: 0,
@@ -218,7 +219,7 @@
             falloffRadius: 1000,
             intensity: 8,
             name: "Orrery Sun Light",
-            position: orreryBaseLocation,
+            position: self.orreryBaseLocation,
             type: "Light",
             grab: { grabbable: false },
             userData: JSON.stringify({ orrery: true }),
@@ -226,7 +227,9 @@
         });
 
         apiRequest(function(bodies, orreryEpochSeconds) {
+
             bodyKeys.forEach(function(bodyKey) {
+
                 var bodyData = bodies[bodyKey];
 
                 var position = getBodyPosition(bodies, bodyKey); // world-frame
@@ -330,6 +333,8 @@
                 }
             });
         });
+
+        Script.setTimeout(createOrrery, lifetime * 1000 - 5000);
     }
 
 
@@ -338,10 +343,5 @@
     });
 
 
-    self.preload = function (entityID) {
-        self.entityID = entityID;
-        Script.setInterval(function () {
-            createOrrery();
-        }, lifetime * 1000 - 5000);
-    };
+    Script.setTimeout(createOrrery, 5000);
 });
