@@ -163,6 +163,16 @@ pallas
 vesta
 vestlute
 
+
+CERES
+PALLAS
+VESTA
+PSYCHE
+LUTETIA
+EROS
+DAVIDA
+KLEOPATRA
+
 * git status
 
 seth@hifi-laptop:~/src/hifi-content/orrery$ git status .
@@ -204,3 +214,9 @@ Untracked files:
 	utils/
 
 no changes added to commit (use "git add" and/or "git commit -a")
+
+* debugging cgi
+
+http://headache.hungry.com/~seth/hifi/orrery/orrery-web-api.cgi?time=1555125290.086
+
+QUERY_STRING='time=1555125290.086' ./orrery-web-api.cgi

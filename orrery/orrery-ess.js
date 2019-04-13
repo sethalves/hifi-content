@@ -43,7 +43,15 @@
         "URANUS",
         "NEPTUNE",
         "PLUTO",
-        "CERES"
+        "CERES",
+        "PALLAS",
+        // these are all returning a position of zero
+        // "VESTA",
+        // "PSYCHE",
+        // "LUTETIA",
+        // "EROS",
+        // "DAVIDA",
+        // "KLEOPATRA"
     ];
 
 
@@ -290,7 +298,10 @@
 
                 var surface = getSurface(bodyKey);
                 var color = surface[0];
-                var userDataParsed = JSON.parse(surface[1]);
+                var userDataParsed = null;
+                if (surface[1]) {
+                    userDataParsed = JSON.parse(surface[1]);
+                }
 
                 // var orbitCenterPosition = getBodyPosition(bodies, bodyData.orbits);
 
@@ -420,6 +431,7 @@
                         { x: 0, y: -size.y / 2 - 0.005, z: 0 },
                         { x: 0, y: -thisHeightAboveFloor, z: 0 }
                     ],
+                    grab: { grabbable: false },
                     lifetime: lifetime,
                     lineWidth: 20
                 });

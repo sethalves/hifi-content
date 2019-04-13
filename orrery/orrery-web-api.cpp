@@ -82,7 +82,8 @@ int main (int argc, char *argv[]) {
     furnsh_c("data/de438.bsp");
     furnsh_c("data/codes_300ast_20100725.bsp");
 
-    char erractAction[] {"REPORT"};
+    // char erractAction[] {"REPORT"};
+    char erractAction[] {"IGNORE"};
     erract_c("SET", 0, erractAction);
 
     time_t now = time(0);
@@ -139,7 +140,14 @@ int main (int argc, char *argv[]) {
         { "Uranus", "URANUS", "URANUS BARYCENTER", "SUN" },
         { "Neptune", "NEPTUNE", "NEPTUNE BARYCENTER", "SUN" },
         { "Pluto", "PLUTO", "PLUTO BARYCENTER", "SUN" },
-        { "Ceres", "CERES", "CERES", "SUN" }
+        { "Ceres", "CERES", "CERES", "SUN" },
+        { "Pallas", "PALLAS", "PALLAS", "SUN" },
+        { "Vesta", "VESTA", "VESTA", "SUN" },
+        { "Psyche", "PSYCHE", "PSYCHE", "SUN" },
+        { "Lutetia", "LUTETIA", "LUTETIA", "SUN" },
+        { "Eros", "EROS", "EROS", "SUN" },
+        { "Davida", "DAVIDA", "DAVIDA", "SUN" },
+        { "Kleopatra", "KLEOPATRA", "KLEOPATRA", "SUN" }
     };
 
     stringstream output;
@@ -164,6 +172,17 @@ int main (int argc, char *argv[]) {
         spkezr_c(body.getBarycenterName(), et, "IAU_SUN", "NONE", body.getOrbitsAround(), state, &lt);
         vector<float> position { (float)state[0], (float)state[1], (float)state[2] };
         vector<float> velocity { (float)state[3], (float)state[4], (float)state[5] };
+
+        // scrub velocity for NaN
+        if (velocity[0] != velocity[0]) {
+            velocity[0] = 0.0;
+        }
+        if (velocity[1] != velocity[1]) {
+            velocity[1] = 0.0;
+        }
+        if (velocity[2] != velocity[2]) {
+            velocity[2] = 0.0;
+        }
 
 
         SpiceDouble futureState[6];
@@ -229,7 +248,7 @@ int main (int argc, char *argv[]) {
     const char *pictur { "Wkd Mon DD HR:MN:SC UTC YYYY ::UTC-0" };
     char readableTime[1024];
     timout_c(et, pictur, sizeof(readableTime), readableTime);
-    cerr << "now = " << readableTime << endl;
+    // cerr << "now = " << readableTime << endl;
 
     output << "    \"timeReadable\": \"" << readableTime << "\"\n";
 
