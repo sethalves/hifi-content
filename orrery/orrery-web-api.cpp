@@ -80,6 +80,7 @@ int main (int argc, char *argv[]) {
     furnsh_c("data/pck00011.tpc");
     furnsh_c("data/naif0012.tls");
     furnsh_c("data/de438.bsp");
+    furnsh_c("data/codes_300ast_20100725.bsp");
 
     char erractAction[] {"REPORT"};
     erract_c("SET", 0, erractAction);
@@ -138,6 +139,7 @@ int main (int argc, char *argv[]) {
         { "Uranus", "URANUS", "URANUS BARYCENTER", "SUN" },
         { "Neptune", "NEPTUNE", "NEPTUNE BARYCENTER", "SUN" },
         { "Pluto", "PLUTO", "PLUTO BARYCENTER", "SUN" },
+        { "Ceres", "CERES", "CERES", "SUN" }
     };
 
     stringstream output;

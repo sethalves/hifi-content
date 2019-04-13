@@ -1,0 +1,206 @@
+-*- org -*-
+
+
+https://en.wikipedia.org/wiki/Jet_Propulsion_Laboratory_Development_Ephemeris
+
+https://en.wikipedia.org/wiki/Barycentric_Coordinate_Time
+
+
+e·phem·er·is
+əˈfem(ə)rəs/
+noun Astronomy Astrology
+noun: ephemeris; plural noun: ephemerides
+    a table or data file giving the calculated positions of a celestial object at regular intervals throughout a period.
+    a book or set of such tables or files.
+Origin
+early 16th century: from Latin, from Greek ephēmeros ‘lasting only a day.’
+
+https://en.wikipedia.org/wiki/Ephemeris
+https://en.wikipedia.org/wiki/Julian_calendar
+
+
+INDEPENDENT EPHEMERIS SOFTWARE UTILITES (not supported by JPL)
+ftp://ssd.jpl.nasa.gov/pub/eph/planets/other_readers.txt
+
+
+glossary
+https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/Tutorials/pdf/individual_docs/05_conventions.pdf
+https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/Tutorials/pdf/individual_docs/12_intro_to_kernels.pdf
+NASA - National Aeronautics and Space Administration
+NAIF - NASA's Navigation and Ancillary Information Facility
+SPICE - An Observation Geometry System for Space Science Missions 
+
+ftp://ssd.jpl.nasa.gov/pub/eph/planets/ascii/de432/
+
+
+bsp ephemeris
+ftp://ssd.jpl.nasa.gov/pub/eph/planets/bsp/
+ftp://ssd.jpl.nasa.gov/pub/eph/planets/bsp/de431t.bsp
+ftp://ssd.jpl.nasa.gov/pub/eph/satellites/bsp/
+
+leap-seconds
+https://naif.jpl.nasa.gov/pub/naif/pds/data/ody-m-spice-6-v1.0/odsp_1000/data/lsk/
+
+
+http://www.exploratorium.edu/ronh/solar_system/
+
+* web orrerys
+
+https://in-the-sky.org/solarsystem.php
+
+http://cosinekitty.com/astronomy.js
+
+https://www.solarsystemscope.com/
+
+* orrery
+
+file:///home/seth/src/hifi-content/orrery/cspice/doc/html/cspice/spkpos_c.html
+http://naif.jpl.nasa.gov/pub/naif/toolkit_docs/C/cspice/spkpos_c.html
+
+
+gcc program.c -I /naif/cspice/include /naif/cspice/lib/cspice.a –lm
+
+
+
+spkpos_c("SUN", et, "MOON_ME", "NONE", "MOON", ptarg, &lt);
+
+
+* planet models
+
+https://free3d.com/3d-models/planet
+
+
+* python package
+
+https://pypi.org/project/de421/
+https://pypi.org/project/jplephem/
+
+* ephemeris.com
+
+http://www.ephemeris.com/software.html
+
+ftp://ssd.jpl.nasa.gov/pub/eph/
+
+* SPICE
+
+self training
+https://naif.jpl.nasa.gov/naif/self_training.html
+
+tutorials
+https://naif.jpl.nasa.gov/naif/tutorials.html
+
+
+** binary kernels ( *.spk ?)
+
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/
+
+
+NAIF now assumes all SPICE users are using--or should be using-- a SPICE Toolkit of Version N52 or later
+
+
+SPICE transfer format (typically named *.xsp)
+binary SPICE transfer format (*.bsp)
+
+** spice toolkits
+
+python
+https://github.com/AndrewAnnex/SpiceyPy
+
+C
+https://naif.jpl.nasa.gov/naif/toolkit_C.html
+
+utilities
+https://naif.jpl.nasa.gov/naif/utilities_PC_Linux_64bit.html
+
+
+** NASA PDS (Planetary Data System)
+
+https://naif.jpl.nasa.gov/naif/data.html
+https://naif.jpl.nasa.gov/naif/data_archived.html
+
+
+
+* JPL HORIZONS
+
+https://ssd.jpl.nasa.gov/?horizons
+
+
+* celestia
+
+https://celestia.space/download.html
+
+
+
+* listing contents of bsp
+
+$ ./cspice/exe/brief data/de438.bsp
+ 
+BRIEF -- Version 4.0.0, September 8, 2010 -- Toolkit Version N0066
+ 
+ 
+Summary for: data/de438.bsp
+ 
+Bodies: MERCURY BARYCENTER (1)  SATURN BARYCENTER (6)   MERCURY (199)
+        VENUS BARYCENTER (2)    URANUS BARYCENTER (7)   VENUS (299)
+        EARTH BARYCENTER (3)    NEPTUNE BARYCENTER (8)  MOON (301)
+        MARS BARYCENTER (4)     PLUTO BARYCENTER (9)    EARTH (399)
+        JUPITER BARYCENTER (5)  SUN (10)
+        Start of Interval (ET)              End of Interval (ET)
+        -----------------------------       -----------------------------
+        1549 DEC 31 00:00:00.000            2650 JAN 25 00:00:00.000
+ 
+
+* large asteroids
+
+https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/asteroids/codes_300ast_20100725.bsp
+
+ceres
+eros
+kleopatra
+minoriso
+mn4
+pallas
+vesta
+vestlute
+
+* git status
+
+seth@hifi-laptop:~/src/hifi-content/orrery$ git status .
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   Makefile
+	modified:   orrery-es.js
+	modified:   orrery-ess.js
+	modified:   orrery-web-api.cpp
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	cspice.tar.Z
+	cspice/
+	data/
+	ephcom-1.0.zip
+	ephcom/
+	junk/
+	lnxm13000p17000.431
+	manifest-bsp.txt
+	manifest.txt
+	models/
+	notes
+	notes~
+	nsp00000.log
+	orrery-ess.js~
+	orrery-web-api
+	orrery-web-api.cgi
+	orrery-web-api.o
+	orrery/
+	pinpoint.ug
+	sun.fs~
+	utils/
+
+no changes added to commit (use "git add" and/or "git commit -a")

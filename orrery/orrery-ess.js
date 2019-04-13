@@ -27,7 +27,8 @@
         "EARTH": 70000000
     };
 
-    var speed = 1/12;
+    // var speed = 1/12;
+    var speed = 1/3600;
     var lifetime = 600;
 
     var bodyKeys = [
@@ -41,7 +42,8 @@
         "SATURN",
         "URANUS",
         "NEPTUNE",
-        "PLUTO"
+        "PLUTO",
+        "CERES"
     ];
 
 
@@ -57,6 +59,10 @@
     self.preload = function (entityID) {
         self.entityID = entityID;
     };
+
+    function getDefaultSurface() {
+        return [{ red: 100, green: 100, blue: 100 }, null];
+    }
 
     function getSunSurface() {
         // return [ { red: 255, green: 255, blue: 0 }, "" ];
@@ -95,6 +101,7 @@
 
 
     var surfaceFunctions = {
+        "unknown": getDefaultSurface,
         "SUN": getSunSurface,
         "MERCURY": function() { return getSimpleTextureSurface("models/Mercury/mercurymap.jpg"); },
         "VENUS": function() { return getSimpleTextureSurface("models/Venus/venusmap.jpg"); },
@@ -110,7 +117,10 @@
 
 
     function getSurface(bodyKey) {
-        return surfaceFunctions[bodyKey]();
+        if (surfaceFunctions[bodyKey]) {
+            return surfaceFunctions[bodyKey]();
+        }
+        return surfaceFunctions["unknown"];
     }
 
 
@@ -209,22 +219,64 @@
     }
 
 
-    function createOrrery() {
-        self.orreryBaseLocation = Entities.getEntityProperties(self.entityID, ["position"]).position;
+    function spinBodies(bodies, orreryEpochSeconds) {
+        bodyKeys.forEach(function (bodyKey) {
+            if (bodyKey == "SUN") {
+                // pivotSpin.SUN = { x: 0, y: 0, z: 0 };
+                return;
+            }
 
-        Entities.addEntity({
-            cutoff: 0,
-            damping: 0,
-            dimensions: { x: modelRadius, y: modelRadius, z: modelRadius },
-            falloffRadius: 1000,
-            intensity: 8,
-            name: "Orrery Sun Light",
-            position: self.orreryBaseLocation,
-            type: "Light",
-            grab: { grabbable: false },
-            userData: JSON.stringify({ orrery: true }),
-            lifetime: lifetime
+            var bodyData = bodies[bodyKey];
+
+            var rotation = cspiceQuatToHifi(bodyData.orientation);
+            var rotationInOneHour = cspiceQuatToHifi(bodyData.orientationInOneHour);
+            var bodyAngularVelocity = Quat.safeEulerAngles(Quat.multiply(rotationInOneHour, Quat.inverse(rotation)));
+            bodyAngularVelocity = Vec3.multiply(bodyAngularVelocity, speed);
+
+            Entities.editEntity(bodyEntityIDs[bodyKey], {
+                // localAngularVelocity: bodyAngularVelocity,
+                angularVelocity: bodyAngularVelocity,
+            });
+
+            // // Entities.editEntity(bodyAnchorIDs[bodyKey], {
+            // //     // XXX spin opposite of pivot?
+            // // });
+
+            // var relativePosition = Vec3.multiplyQbyV(toHifiAxis, bodyData.position);
+            // var relativePositionInOneHour = Vec3.multiplyQbyV(toHifiAxis, bodyData.positionInOneHour);
+
+            // // bring the relative positions into the frame of the anchor of what this orbits around
+            // var parentAnchorProps = Entities.getEntityProperties(bodyAnchorIDs[bodyData.orbits],
+            //                                                      ["position", "rotation"]);
+            // var basePosition = parentAnchorProps.position;
+            // var baseRotation = parentAnchorProps.rotation;
+            // var baseMat = Mat4.createFromRotAndTrans(baseRotation, basePosition);
+            // var baseMatInv = Mat4.inverse(baseMat);
+            // // var baseMatInvRot = Mat4.extractRotation(baseMatInv);
+
+            // var localPosition = Mat4.transformPoint(baseMatInv, relativePosition);
+            // var localPositionInOneHour = Mat4.transformPoint(baseMatInv, relativePositionInOneHour);
+
+            // // var radiansChangeInOneHour = Vec3.getAngle(relativePosition, relativePositionInOneHour);
+            // var changeInHour = Quat.rotationBetween(localPositionInOneHour, localPosition);
+            // var pivotAngularVelocity = Quat.safeEulerAngles(changeInHour);
+            // pivotAngularVelocity = Vec3.multiply(pivotAngularVelocity, speed);
+
+            // if (bodyKey == "MOON") {
+            //     pivotAngularVelocity = { x: 0, y: 0.1, z: 0 };
+            // }
+
+            // Entities.editEntity(bodyPivotIDs[bodyKey], {
+            //     localAngularVelocity: pivotAngularVelocity,
+            // });
         });
+    }
+
+
+    function createOrrery() {
+        var props = Entities.getEntityProperties(self.entityID);
+        self.orreryBaseLocation = props.position;
+        self.heightAboveFloor = props.localPosition.y - 0.01; // thickness of floor platform divided by 2
 
         apiRequest(function(bodies, orreryEpochSeconds) {
 
@@ -270,6 +322,24 @@
                 bodyPivotIDs[bodyKey] = Entities.addEntity(bodyPivotProps);
 
 
+                if (bodyKey == "SUN") {
+                    Entities.addEntity({
+                        cutoff: 0,
+                        damping: 0,
+                        dimensions: { x: modelRadius, y: modelRadius, z: modelRadius },
+                        falloffRadius: 1000,
+                        intensity: 4,
+                        name: "Orrery Sun Light",
+                        position: self.orreryBaseLocation,
+                        parentID: bodyPivotIDs[bodyKey],
+                        type: "Light",
+                        grab: { grabbable: false },
+                        userData: JSON.stringify({ orrery: true }),
+                        lifetime: lifetime
+                    });
+                }
+
+
                 if (bodyAnchorIDs[bodyKey]) {
                     Entities.deleteEntity(bodyAnchorIDs[bodyKey]);
                 }
@@ -292,8 +362,11 @@
                 });
 
 
-                userDataParsed.orrery = true;
-                var userData = JSON.stringify(userDataParsed);
+                var userData = "{ orrery: true }";
+                if (userDataParsed) {
+                    userDataParsed.orrery = true;
+                    userData = JSON.stringify(userDataParsed);
+                }
 
                 if (bodyEntityIDs[bodyKey]) {
                     Entities.deleteEntity(bodyEntityIDs[bodyKey]);
@@ -323,18 +396,40 @@
                         type: "Shape",
                         dynamic: false,
                         collisionless: true,
-                        parentID: bodyAnchorIDs[bodyKey],
+                        parentID: bodyEntityIDs[bodyKey],
                         localPosition: { x: 0, y: 0, z: 0 },
-                        localRotation: Quat.fromVec3Degrees({ x: -90, y: 0, z: 0 }),
+                        localRotation: Quat.fromVec3Degrees({ x: 90, y: 0, z: 0 }),
                         grab: { grabbable: false },
                         userData: JSON.stringify({ orrery: true }),
                         lifetime: lifetime
                     });
                 }
-            });
-        });
 
-        Script.setTimeout(createOrrery, lifetime * 1000 - 5000);
+
+                var thisHeightAboveFloor = self.heightAboveFloor + position.y - self.orreryBaseLocation.y;
+
+                Entities.addEntity({
+                    name: "Orrery " + bodyData.name + " line",
+                    type: "Line",
+                    color: { red: 255, green: 255, blue: 255 },
+                    dimensions: { x: 1, y: 2 * thisHeightAboveFloor, z: 1 },
+                    localPosition: { x: 0, y: 0, z: 0 },
+                    localRotation: { x: 0, y: 0, z: 0, w: 1 },
+                    parentID: bodyAnchorIDs[bodyKey],
+                    linePoints: [
+                        { x: 0, y: -size.y / 2 - 0.005, z: 0 },
+                        { x: 0, y: -thisHeightAboveFloor, z: 0 }
+                    ],
+                    lifetime: lifetime,
+                    lineWidth: 20
+                });
+            });
+
+            Script.setTimeout(function () {
+                spinBodies(bodies, orreryEpochSeconds);
+            }, 1000);
+            Script.setTimeout(createOrrery, lifetime * 1000 - 5000);
+        });
     }
 
 

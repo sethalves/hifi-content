@@ -204,7 +204,6 @@
     }
 
     function spinBodies(bodies, orreryEpochSeconds) {
-        return;
         Script.setTimeout(function () {
             bodyKeys.forEach(function (bodyKey) {
                 if (bodyKey == "SUN") {

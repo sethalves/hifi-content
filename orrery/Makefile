@@ -4,7 +4,7 @@
 
 CPPFLAGS=-std=c++11
 LDLIBS=cspice/lib/cspice.a -lstdc++ -lm
-DATAFILES=data/pck00011.tpc data/naif0012.tls data/de438.bsp
+DATAFILES=data/pck00011.tpc data/naif0012.tls data/de438.bsp data/codes_300ast_20100725.bsp
 
 all: orrery-web-api.cgi
 
