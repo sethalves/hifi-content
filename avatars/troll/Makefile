@@ -13,6 +13,8 @@ upload:
 	cp export/textures/* troll/
 	cp avatar-animation.json troll/
 	cp walk_fwd.fbx troll/
+	cp jog_fwd.fbx troll/
+	cp run_fwd.fbx troll/
 	ln -s . troll/textures
 	rsync --delete -avP troll/ headache.hungry.com:public_html/hifi/avatars/Troll/
 
