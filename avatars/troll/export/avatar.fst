@@ -129,4 +129,4 @@ jointRotationOffset = RightFoot = (0.1522419, 0.004332326, -0.1836986, -0.971112
 jointRotationOffset = RightToeBase = (-0.008165203, -0.01147844, -0.1655695, -0.9860977)
 jointRotationOffset = RightToe_End = (0.003937793, 0.04250832, -0.2101851, -0.9767293)
 jointRotationOffset = RightToe_End_end = (0.003937793, 0.04250832, -0.2101851, -0.9767293)
-animGraphUrl = http://headache.hungry.com/~seth/hifi/avatars/Troll/avatar-animation.json?v=1
+animGraphUrl = http://headache.hungry.com/~seth/hifi/avatars/Troll/avatar-animation.json?v=2
