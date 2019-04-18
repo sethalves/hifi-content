@@ -1115,8 +1115,8 @@
                                                                                                 "id": "walkFwdFast_c",
                                                                                                 "type": "clip",
                                                                                                 "data": {
-                                                                                                    "url": "http://headache.hungry.com/~seth/hifi/avatars/Troll/walk_fwd_fast.fbx",
-                                                                                                    "startFrame": 1.0,
+                                                                                                    "url": "http://headache.hungry.com/~seth/hifi/avatars/Troll/walk_fwd.fbx",
+                                                                                                    "startFrame": 0.0,
                                                                                                     "endFrame": 30.0,
                                                                                                     "timeScale": 1.0,
                                                                                                     "loopFlag": true
