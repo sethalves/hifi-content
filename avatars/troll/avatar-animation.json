@@ -1127,7 +1127,7 @@
                                                                                                 "id": "walkFwdJog_c",
                                                                                                 "type": "clip",
                                                                                                 "data": {
-                                                                                                    "url": "qrc:///avatar/animations/jog_fwd.fbx",
+                                                                                                    "url": "http://headache.hungry.com/~seth/hifi/avatars/Troll/jog_fwd.fbx",
                                                                                                     "startFrame": 0.0,
                                                                                                     "endFrame": 25.0,
                                                                                                     "timeScale": 1.0,
@@ -1139,7 +1139,7 @@
                                                                                                 "id": "walkFwdRun_c",
                                                                                                 "type": "clip",
                                                                                                 "data": {
-                                                                                                    "url": "qrc:///avatar/animations/run_fwd.fbx",
+                                                                                                    "url": "http://headache.hungry.com/~seth/hifi/avatars/Troll/run_fwd.fbx",
                                                                                                     "startFrame": 1.0,
                                                                                                     "endFrame": 22.0,
                                                                                                     "timeScale": 1.0,
