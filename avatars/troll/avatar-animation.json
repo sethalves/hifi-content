@@ -1118,7 +1118,7 @@
                                                                                                     "url": "http://headache.hungry.com/~seth/hifi/avatars/Troll/walk_fwd.fbx",
                                                                                                     "startFrame": 0.0,
                                                                                                     "endFrame": 30.0,
-                                                                                                    "timeScale": 1.0,
+                                                                                                    "timeScale": 0.7,
                                                                                                     "loopFlag": true
                                                                                                 },
                                                                                                 "children": []
