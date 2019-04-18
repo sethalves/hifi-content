@@ -1115,7 +1115,7 @@
                                                                                                 "id": "walkFwdFast_c",
                                                                                                 "type": "clip",
                                                                                                 "data": {
-                                                                                                    "url": "qrc:///avatar/animations/walk_fwd_fast.fbx",
+                                                                                                    "url": "http://headache.hungry.com/~seth/hifi/avatars/Troll/walk_fwd_fast.fbx",
                                                                                                     "startFrame": 0.0,
                                                                                                     "endFrame": 25.0,
                                                                                                     "timeScale": 1.0,

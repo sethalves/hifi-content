@@ -13,6 +13,7 @@ upload:
 	cp export/textures/* troll/
 	cp avatar-animation.json troll/
 	cp walk_fwd.fbx troll/
+	cp walk_fwd_fast.fbx troll/
 	cp jog_fwd.fbx troll/
 	cp run_fwd.fbx troll/
 	ln -s . troll/textures
