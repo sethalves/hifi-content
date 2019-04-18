@@ -5,7 +5,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 00000000.dds
+map_Kd 00000000.png
 #
 newmtl material_1
 Ka  0.6 0.6 0.6
@@ -14,7 +14,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd a7f78e52.dds
+map_Kd a7f78e52.png
 #
 newmtl material_2
 Ka  0.6 0.6 0.6
@@ -23,7 +23,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 56cf77dc.dds
+map_Kd 56cf77dc.png
 #
 newmtl material_3
 Ka  0.6 0.6 0.6
@@ -32,7 +32,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 592b6469.dds
+map_Kd 592b6469.png
 #
 newmtl material_4
 Ka  0.6 0.6 0.6
@@ -41,7 +41,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 22864127.dds
+map_Kd 22864127.png
 #
 newmtl material_5
 Ka  0.6 0.6 0.6
@@ -50,7 +50,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 60496c2a.dds
+map_Kd 60496c2a.png
 #
 newmtl material_6
 Ka  0.6 0.6 0.6
@@ -59,7 +59,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd a37b6b4c.dds
+map_Kd a37b6b4c.png
 #
 newmtl material_7
 Ka  0.6 0.6 0.6
@@ -68,7 +68,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 3559fbeb.dds
+map_Kd 3559fbeb.png
 #
 newmtl material_8
 Ka  0.6 0.6 0.6
@@ -77,7 +77,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 61a60352.dds
+map_Kd 61a60352.png
 #
 newmtl material_9
 Ka  0.6 0.6 0.6
@@ -86,7 +86,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 17c390fd.dds
+map_Kd 17c390fd.png
 #
 newmtl material_10
 Ka  0.6 0.6 0.6
@@ -95,7 +95,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e4d98b5b.dds
+map_Kd e4d98b5b.png
 #
 newmtl material_11
 Ka  0.6 0.6 0.6
@@ -104,7 +104,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 2d6ce56e.dds
+map_Kd 2d6ce56e.png
 #
 newmtl material_12
 Ka  0.6 0.6 0.6
@@ -113,7 +113,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd beacd560.dds
+map_Kd beacd560.png
 #
 newmtl material_13
 Ka  0.6 0.6 0.6
@@ -122,7 +122,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 357b2d0c.dds
+map_Kd 357b2d0c.png
 #
 newmtl material_14
 Ka  0.6 0.6 0.6
@@ -131,7 +131,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e14f221b.dds
+map_Kd e14f221b.png
 #
 newmtl material_15
 Ka  0.6 0.6 0.6
@@ -140,7 +140,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8233375c.dds
+map_Kd 8233375c.png
 #
 newmtl material_16
 Ka  0.6 0.6 0.6
@@ -149,7 +149,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 2d1299ae.dds
+map_Kd 2d1299ae.png
 #
 newmtl material_17
 Ka  0.6 0.6 0.6
@@ -158,7 +158,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 45e90bd1.dds
+map_Kd 45e90bd1.png
 #
 newmtl material_18
 Ka  0.6 0.6 0.6
@@ -167,7 +167,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d6f24367.dds
+map_Kd d6f24367.png
 #
 newmtl material_19
 Ka  0.6 0.6 0.6
@@ -176,7 +176,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd c961d5eb.dds
+map_Kd c961d5eb.png
 #
 newmtl material_20
 Ka  0.6 0.6 0.6
@@ -185,7 +185,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 81cffaf1.dds
+map_Kd 81cffaf1.png
 #
 newmtl material_21
 Ka  0.6 0.6 0.6
@@ -194,7 +194,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e7170997.dds
+map_Kd e7170997.png
 #
 newmtl material_22
 Ka  0.6 0.6 0.6
@@ -203,7 +203,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd ecc4e5f1.dds
+map_Kd ecc4e5f1.png
 #
 newmtl material_23
 Ka  0.6 0.6 0.6
@@ -212,7 +212,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8749cf9b.dds
+map_Kd 8749cf9b.png
 #
 newmtl material_24
 Ka  0.6 0.6 0.6
@@ -221,7 +221,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8fe0a99a.dds
+map_Kd 8fe0a99a.png
 #
 newmtl material_25
 Ka  0.6 0.6 0.6
@@ -230,7 +230,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 456ff47c.dds
+map_Kd 456ff47c.png
 #
 newmtl material_26
 Ka  0.6 0.6 0.6
@@ -239,7 +239,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e8d628d9.dds
+map_Kd e8d628d9.png
 #
 newmtl material_27
 Ka  0.6 0.6 0.6
@@ -248,7 +248,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 674420c1.dds
+map_Kd 674420c1.png
 #
 newmtl material_28
 Ka  0.6 0.6 0.6
@@ -257,7 +257,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 008e83da.dds
+map_Kd 008e83da.png
 #
 newmtl material_29
 Ka  0.6 0.6 0.6
@@ -266,7 +266,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 19a17860.dds
+map_Kd 19a17860.png
 #
 newmtl material_30
 Ka  0.6 0.6 0.6
@@ -275,7 +275,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d5156036.dds
+map_Kd d5156036.png
 #
 newmtl material_31
 Ka  0.6 0.6 0.6
@@ -284,7 +284,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d3868368.dds
+map_Kd d3868368.png
 #
 newmtl material_32
 Ka  0.6 0.6 0.6
@@ -293,7 +293,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 68ae6c85.dds
+map_Kd 68ae6c85.png
 #
 newmtl material_33
 Ka  0.6 0.6 0.6
@@ -302,7 +302,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 6404c678.dds
+map_Kd 6404c678.png
 #
 newmtl material_34
 Ka  0.6 0.6 0.6
@@ -311,7 +311,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd a7a7a7bb.dds
+map_Kd a7a7a7bb.png
 #
 newmtl material_35
 Ka  0.6 0.6 0.6
@@ -320,7 +320,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 10807f01.dds
+map_Kd 10807f01.png
 #
 newmtl material_36
 Ka  0.6 0.6 0.6
@@ -329,7 +329,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e29c3783.dds
+map_Kd e29c3783.png
 #
 newmtl material_37
 Ka  0.6 0.6 0.6
@@ -338,7 +338,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd fd8ce406.dds
+map_Kd fd8ce406.png
 #
 newmtl material_38
 Ka  0.6 0.6 0.6
@@ -347,7 +347,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 3b956447.dds
+map_Kd 3b956447.png
 #
 newmtl material_39
 Ka  0.6 0.6 0.6
@@ -356,7 +356,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8363edd6.dds
+map_Kd 8363edd6.png
 #
 newmtl material_40
 Ka  0.6 0.6 0.6
@@ -365,7 +365,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd ec06a104.dds
+map_Kd ec06a104.png
 #
 newmtl material_41
 Ka  0.6 0.6 0.6
@@ -374,7 +374,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 3b9a149a.dds
+map_Kd 3b9a149a.png
 #
 newmtl material_42
 Ka  0.6 0.6 0.6
@@ -383,7 +383,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 03f534fd.dds
+map_Kd 03f534fd.png
 #
 newmtl material_43
 Ka  0.6 0.6 0.6
@@ -392,7 +392,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 533dcbf1.dds
+map_Kd 533dcbf1.png
 #
 newmtl material_44
 Ka  0.6 0.6 0.6
@@ -401,7 +401,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd b1138102.dds
+map_Kd b1138102.png
 #
 newmtl material_45
 Ka  0.6 0.6 0.6
@@ -410,7 +410,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 09d5f3c5.dds
+map_Kd 09d5f3c5.png
 #
 newmtl material_46
 Ka  0.6 0.6 0.6
@@ -419,7 +419,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 39d7d5a8.dds
+map_Kd 39d7d5a8.png
 #
 newmtl material_47
 Ka  0.6 0.6 0.6
@@ -428,7 +428,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 726ef0fb.dds
+map_Kd 726ef0fb.png
 #
 newmtl material_48
 Ka  0.6 0.6 0.6
@@ -437,7 +437,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d8d2299d.dds
+map_Kd d8d2299d.png
 #
 newmtl material_49
 Ka  0.6 0.6 0.6
@@ -446,7 +446,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 268ceb67.dds
+map_Kd 268ceb67.png
 #
 newmtl material_50
 Ka  0.6 0.6 0.6
@@ -455,7 +455,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5edfa72d.dds
+map_Kd 5edfa72d.png
 #
 newmtl material_51
 Ka  0.6 0.6 0.6
@@ -464,7 +464,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 197d184c.dds
+map_Kd 197d184c.png
 #
 newmtl material_52
 Ka  0.6 0.6 0.6
@@ -473,7 +473,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 571e56c4.dds
+map_Kd 571e56c4.png
 #
 newmtl material_53
 Ka  0.6 0.6 0.6
@@ -482,7 +482,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 162cc5ca.dds
+map_Kd 162cc5ca.png
 #
 newmtl material_54
 Ka  0.6 0.6 0.6
@@ -491,7 +491,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5d331c1c.dds
+map_Kd 5d331c1c.png
 #
 newmtl material_55
 Ka  0.6 0.6 0.6
@@ -500,7 +500,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd ee177f54.dds
+map_Kd ee177f54.png
 #
 newmtl material_56
 Ka  0.6 0.6 0.6
@@ -509,7 +509,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd bc88b8a2.dds
+map_Kd bc88b8a2.png
 #
 newmtl material_57
 Ka  0.6 0.6 0.6
@@ -518,7 +518,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 79167a33.dds
+map_Kd 79167a33.png
 #
 newmtl material_58
 Ka  0.6 0.6 0.6
@@ -527,7 +527,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 90ed58d7.dds
+map_Kd 90ed58d7.png
 #
 newmtl material_59
 Ka  0.6 0.6 0.6
@@ -536,7 +536,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e78f7c1d.dds
+map_Kd e78f7c1d.png
 #
 newmtl material_60
 Ka  0.6 0.6 0.6
@@ -545,7 +545,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 1036e05f.dds
+map_Kd 1036e05f.png
 #
 newmtl material_61
 Ka  0.6 0.6 0.6
@@ -554,7 +554,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd a2d9ae55.dds
+map_Kd a2d9ae55.png
 #
 newmtl material_62
 Ka  0.6 0.6 0.6
@@ -563,7 +563,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 6af23c9f.dds
+map_Kd 6af23c9f.png
 #
 newmtl material_63
 Ka  0.6 0.6 0.6
@@ -572,7 +572,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 65582614.dds
+map_Kd 65582614.png
 #
 newmtl material_64
 Ka  0.6 0.6 0.6
@@ -581,7 +581,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd cd7fb5bf.dds
+map_Kd cd7fb5bf.png
 #
 newmtl material_65
 Ka  0.6 0.6 0.6
@@ -590,7 +590,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8ae6a7b8.dds
+map_Kd 8ae6a7b8.png
 #
 newmtl material_66
 Ka  0.6 0.6 0.6
@@ -599,7 +599,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 69c8473e.dds
+map_Kd 69c8473e.png
 #
 newmtl material_67
 Ka  0.6 0.6 0.6
@@ -608,7 +608,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd fba04f5e.dds
+map_Kd fba04f5e.png
 #
 newmtl material_68
 Ka  0.6 0.6 0.6
@@ -617,7 +617,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 34385b95.dds
+map_Kd 34385b95.png
 #
 newmtl material_69
 Ka  0.6 0.6 0.6
@@ -626,7 +626,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 7929691a.dds
+map_Kd 7929691a.png
 #
 newmtl material_70
 Ka  0.6 0.6 0.6
@@ -635,7 +635,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8ebce19e.dds
+map_Kd 8ebce19e.png
 #
 newmtl material_71
 Ka  0.6 0.6 0.6
@@ -644,7 +644,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e7ad7889.dds
+map_Kd e7ad7889.png
 #
 newmtl material_72
 Ka  0.6 0.6 0.6
@@ -653,7 +653,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 570dcbde.dds
+map_Kd 570dcbde.png
 #
 newmtl material_73
 Ka  0.6 0.6 0.6
@@ -662,7 +662,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd c85fb05f.dds
+map_Kd c85fb05f.png
 #
 newmtl material_74
 Ka  0.6 0.6 0.6
@@ -671,7 +671,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd f32b9a2b.dds
+map_Kd f32b9a2b.png
 #
 newmtl material_75
 Ka  0.6 0.6 0.6
@@ -680,7 +680,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 35481444.dds
+map_Kd 35481444.png
 #
 newmtl material_76
 Ka  0.6 0.6 0.6
@@ -689,7 +689,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 4ee970be.dds
+map_Kd 4ee970be.png
 #
 newmtl material_77
 Ka  0.6 0.6 0.6
@@ -698,7 +698,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 373e7b14.dds
+map_Kd 373e7b14.png
 #
 newmtl material_78
 Ka  0.6 0.6 0.6
@@ -707,7 +707,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 798ca407.dds
+map_Kd 798ca407.png
 #
 newmtl material_79
 Ka  0.6 0.6 0.6
@@ -716,7 +716,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 0168d2c0.dds
+map_Kd 0168d2c0.png
 #
 newmtl material_80
 Ka  0.6 0.6 0.6
@@ -725,7 +725,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd dcc20506.dds
+map_Kd dcc20506.png
 #
 newmtl material_81
 Ka  0.6 0.6 0.6
@@ -734,7 +734,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd dca3a63a.dds
+map_Kd dca3a63a.png
 #
 newmtl material_82
 Ka  0.6 0.6 0.6
@@ -743,7 +743,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 7ac9a013.dds
+map_Kd 7ac9a013.png
 #
 newmtl material_83
 Ka  0.6 0.6 0.6
@@ -752,7 +752,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 06e6692f.dds
+map_Kd 06e6692f.png
 #
 newmtl material_84
 Ka  0.6 0.6 0.6
@@ -761,7 +761,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 6aaf29d2.dds
+map_Kd 6aaf29d2.png
 #
 newmtl material_85
 Ka  0.6 0.6 0.6
@@ -770,7 +770,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd daa92662.dds
+map_Kd daa92662.png
 #
 newmtl material_86
 Ka  0.6 0.6 0.6
@@ -779,7 +779,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 4ada7410.dds
+map_Kd 4ada7410.png
 #
 newmtl material_87
 Ka  0.6 0.6 0.6
@@ -788,7 +788,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 11b65c19.dds
+map_Kd 11b65c19.png
 #
 newmtl material_88
 Ka  0.6 0.6 0.6
@@ -797,7 +797,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 6757af1d.dds
+map_Kd 6757af1d.png
 #
 newmtl material_89
 Ka  0.6 0.6 0.6
@@ -806,7 +806,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5b8564a5.dds
+map_Kd 5b8564a5.png
 #
 newmtl material_90
 Ka  0.6 0.6 0.6
@@ -815,7 +815,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 0fc273a0.dds
+map_Kd 0fc273a0.png
 #
 newmtl material_91
 Ka  0.6 0.6 0.6
@@ -824,7 +824,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 19c23e33.dds
+map_Kd 19c23e33.png
 #
 newmtl material_92
 Ka  0.6 0.6 0.6
@@ -833,7 +833,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e0df72a7.dds
+map_Kd e0df72a7.png
 #
 newmtl material_93
 Ka  0.6 0.6 0.6
@@ -842,7 +842,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 9d76afa5.dds
+map_Kd 9d76afa5.png
 #
 newmtl material_94
 Ka  0.6 0.6 0.6
@@ -851,7 +851,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 50603ae4.dds
+map_Kd 50603ae4.png
 #
 newmtl material_95
 Ka  0.6 0.6 0.6
@@ -860,7 +860,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 97dee567.dds
+map_Kd 97dee567.png
 #
 newmtl material_96
 Ka  0.6 0.6 0.6
@@ -869,7 +869,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8108579d.dds
+map_Kd 8108579d.png
 #
 newmtl material_97
 Ka  0.6 0.6 0.6
@@ -878,7 +878,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd b144cd03.dds
+map_Kd b144cd03.png
 #
 newmtl material_98
 Ka  0.6 0.6 0.6
@@ -887,7 +887,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 4daf7fe0.dds
+map_Kd 4daf7fe0.png
 #
 newmtl material_99
 Ka  0.6 0.6 0.6
@@ -896,7 +896,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 71839895.dds
+map_Kd 71839895.png
 #
 newmtl material_100
 Ka  0.6 0.6 0.6
@@ -905,7 +905,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 29132100.dds
+map_Kd 29132100.png
 #
 newmtl material_101
 Ka  0.6 0.6 0.6
@@ -914,7 +914,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 584ef0a8.dds
+map_Kd 584ef0a8.png
 #
 newmtl material_102
 Ka  0.6 0.6 0.6
@@ -923,7 +923,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 984fbf68.dds
+map_Kd 984fbf68.png
 #
 newmtl material_103
 Ka  0.6 0.6 0.6
@@ -932,7 +932,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd c9c9fa5c.dds
+map_Kd c9c9fa5c.png
 #
 newmtl material_104
 Ka  0.6 0.6 0.6
@@ -941,7 +941,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd aba2e37b.dds
+map_Kd aba2e37b.png
 #
 newmtl material_105
 Ka  0.6 0.6 0.6
@@ -950,7 +950,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd b34b24bc.dds
+map_Kd b34b24bc.png
 #
 newmtl material_106
 Ka  0.6 0.6 0.6
@@ -959,7 +959,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 64eb8dda.dds
+map_Kd 64eb8dda.png
 #
 newmtl material_107
 Ka  0.6 0.6 0.6
@@ -968,7 +968,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 758863a2.dds
+map_Kd 758863a2.png
 #
 newmtl material_108
 Ka  0.6 0.6 0.6
@@ -977,7 +977,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 7115a39d.dds
+map_Kd 7115a39d.png
 #
 newmtl material_109
 Ka  0.6 0.6 0.6
@@ -986,7 +986,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 4eb4f228.dds
+map_Kd 4eb4f228.png
 #
 newmtl material_110
 Ka  0.6 0.6 0.6
@@ -995,7 +995,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd a92c5d97.dds
+map_Kd a92c5d97.png
 #
 newmtl material_111
 Ka  0.6 0.6 0.6
@@ -1004,7 +1004,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 2277a251.dds
+map_Kd 2277a251.png
 #
 newmtl material_112
 Ka  0.6 0.6 0.6
@@ -1013,7 +1013,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 1b15727f.dds
+map_Kd 1b15727f.png
 #
 newmtl material_113
 Ka  0.6 0.6 0.6
@@ -1022,7 +1022,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 7785a596.dds
+map_Kd 7785a596.png
 #
 newmtl material_114
 Ka  0.6 0.6 0.6
@@ -1031,7 +1031,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 59d0c47c.dds
+map_Kd 59d0c47c.png
 #
 newmtl material_115
 Ka  0.6 0.6 0.6
@@ -1040,7 +1040,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 07b6a297.dds
+map_Kd 07b6a297.png
 #
 newmtl material_116
 Ka  0.6 0.6 0.6
@@ -1049,7 +1049,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5f9f7508.dds
+map_Kd 5f9f7508.png
 #
 newmtl material_117
 Ka  0.6 0.6 0.6
@@ -1058,7 +1058,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 0630cd83.dds
+map_Kd 0630cd83.png
 #
 newmtl material_118
 Ka  0.6 0.6 0.6
@@ -1067,7 +1067,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd cde791d4.dds
+map_Kd cde791d4.png
 #
 newmtl material_119
 Ka  0.6 0.6 0.6
@@ -1076,7 +1076,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 770cf130.dds
+map_Kd 770cf130.png
 #
 newmtl material_120
 Ka  0.6 0.6 0.6
@@ -1085,7 +1085,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d4ce742e.dds
+map_Kd d4ce742e.png
 #
 newmtl material_121
 Ka  0.6 0.6 0.6
@@ -1094,7 +1094,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d2c7f29d.dds
+map_Kd d2c7f29d.png
 #
 newmtl material_122
 Ka  0.6 0.6 0.6
@@ -1103,7 +1103,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 7195edf2.dds
+map_Kd 7195edf2.png
 #
 newmtl material_123
 Ka  0.6 0.6 0.6
@@ -1112,7 +1112,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5a58f647.dds
+map_Kd 5a58f647.png
 #
 newmtl material_124
 Ka  0.6 0.6 0.6
@@ -1121,7 +1121,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 8a373cab.dds
+map_Kd 8a373cab.png
 #
 newmtl material_125
 Ka  0.6 0.6 0.6
@@ -1130,7 +1130,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 08dbb25c.dds
+map_Kd 08dbb25c.png
 #
 newmtl material_126
 Ka  0.6 0.6 0.6
@@ -1139,7 +1139,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 3568fadf.dds
+map_Kd 3568fadf.png
 #
 newmtl material_127
 Ka  0.6 0.6 0.6
@@ -1148,7 +1148,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 76c6e870.dds
+map_Kd 76c6e870.png
 #
 newmtl material_128
 Ka  0.6 0.6 0.6
@@ -1157,7 +1157,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e0a8bf72.dds
+map_Kd e0a8bf72.png
 #
 newmtl material_129
 Ka  0.6 0.6 0.6
@@ -1166,7 +1166,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 20f4fb4d.dds
+map_Kd 20f4fb4d.png
 #
 newmtl material_130
 Ka  0.6 0.6 0.6
@@ -1175,7 +1175,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 03c33783.dds
+map_Kd 03c33783.png
 #
 newmtl material_131
 Ka  0.6 0.6 0.6
@@ -1184,7 +1184,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd f7fb4385.dds
+map_Kd f7fb4385.png
 #
 newmtl material_132
 Ka  0.6 0.6 0.6
@@ -1193,7 +1193,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd bf028502.dds
+map_Kd bf028502.png
 #
 newmtl material_133
 Ka  0.6 0.6 0.6
@@ -1202,7 +1202,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd c6ffacea.dds
+map_Kd c6ffacea.png
 #
 newmtl material_134
 Ka  0.6 0.6 0.6
@@ -1211,7 +1211,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd ee64177d.dds
+map_Kd ee64177d.png
 #
 newmtl material_135
 Ka  0.6 0.6 0.6
@@ -1220,7 +1220,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 7a05a982.dds
+map_Kd 7a05a982.png
 #
 newmtl material_136
 Ka  0.6 0.6 0.6
@@ -1229,7 +1229,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 83c01698.dds
+map_Kd 83c01698.png
 #
 newmtl material_137
 Ka  0.6 0.6 0.6
@@ -1238,7 +1238,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd f5bcd7cf.dds
+map_Kd f5bcd7cf.png
 #
 newmtl material_138
 Ka  0.6 0.6 0.6
@@ -1247,7 +1247,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 2d66f55d.dds
+map_Kd 2d66f55d.png
 #
 newmtl material_139
 Ka  0.6 0.6 0.6
@@ -1256,7 +1256,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 4632f3f1.dds
+map_Kd 4632f3f1.png
 #
 newmtl material_140
 Ka  0.6 0.6 0.6
@@ -1265,7 +1265,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd a726048a.dds
+map_Kd a726048a.png
 #
 newmtl material_141
 Ka  0.6 0.6 0.6
@@ -1274,7 +1274,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd f4a9c1fe.dds
+map_Kd f4a9c1fe.png
 #
 newmtl material_142
 Ka  0.6 0.6 0.6
@@ -1283,7 +1283,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 1f24555c.dds
+map_Kd 1f24555c.png
 #
 newmtl material_143
 Ka  0.6 0.6 0.6
@@ -1292,7 +1292,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 75fb2160.dds
+map_Kd 75fb2160.png
 #
 newmtl material_144
 Ka  0.6 0.6 0.6
@@ -1301,7 +1301,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd c2b028b3.dds
+map_Kd c2b028b3.png
 #
 newmtl material_145
 Ka  0.6 0.6 0.6
@@ -1310,7 +1310,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd ef01f122.dds
+map_Kd ef01f122.png
 #
 newmtl material_146
 Ka  0.6 0.6 0.6
@@ -1319,7 +1319,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd abfd3601.dds
+map_Kd abfd3601.png
 #
 newmtl material_147
 Ka  0.6 0.6 0.6
@@ -1328,7 +1328,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd dbc3fe85.dds
+map_Kd dbc3fe85.png
 #
 newmtl material_148
 Ka  0.6 0.6 0.6
@@ -1337,7 +1337,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 07f46a19.dds
+map_Kd 07f46a19.png
 #
 newmtl material_149
 Ka  0.6 0.6 0.6
@@ -1346,7 +1346,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 27df45bb.dds
+map_Kd 27df45bb.png
 #
 newmtl material_150
 Ka  0.6 0.6 0.6
@@ -1355,7 +1355,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd f910c9c2.dds
+map_Kd f910c9c2.png
 #
 newmtl material_151
 Ka  0.6 0.6 0.6
@@ -1364,7 +1364,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d4d5a36c.dds
+map_Kd d4d5a36c.png
 #
 newmtl material_152
 Ka  0.6 0.6 0.6
@@ -1373,7 +1373,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5c9a44e7.dds
+map_Kd 5c9a44e7.png
 #
 newmtl material_153
 Ka  0.6 0.6 0.6
@@ -1382,7 +1382,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e205762f.dds
+map_Kd e205762f.png
 #
 newmtl material_154
 Ka  0.6 0.6 0.6
@@ -1391,7 +1391,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd de998a40.dds
+map_Kd de998a40.png
 #
 newmtl material_155
 Ka  0.6 0.6 0.6
@@ -1400,7 +1400,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 581fd1ac.dds
+map_Kd 581fd1ac.png
 #
 newmtl material_156
 Ka  0.6 0.6 0.6
@@ -1409,7 +1409,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd e25651d9.dds
+map_Kd e25651d9.png
 #
 newmtl material_157
 Ka  0.6 0.6 0.6
@@ -1418,7 +1418,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 9203958a.dds
+map_Kd 9203958a.png
 #
 newmtl material_158
 Ka  0.6 0.6 0.6
@@ -1427,7 +1427,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 9008f5e3.dds
+map_Kd 9008f5e3.png
 #
 newmtl material_159
 Ka  0.6 0.6 0.6
@@ -1436,7 +1436,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 5f929ac7.dds
+map_Kd 5f929ac7.png
 #
 newmtl material_160
 Ka  0.6 0.6 0.6
@@ -1445,7 +1445,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 33bc56ea.dds
+map_Kd 33bc56ea.png
 #
 newmtl material_161
 Ka  0.6 0.6 0.6
@@ -1454,7 +1454,7 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd 6fcecf1c.dds
+map_Kd 6fcecf1c.png
 #
 newmtl material_162
 Ka  0.6 0.6 0.6
@@ -1463,5 +1463,5 @@ Ks  0.9 0.9 0.9
 d  1.0
 Ns  0.0
 illum 2
-map_Kd d56aa9cc.dds
+map_Kd d56aa9cc.png
 #
