@@ -131,7 +131,7 @@
     function startup() {
         ui = new AppUi({
             buttonName: "CLEANER",
-            home: Script.resolvePath("domain-clean.qml"),
+            home: Script.resolvePath("domain-cleaner.qml"),
             onMessage: fromQml,
             normalButton: Script.resolvePath("domain-clean.svg"),
             activeButton: Script.resolvePath("domain-clean.svg")
