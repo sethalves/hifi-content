@@ -2,23 +2,24 @@
 #
 #
 
-
 OVEN=../../hifi/build/tools/oven/oven
 BAKEDDIR=baked
+
 BAKEDOUTPUT=${BAKEDDIR}/table2_re-oriented/baked
+INPUT_FILE=table2_re-oriented.fbx
+PUBLISHED_NAME=windmill-table
 
-FILES=\
-${BAKEDOUTPUT}/table2_re-oriented.baked.fbx \
-${BAKEDOUTPUT}/table2_re-oriented.baked.fst \
-${BAKEDOUTPUT}/table2_re-oriented.baked.json
+#
+#
+#
 
-all: ${FILES}
+all: ${BAKEDOUTPUT}
 
-${FILES}: table2_re-oriented.fbx
+${BAKEDOUTPUT}: ${INPUT_FILE}
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
 upload: ${FILES}
-	rsync --delete -avP ${BAKEDOUTPUT}/ headache.hungry.com:public_html/hifi/windmill-table/
+	rsync --delete -avP ${BAKEDOUTPUT}/ headache.hungry.com:public_html/hifi/${PUBLISHED_NAME}/
 
 clean:
 	rm -rf *~ ${BAKEDDIR}
