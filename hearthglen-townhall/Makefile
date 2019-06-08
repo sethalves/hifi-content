@@ -2,24 +2,24 @@
 #
 #
 
-
 OVEN=../../hifi/build/tools/oven/oven
 BAKEDDIR=baked
+
 BAKEDOUTPUT=${BAKEDDIR}/hearthglen_townhall_nowall/baked
+INPUT_FILE=hearthglen_townhall_nowall.obj
+PUBLISHED_NAME=hearthglen-townhall
 
-FILES=\
-${BAKEDOUTPUT}/hearthglen_townhall_nowall.baked.fbx \
-${BAKEDOUTPUT}/hearthglen_townhall_nowall.baked.fst \
-${BAKEDOUTPUT}/hearthglen_townhall_nowall.baked.json
+#
+#
+#
 
+all: ${BAKEDOUTPUT}
 
-all: ${FILES}
-
-${FILES}: hearthglen_townhall_nowall.obj
+${BAKEDOUTPUT}: ${INPUT_FILE}
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
 upload: ${FILES}
-	rsync --delete -avP ${BAKEDOUTPUT}/ headache.hungry.com:public_html/hifi/hearthglen-townhall/
+	rsync --delete -avP ${BAKEDOUTPUT}/ headache.hungry.com:public_html/hifi/${PUBLISHED_NAME}/
 
 clean:
 	rm -rf *~ ${BAKEDDIR}
