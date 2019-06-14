@@ -14,15 +14,15 @@ all: ${BAKEDOUTPUT}
 ${BAKEDOUTPUT}: lamp-post.obj
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
-upload: lamp-post.obj.gz Lamp_Post_export.mtl Diffuse_Map.jpg Specular_map.jpg lamp.js
+upload: lamp-post.obj.gz Lamp_Post_export.mtl Diffuse_Map.jpg Specular_map.jpg lamp.js ${BAKEDOUTPUT}
 	rm -rf lamp
 	mkdir -p lamp
 	rsync -avP ${BAKEDOUTPUT}/ lamp/
-	cp $^ lamp/
+	cp lamp-post.obj.gz Lamp_Post_export.mtl Diffuse_Map.jpg Specular_map.jpg lamp.js lamp/
 	rsync --delete -avP lamp/ headache.hungry.com:public_html/hifi/lamp/
 
 
 clean:
-	rm -f *~
+	rm -f *~ lamp-post.obj.gz
 	rm -rf lamp
 	rm -rf ${BAKEDDIR}
