@@ -10,6 +10,11 @@ WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 ATP_GET=../../hifi/build/tools/atp-client/atp-client
 VHACD=/home/seth/src/hifi/build/tools/vhacd-util/vhacd-util
 
+OPENSCAD=openscad-nightly
+
+OVEN=../../hifi/build/tools/oven/oven
+BAKEDDIR=baked
+
 VORONOI=../../voronoi/voronoi
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
 WIDTH=80
@@ -22,7 +27,7 @@ OUTPUT_HEIGHT=1024
 PAINT_SAVE_N=6085
 
 
-all: terrain-lines.png terrain.scad terrain-textured.obj terrain-hull.obj # terrain-sans-caves.obj
+all: terrain-lines.png terrain.scad terrain-textured.obj terrain-hull.obj ${BAKEDDIR}/terrain-textured/baked # terrain-sans-caves.obj
 
 voronoi-terrain-chicken: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
@@ -73,7 +78,7 @@ terrain-caves.scad: terrain-caves-reduced.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -o $@
 
 terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
-	openscad -o $@ $<
+	${OPENSCAD} -o $@ $<
 
 terrain-with-caves-reduced.obj: terrain-with-caves.stl terrain-with-caves.mlx
 	meshlabserver -i $< -o $@ -s terrain-with-caves.mlx # -om vc vn
@@ -87,7 +92,9 @@ terrain-texture.ppm: points lines
 		lines points > $@
 
 terrain-texture.png: terrain-texture.ppm
-	pnmtopng $^ > $@
+	pnmflip -leftright -rotate180 $^ | pnmtopng - > $@
+
+#	pnmtopng $^ > $@
 
 
 
@@ -112,9 +119,15 @@ terrain-hull.obj: terrain-textured.obj
 #	$(VHACD) -f -i $^ -o $@
 
 
-upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj # terrain-sans-caves.obj
+${BAKEDDIR}/terrain-textured/baked: terrain-textured.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+
+UNBAKED_FILES=terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg terrain-hull.obj
+
+upload: ${UNBAKED_FILES} ${BAKEDDIR}/terrain-textured/baked
 	mkdir -p voronoi-terrain
-	cp $^ voronoi-terrain/
+	rsync -avP ${BAKEDDIR}/terrain-textured/baked/ voronoi-terrain/
+	cp ${UNBAKED_FILES} voronoi-terrain/
 	rsync --delete -avP voronoi-terrain/ headache.hungry.com:public_html/hifi/voronoi-terrain-2/
 
 
@@ -134,6 +147,8 @@ clean:
 	rm -f terrain-sans-caves.stl
 	rm -f terrain.obj
 	rm -f terrain-reduced.obj
+	rm -f terrain-hull.obj
+	rm -f terrain-with-caves-reduced.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
