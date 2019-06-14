@@ -107,7 +107,9 @@ terrain-texture.ppm: points lines
 
 
 terrain-texture.png: terrain-texture.ppm
-	pnmtopng $^ > $@
+	pnmflip -leftright -rotate180 $^ | pnmtopng - > $@
+
+#	pnmrotate 90 $^ | pnmrotate 90 - | pnmtopng - > $@
 
 
 # terrain-textured.obj: terrain-whole.stl terrain-texture.png
