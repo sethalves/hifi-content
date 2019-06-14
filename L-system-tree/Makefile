@@ -2,6 +2,12 @@
 #
 #
 
+OVEN=../../hifi/build/tools/oven/oven
+BAKEDDIR=baked
+
+BAKEDOUTPUT=${BAKEDDIR}/something/baked
+
+
 WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 # WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 L_SYSTEM_TREE=./L-system-tree
@@ -17,11 +23,11 @@ COMBINE_DISTANCE=0.3
 	cat $< | gzip -9 - > $@
 
 
-TARGETS=tree0.obj.gz tree0-hull.obj.gz \
-		tree1.obj.gz tree1-hull.obj.gz \
-		tree2.obj.gz tree2-hull.obj.gz \
-		tree3.obj.gz tree3-hull.obj.gz \
-		tree4.obj.gz tree4-hull.obj.gz
+TARGETS=tree0.obj.gz tree0.baked.fbx tree0-hull.obj.gz \
+		tree1.obj.gz tree1.baked.fbx tree1-hull.obj.gz \
+		tree2.obj.gz tree2.baked.fbx tree2-hull.obj.gz \
+		tree3.obj.gz tree3.baked.fbx tree3-hull.obj.gz \
+		tree4.obj.gz tree4.baked.fbx tree4-hull.obj.gz
 
 
 # TARGETS=tree0.obj tree0-hull.obj \
@@ -87,6 +93,7 @@ clean:
 	rm -f tree4-trunk.scad tree4-trunk.stl tree4-trunk.obj.tmp.obj tree4-trunk.obj
 	rm -f tree4-hull.scad tree4-hull.stl tree4-hull.obj.tmp.obj tree4-hull.obj tree4-hull.obj.gz
 	rm -rf trees
+	rm -rf ${BAKEDDIR}
 
 
 very-clean: clean

@@ -35,6 +35,10 @@ tree0-hull.obj: tree0-hull.stl
 tree0.obj: tree0-trunk.obj tree0-leaves.obj
 	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^
 
+tree0.baked.fbx: tree0.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+	cp ${BAKEDDIR}/tree0/baked/$@ $@
+
 # ---
 
 TREE1_W=3
@@ -55,6 +59,9 @@ tree1-hull.obj: tree1-hull.stl
 tree1.obj: tree1-trunk.obj tree1-leaves.obj
 	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^
 
+tree1.baked.fbx: tree1.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+	cp ${BAKEDDIR}/tree1/baked/$@ $@
 
 # ---
 
@@ -76,6 +83,9 @@ tree2-hull.obj: tree2-hull.stl
 tree2.obj: tree2-trunk.obj tree2-leaves.obj
 	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^
 
+tree2.baked.fbx: tree2.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+	cp ${BAKEDDIR}/tree2/baked/$@ $@
 
 # ---
 
@@ -97,6 +107,10 @@ tree3-hull.obj: tree3-hull.stl
 tree3.obj: tree3-trunk.obj tree3-leaves.obj
 	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^
 
+tree3.baked.fbx: tree3.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+	cp ${BAKEDDIR}/tree3/baked/$@ $@
+
 # ---
 
 TREE4_W=5
@@ -113,3 +127,7 @@ tree4-hull.obj: tree4-hull.stl
 
 tree4.obj: tree4.stl
 	$(WAVEFRONT_OBJ_TOOL) -n -c -C $(COMBINE_DISTANCE) -o $@ $^
+
+tree4.baked.fbx: tree4.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+	cp ${BAKEDDIR}/tree4/baked/$@ $@
