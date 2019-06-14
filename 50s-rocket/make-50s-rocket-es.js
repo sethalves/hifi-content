@@ -31,8 +31,8 @@
             this.rocketID = Entities.addEntity({
                 name: '50s rocket',
                 type: 'Model',
-                modelURL: Script.resolvePath('50s-rocket.obj'),
-                compoundShapeURL: Script.resolvePath('50s-rocket-collision-hull.obj'),
+                modelURL: Script.resolvePath('50s-rocket.baked.fst'),
+                compoundShapeURL: Script.resolvePath('50s-rocket-collision-hull.obj.gz'),
                 dimensions: { x: 17.1244, y: 32.75, z: 15.4726 }, // copied out of edit.js
                 shapeType: "compound",
                 collisionsWillMove: false,
@@ -67,8 +67,8 @@
             this.doorID = Entities.addEntity({
                 name: '50s rocket door',
                 type: 'Model',
-                modelURL: Script.resolvePath('50s-rocket-door.obj'),
-                compoundShapeURL: Script.resolvePath('50s-rocket-door-collision-hull.obj'),
+                modelURL: Script.resolvePath('50s-rocket-door.baked.fst'),
+                compoundShapeURL: Script.resolvePath('50s-rocket-door-collision-hull.obj.gz'),
                 dimensions: { x: 1.5643, y: 6, z: 1.2840 }, // copied out of edit.js
                 shapeType: "compound",
                 dynamic: false,

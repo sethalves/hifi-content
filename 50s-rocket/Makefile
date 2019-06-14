@@ -2,13 +2,22 @@
 #
 #
 
+%.obj.gz: %.obj
+	cat $< | gzip -9 - > $@
+
+OPENSCAD=openscad-nightly
+
+OVEN=../../hifi/build/tools/oven/oven
+BAKEDDIR=baked
+
+
 50s-rocket-parts/%.stl: 50s-rocket.scad
 	mkdir -p 50s-rocket-parts
-	openscad -D combined=0 -D nth="`basename -s .stl $@`" -o $@ $^
+	${OPENSCAD} -D combined=0 -D nth="`basename -s .stl $@`" -o $@ $^
 
 50s-rocket-door-parts/%.stl: 50s-rocket.scad
 	mkdir -p 50s-rocket-door-parts
-	openscad -D combined=0 -D door=1 -D nth="`basename -s .stl $@`" -o $@ $^
+	${OPENSCAD} -D combined=0 -D door=1 -D nth="`basename -s .stl $@`" -o $@ $^
 
 
 %.obj: %.stl
@@ -30,27 +39,27 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 # ---
 
 50s-rocket-thrusters.stl: 50s-rocket.scad
-	openscad -D combined=1 -D thrusters=1 -o $@ $^
+	${OPENSCAD} -D combined=1 -D thrusters=1 -o $@ $^
 
 50s-rocket-thrusters.obj: 50s-rocket-thrusters.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S rocket_thrusters_mtl
 
 
 50s-rocket-body.stl: 50s-rocket.scad
-	openscad -D combined=1 -D body=1 -o $@ $^
+	${OPENSCAD} -D combined=1 -D body=1 -o $@ $^
 
 50s-rocket-body.obj: 50s-rocket-body.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S rocket_body_mtl
 
 
 50s-rocket-table.stl: 50s-rocket.scad
-	openscad -D combined=1 -D table=1 -o $@ $^
+	${OPENSCAD} -D combined=1 -D table=1 -o $@ $^
 
 50s-rocket-table.obj: 50s-rocket-table.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S rocket_table_mtl
 
 50s-rocket-porthole-edges.stl: 50s-rocket.scad
-	openscad -D combined=1 -D porthole_edges=1 -o $@ $^
+	${OPENSCAD} -D combined=1 -D porthole_edges=1 -o $@ $^
 
 50s-rocket-porthole-edges.obj: 50s-rocket-porthole-edges.stl
 	wavefront-obj-tool -n -c $^ -o $@ -S rocket_porthole_edges_mtl
@@ -60,7 +69,7 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 
 
 50s-rocket.stl: 50s-rocket.scad
-	openscad -D combined=1 -D body=1 -o $@ $^
+	${OPENSCAD} -D combined=1 -D body=1 -o $@ $^
 
 50s-rocket.obj: 50s-rocket-body.obj 50s-rocket-thrusters.obj 50s-rocket-table.obj 50s-rocket-porthole-edges.obj
 	wavefront-obj-tool -n -L 50s-rocket.mtl -c $^ -o $@
@@ -71,7 +80,7 @@ all: 50s-rocket-collision-hull.obj 50s-rocket.obj 50s-rocket-door-collision-hull
 # ---
 
 50s-rocket-door.stl: 50s-rocket.scad
-	openscad -D combined=1 -D door=1 -o $@ $^
+	${OPENSCAD} -D combined=1 -D door=1 -o $@ $^
 
 50s-rocket-door.obj: 50s-rocket-door.stl
 	wavefront-obj-tool -n -L 50s-rocket.mtl -c $^ -o $@ -S rocket_door_mtl
@@ -91,6 +100,7 @@ clean:
 	rm -f 50s-rocket.obj.tmp.obj 50s-rocket.stl
 	rm -f 50s-rocket-door.obj.tmp.obj 50s-rocket-door.stl
 	rm -rf 50s-rocket
+	rm -rf baked
 
 # upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js \
 # 		50s-rocket.obj 50s-rocket-door.obj  \
@@ -102,11 +112,20 @@ clean:
 # 50s-rocket.png
 
 
-upload: make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js \
-		50s-rocket.obj 50s-rocket-door.obj  \
-		50s-rocket-collision-hull.obj 50s-rocket-door-collision-hull.obj \
-		50s-rocket.mtl \
-		make-50s-rocket-es.js
+${BAKEDDIR}/50s-rocket/baked: 50s-rocket.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+
+${BAKEDDIR}/50s-rocket-door/baked: 50s-rocket-door.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+
+
+UNBAKED_FILES=make-50s-rocket.js 50s-rocket.js 50s-rocket-remote.js 50s-rocket-door.js 50s-rocket.obj.gz \
+	50s-rocket-door.obj.gz 50s-rocket-collision-hull.obj.gz 50s-rocket-door-collision-hull.obj.gz 50s-rocket.mtl \
+	make-50s-rocket-es.js
+
+upload: ${UNBAKED_FILES} ${BAKEDDIR}/50s-rocket/baked ${BAKEDDIR}/50s-rocket-door/baked
 	mkdir -p 50s-rocket
-	cp $^ 50s-rocket/
+	rsync -avP ${BAKEDDIR}/50s-rocket/baked/ 50s-rocket/
+	rsync -avP ${BAKEDDIR}/50s-rocket-door/baked/ 50s-rocket/
+	cp ${UNBAKED_FILES} 50s-rocket/
 	rsync --delete -avP 50s-rocket/ headache.hungry.com:public_html/hifi/50s-rocket/
