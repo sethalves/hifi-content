@@ -18,7 +18,7 @@ all: ${BAKEDOUTPUT}
 ${BAKEDOUTPUT}: ${INPUT_FILE}
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
-upload: ${FILES}
+upload: ${BAKEDOUTPUT}
 	rsync --delete -avP ${BAKEDOUTPUT}/ headache.hungry.com:public_html/hifi/${PUBLISHED_NAME}/
 
 clean:
