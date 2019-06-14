@@ -7,7 +7,7 @@
 
 # WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
-ATP_GET=/home/seth/src/hifi/build/tools/atp-get/atp-get
+ATP_GET=../../hifi/build/tools/atp-client/atp-client
 VHACD=/home/seth/src/hifi/build/tools/vhacd-util/vhacd-util
 
 VORONOI=../../voronoi/voronoi
@@ -61,7 +61,7 @@ terrain.scad: terrain-reduced.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -o $@
 
 terrain-caves.obj:
-	- $(ATP_GET) -d eschatology.hungry.com atp:/voxel-paint-save-$(PAINT_SAVE_N).obj $@
+	- $(ATP_GET) -d eschatology.hungry.com atp:/voxel-paint-save-$(PAINT_SAVE_N).obj -o $@
 
 terrain-caves-water-tight.obj: terrain-caves.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.01 -c -s 64 -o $@
@@ -128,11 +128,12 @@ clean:
 	rm -rf terrain-underground-textured.obj
 	rm -rf terrain-with-caves.stl
 	rm -f terrain-lines.png terrain-lines.pnm
-	rm -f terrain-caves.obj terrain-caves-water-tight.obj terrain-caves.scad
+	rm -f terrain-caves-water-tight.obj terrain-caves.scad
 	rm -f terrain-caves-reduced.obj
 	rm -f terrain-sans-caves.obj
 	rm -f terrain-sans-caves.stl
 	rm -f terrain.obj
+	rm -f terrain-reduced.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
