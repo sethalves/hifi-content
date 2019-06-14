@@ -167,6 +167,7 @@ clean:
 	rm -f terrain-caves.scad terrain-with-caves.stl
 	rm -f terrain-underground-textured.obj terrain-underground-floor-textured.obj
 	rm -rf ${BAKEDDIR}
+	rm -f terrain-textured.obj.gz
 
 very-clean: clean
-	rm -rf seth snow srfi foldling
+	rm -rf seth snow srfi foldling chibi
