@@ -374,8 +374,7 @@
                            (loop b-rest leftest-angle face-edge)))))))))
 
     (define (point->corner model mesh material point)
-      (let* ((point-s (vector-map number->string point))
-             (point-index (model-append-vertex! model point-s)))
+      (let* ((point-index (model-append-vertex! model (make-vertex-from-point/color point #f))))
         (make-face-corner point-index 'unset 'unset)))
 
 
@@ -461,8 +460,8 @@
                    (vector (* (vector3-x point-3d) (vector3-x multiplier))
                            (* (vector3-y point-3d) (vector3-y multiplier))
                            (* (vector3-z point-3d) (vector3-z multiplier))))
-                  (point-3d-str (vector-map number->string point-3d-scaled))
-                  (index (model-append-vertex! model point-3d-str)))
+                  (vtx (make-vertex-from-point/color point-3d-scaled #f))
+                  (index (model-append-vertex! model vtx)))
              (voronoi-graph-data-set-index! data index)))
          (graph-nodes graph))
 
@@ -817,7 +816,7 @@
                                                               (face-set-normals! model face)
                                                               face))
                                     (compact-obj-model model)
-                                    (fix-face-winding model))))
+                                    (fix-face-winding! model))))
                 (cond
 
                  (output-obj

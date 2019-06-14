@@ -5,6 +5,12 @@
 # WAVEFRONT_OBJ_TOOL=wavefront-obj-tool
 WAVEFRONT_OBJ_TOOL=../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 
+OPENSCAD=openscad-nightly
+
+OVEN=../../hifi/build/tools/oven/oven
+BAKEDDIR=baked
+
+
 VORONOI=../../voronoi/voronoi
 LIBS='(seth pbm)' '(foldling command-line)' '(seth obj-model)' '(srfi 95)' '(seth graph)' '(seth scad-model)' '(seth octree)'
 WIDTH=80
@@ -14,10 +20,12 @@ OUTPUT_WIDTH=1024
 OUTPUT_DEPTH=1024
 OUTPUT_HEIGHT=1024
 
+%.obj.gz: %.obj
+	cat $< | gzip -9 - > $@
 
 terrain-parts/terrain%.stl: terrain-parts.scad terrain.scad
 	mkdir -p terrain-parts
-	openscad -D xslice=`expr substr $@ 22 1` \
+	${OPENSCAD} -D xslice=`expr substr $@ 22 1` \
 				-D zslice=`expr substr $@ 23 1` \
 				-D width=$(OUTPUT_WIDTH) \
 				-D depth=$(OUTPUT_DEPTH) \
@@ -39,7 +47,7 @@ json-parts/terrain%.json: terrain-parts/terrain%.obj terrain-json.m4
 		terrain-json.m4 > $@
 
 
-all: terrain-lines.png terrain.scad terrain-textured.obj # terrain.obj terrain terrain.json
+all: terrain-lines.png terrain.scad terrain-textured.obj.gz ${BAKEDDIR}/terrain-textured/baked # terrain.obj terrain terrain.json
 
 voronoi-terrain-chicken: voronoi-terrain-chicken.scm
 	csc -X r7rs $^ -o $@
@@ -78,7 +86,7 @@ terrain.scad: lines points
 
 
 terrain-whole.stl: terrain.scad
-	openscad -o $@ $<
+	${OPENSCAD} -o $@ $<
 
 
 terrain-caves.scad: cave-arcs make-caves-gauche.scm make-caves-main.sld
@@ -86,10 +94,10 @@ terrain-caves.scad: cave-arcs make-caves-gauche.scm make-caves-main.sld
 
 
 terrain-caves.stl: terrain-caves.scad
-	openscad -o $@ $<
+	${OPENSCAD} -o $@ $<
 
 terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
-	openscad -o $@ $<
+	${OPENSCAD} -o $@ $<
 
 terrain-texture.ppm: points lines
 	./voronoi-terrain-gauche.scm --texture \
@@ -135,9 +143,16 @@ JSON_PARTS=$(foreach xz,$(PARTS),json-parts/terrain${xz}.json)
 terrain.json: $(JSON_PARTS)
 	cat $^ > $@
 
-upload: terrain-textured.obj terrain-texture.png terrain.mtl cave-floor.jpg
+${BAKEDDIR}/terrain-textured/baked: terrain-textured.obj
+	${OVEN} -i $^ -o ${BAKEDDIR} -t model
+
+
+UNBAKED_FILES=terrain-textured.obj.gz terrain-texture.png terrain.mtl cave-floor.jpg
+
+upload: ${UNBAKED_FILES} ${BAKEDDIR}/terrain-textured/baked
 	mkdir -p voronoi-terrain
-	cp $^ voronoi-terrain/
+	rsync -avP ${BAKEDDIR}/terrain-textured/baked/ voronoi-terrain/
+	cp ${UNBAKED_FILES} voronoi-terrain/
 	rsync --delete -avP voronoi-terrain/ headache.hungry.com:public_html/hifi/voronoi-terrain/
 
 
@@ -149,6 +164,7 @@ clean:
 	rm -f terrain-texture.png terrain-texture.ppm
 	rm -f terrain-caves.scad terrain-with-caves.stl
 	rm -f terrain-underground-textured.obj terrain-underground-floor-textured.obj
+	rm -rf ${BAKEDDIR}
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
