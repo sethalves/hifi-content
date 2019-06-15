@@ -59,35 +59,20 @@ terrain.obj: lines points
 			--input-width $(WIDTH) --input-height $(HEIGHT) \
 			lines points > $@
 
-terrain-reduced.obj: terrain.obj
-	cp $< $@
-
-#	meshlabserver -i $< -o $@ -s terrain.mlx # -om vc vn
-
-terrain.scad: terrain-reduced.obj
+terrain.scad: terrain.obj
 	$(WAVEFRONT_OBJ_TOOL) $^ -o $@
 
 terrain-caves.obj:
 	- $(ATP_GET) -d eschatology.hungry.com atp:/voxel-paint-save-$(PAINT_SAVE_N).obj -o $@
 
-terrain-caves-water-tight.obj: terrain-caves.obj
-	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.0005 -c -s 64 -o $@
-
-terrain-caves-reduced.obj: terrain-caves-water-tight.obj terrain-caves.mlx
-	cp $< $@
-
-#	meshlabserver -i $< -o $@ -s terrain-caves.mlx # -om vc vn
-
-terrain-caves.scad: terrain-caves-reduced.obj
-	$(WAVEFRONT_OBJ_TOOL) $^ -o $@
+terrain-caves.scad: terrain-caves.obj
+	$(WAVEFRONT_OBJ_TOOL) $^ -c -s 64 -o $@
 
 terrain-with-caves.stl: terrain-with-caves.scad terrain.scad terrain-negative.scad terrain-caves.scad
 	${OPENSCAD} -o $@ $<
 
-terrain-with-caves-reduced.obj: terrain-with-caves.stl terrain-with-caves.mlx
-	cp $< $@
-
-#	meshlabserver -i $< -o $@ -s terrain-with-caves.mlx # -om vc vn
+terrain-with-caves.obj: terrain-with-caves.stl
+	$(WAVEFRONT_OBJ_TOOL) $^ -o $@
 
 ###
 
@@ -104,7 +89,7 @@ terrain-texture.png: terrain-texture.ppm
 
 
 
-terrain-underground-textured.obj: terrain-with-caves-reduced.obj
+terrain-underground-textured.obj: terrain-with-caves.obj
 	$(WAVEFRONT_OBJ_TOOL) -n $< -o $@ -L terrain.mtl -S dirt_mtl
 
 terrain-underground-floor-textured.obj: terrain-underground-textured.obj
@@ -147,14 +132,14 @@ clean:
 	rm -rf terrain-underground-textured.obj
 	rm -rf terrain-with-caves.stl
 	rm -f terrain-lines.png terrain-lines.pnm
-	rm -f terrain-caves-water-tight.obj terrain-caves.scad
+	rm -f terrain-caves-scaled.obj terrain-caves.scad
 	rm -f terrain-caves-reduced.obj
 	rm -f terrain-sans-caves.obj
 	rm -f terrain-sans-caves.stl
 	rm -f terrain.obj
 	rm -f terrain-reduced.obj
 	rm -f terrain-hull.obj
-	rm -f terrain-with-caves-reduced.obj
+	rm -f terrain-with-caves.obj
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
