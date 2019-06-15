@@ -71,7 +71,7 @@ terrain-caves.obj:
 	- $(ATP_GET) -d eschatology.hungry.com atp:/voxel-paint-save-$(PAINT_SAVE_N).obj -o $@
 
 terrain-caves-water-tight.obj: terrain-caves.obj
-	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.001 -c -s 64 -o $@
+	$(WAVEFRONT_OBJ_TOOL) $^ -C 0.0005 -c -s 64 -o $@
 
 terrain-caves-reduced.obj: terrain-caves-water-tight.obj terrain-caves.mlx
 	cp $< $@
