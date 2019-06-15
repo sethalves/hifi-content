@@ -140,6 +140,7 @@ clean:
 	rm -f terrain-reduced.obj
 	rm -f terrain-hull.obj
 	rm -f terrain-with-caves.obj
+	rm -rf baked
 
 very-clean: clean
 	rm -rf seth snow srfi foldling
