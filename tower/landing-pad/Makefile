@@ -2,13 +2,12 @@
 #
 #
 
-# http://headache.hungry.com/~seth/hifi/landing-pad.obj
-# http://headache.hungry.com/~seth/hifi/landing-pad-collision-hull.obj
-
 OVEN=../../../hifi/build/tools/oven/oven
 BAKEDDIR=baked
 
 OPENSCAD=openscad-nightly
+
+WAVEFRONT_OBJ_TOOL=../../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
 
 %.obj.gz: %.obj
 	cat $< | gzip -9 - > $@
@@ -18,7 +17,7 @@ landing-pad-parts/%.stl: landing-pad.scad
 	${OPENSCAD} -D nth="`basename -s .stl $@`" -o $@ $^
 
 %.obj: %.stl
-	wavefront-obj-tool -m 0.2 -n $^ -o $@ # -L landing-pad.mtl
+	${WAVEFRONT_OBJ_TOOL} -m 0.2 -n $^ -o $@ # -L landing-pad.mtl
 
 COLLISION_HULL_PARTS=$(foreach nth,1 2 4,landing-pad-parts/${nth}.obj)
 
@@ -31,23 +30,23 @@ platform.stl: landing-pad.scad
 	${OPENSCAD} -D nth=4 -o $@ $^
 
 platform.obj: platform.stl
-	wavefront-obj-tool -n -c $^ -o $@ -S landing_pad_platform_mtl
+	${WAVEFRONT_OBJ_TOOL} -n -c $^ -o $@ -S landing_pad_platform_mtl
 
 
 walkway.stl: landing-pad.scad
 	${OPENSCAD} -D nth=3 -o $@ $^
 
 walkway.obj: walkway.stl
-	wavefront-obj-tool -m 0.2 -n -c $^ -o $@ -S landing_pad_walkway_mtl
+	${WAVEFRONT_OBJ_TOOL} -m 0.2 -n -c $^ -o $@ -S landing_pad_walkway_mtl
 
 
 # ---
 
 landing-pad.obj: platform.obj walkway.obj
-	wavefront-obj-tool -n  -L landing-pad.mtl -c $^ -o $@
+	${WAVEFRONT_OBJ_TOOL} -n  -L landing-pad.mtl -c $^ -o $@
 
 landing-pad-collision-hull.obj: $(COLLISION_HULL_PARTS)
-	wavefront-obj-tool -c -o $@ $^
+	${WAVEFRONT_OBJ_TOOL} -c -o $@ $^
 
 ${BAKEDDIR}/landing-pad/baked: landing-pad.obj
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
