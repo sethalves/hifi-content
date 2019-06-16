@@ -30,7 +30,7 @@ second-ramp.stl: second-ramp.scad
 	${OPENSCAD} -D combined=1 -o $@ $^
 
 second-ramp.obj: second-ramp.stl
-	${WAVEFRONT_OBJ_TOOL} -m 0.2 -n $^ -o $@ -L second-ramp.mtl -S ramp_mtl
+	${WAVEFRONT_OBJ_TOOL} -m 0.2 -n $^ -o $@ -L second-ramp.mtl -S tower_mtl
 
 second-ramp-collision-hull.obj: $(PARTS)
 	${WAVEFRONT_OBJ_TOOL} -c -o $@ $^
@@ -38,7 +38,7 @@ second-ramp-collision-hull.obj: $(PARTS)
 ${BAKEDDIR}/second-ramp/baked: second-ramp.obj
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
-UNBAKED_FILES=second-ramp.obj.gz second-ramp-collision-hull.obj.gz
+UNBAKED_FILES=second-ramp.obj.gz second-ramp-collision-hull.obj.gz second-ramp.mtl tower-ramp.png
 
 upload: ${UNBAKED_FILES} ${BAKEDDIR}/second-ramp/baked
 	mkdir -p second-ramp
@@ -49,3 +49,4 @@ clean:
 	rm -rf *~ second-ramp-parts second-ramp-collision-hull.obj second-ramp.obj
 	rm -f second-ramp.obj.tmp.obj second-ramp.stl
 	rm -rf baked
+	rm -f second-ramp-collision-hull.obj.gz second-ramp.obj.gz
