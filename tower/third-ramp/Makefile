@@ -13,12 +13,14 @@ BAKEDDIR=baked
 
 OPENSCAD=openscad-nightly
 
+WAVEFRONT_OBJ_TOOL=../../../wavefront-obj-tools/wavefront-obj-tool-gauche.scm
+
 third-ramp-parts/%.stl: third-ramp.scad
 	mkdir -p third-ramp-parts
 	${OPENSCAD} -D combined=0 -D nth="`basename -s .stl $@`" -o $@ $^
 
 %.obj: %.stl
-	wavefront-obj-tool -m 0.2 -n $^ -o $@
+	${WAVEFRONT_OBJ_TOOL} -m 0.2 -n $^ -o $@
 
 PARTS=$(foreach nth,0 1 2 3 4 5 6 7 8 9 10 11,third-ramp-parts/${nth}.obj)
 
@@ -28,10 +30,10 @@ third-ramp.stl: third-ramp.scad
 	${OPENSCAD} -D combined=1 -o $@ $^
 
 third-ramp.obj: third-ramp.stl
-	wavefront-obj-tool -m 0.2 -n $^ -o $@ -L third-ramp.mtl -S tower_mtl
+	${WAVEFRONT_OBJ_TOOL} -m 0.2 -n $^ -o $@ -L third-ramp.mtl -S tower_mtl
 
 third-ramp-collision-hull.obj: $(PARTS)
-	wavefront-obj-tool -c -o $@ $^
+	${WAVEFRONT_OBJ_TOOL} -c -o $@ $^
 
 ${BAKEDDIR}/third-ramp/baked: third-ramp.obj
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model

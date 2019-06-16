@@ -39,4 +39,5 @@ clean:
 	(cd third-ramp && make $@)
 	(cd tower-first-balcony && make $@)
 	(cd tower-third-floor && make $@)
+	(cd tower-third-floor-rail && make $@)
 	rm -rf tower-upload

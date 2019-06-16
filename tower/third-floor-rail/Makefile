@@ -20,7 +20,7 @@ all: tower-third-floor-rail.obj.gz ${BAKEDDIR}/tower-third-floor-rail/baked
 tower-third-floor-rail.stl: tower-third-floor-rail.scad
 	${OPENSCAD} -D nth=0 -o $@ $^
 
-${BAKEDDIR}/third-floor-rail/baked: tower-third-floor-rail.obj
+${BAKEDDIR}/tower-third-floor-rail/baked: tower-third-floor-rail.obj
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
 UNBAKED_FILES=tower-third-floor-rail.obj.gz tower-third-floor-rail.mtl
