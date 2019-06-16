@@ -36,7 +36,7 @@ third-ramp-collision-hull.obj: $(PARTS)
 ${BAKEDDIR}/third-ramp/baked: third-ramp.obj
 	${OVEN} -i $^ -o ${BAKEDDIR} -t model
 
-UNBAKED_FILES=third-ramp.obj.gz third-ramp-collision-hull.obj.gz
+UNBAKED_FILES=third-ramp.obj.gz third-ramp-collision-hull.obj.gz third-ramp.mtl tower-ramp.png
 
 upload: ${UNBAKED_FILES} ${BAKEDDIR}/third-ramp/baked
 	mkdir -p ../tower-upload/
