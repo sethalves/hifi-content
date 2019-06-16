@@ -16,6 +16,9 @@ curved-ramp-parts/%.stl: curved-ramp.scad
 %.obj: %.stl
 	$(WAVEFRONT_OBJ_TOOL) -m 0.2 -n $^ -o $@
 
+%.obj.gz: %.obj
+	cat $< | gzip -9 - > $@
+
 PARTS=$(foreach nth,0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23,curved-ramp-parts/${nth}.obj)
 
 all: curved-ramp-collision-hull.obj.gz curved-ramp.obj.gz ${BAKEDDIR}/curved-ramp/baked
