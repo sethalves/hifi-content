@@ -27,7 +27,7 @@ function getControllerLocation(controllerHand) {
     var ARROW_HIT_SOUND_URL = Script.resolvePath("Arrow_impact1.L.wav");
     var ARROW_SPARKLE_TEXTURE = Script.resolvePath("arrow-sparkle.png");
 
-    var ARROW_MODEL_URL = Script.resolvePath("arrow.fbx");
+    var ARROW_MODEL_URL = Script.resolvePath("arrow.baked.fst");
     // var ARROW_MODEL_URL = Script.resolvePath("newarrow_textured.fbx");
     var ARROW_DIMENSIONS = {
         x: 0.20,

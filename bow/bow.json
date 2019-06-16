@@ -6,7 +6,7 @@
             "dimensions": { "x": 0.04, "y": 1.3, "z": 0.2 },
             "dynamic": 1,
             "gravity": { "x": 0, "y": -1, "z": 0 },
-            "modelURL": "http://headache.hungry.com/~seth/hifi/bow/bow_collision_hull.obj/bow-deadly.fbx",
+            "modelURL": "http://headache.hungry.com/~seth/hifi/bow/bow_collision_hull.obj/bow-deadly.baked.fst",
             "name": "Hifi-Bow",
             "script": "http://headache.hungry.com/~seth/hifi/bow/bow.js",
             "shapeType": "compound",
