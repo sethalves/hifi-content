@@ -1,0 +1,13 @@
+newmtl landing_pad_walkway_mtl
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 1.0
+illum 2
+map_Ka tower-ramp.png
+map_Kd tower-ramp.png
+
+newmtl landing_pad_platform_mtl
+Ka 0.2 0.2 0.2
+Kd 0.2 0.2 0.2
+Ns 10
