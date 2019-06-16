@@ -12,6 +12,7 @@ all:
 	(cd third-ramp && make $@)
 	(cd tower-first-balcony && make $@)
 	(cd tower-third-floor && make $@)
+	(cd tower-third-floor-rail && make $@)
 
 upload:
 	(cd curved-ramp && make $@)
@@ -21,6 +22,7 @@ upload:
 	(cd third-ramp && make $@)
 	(cd tower-first-balcony && make $@)
 	(cd tower-third-floor && make $@)
+	(cd tower-third-floor-rail && make $@)
 	rsync --delete -avP tower-upload/ headache.hungry.com:public_html/hifi/tower/
 
 
