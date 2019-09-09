@@ -1,9 +1,56 @@
 "use strict";
 
+// Distributed under the Apache License, Version 2.0
+// See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
+
+/* jshint strict: true */
+/* jslint vars: true */
 /* global Entities, Script, Assets, MyAvatar, Vec3 */
 
 (function() { // BEGIN LOCAL_SCOPE
+
+    // This is the message that's received from the UI JS that indicates that the UI is ready.
+    function onEventBridgeReady() {
+        ui.sendMessage({
+            app: APP_NAME,
+            method: "initializeUI",
+            data: {}
+        });
+    }
+
+    // Handle EventBridge messages from UI JavaScript.
+    function onWebEventReceived(event) {
+
+        if (event.app !== APP_NAME) {
+            return;
+        }
+
+        switch (event.method) {
+        case "eventBridgeReady":
+            onEventBridgeReady();
+            break;
+
+        case "saveClicked":
+            // saveDomain();
+            break;
+
+        case "restoreClicked":
+            // restoreDomain();
+            break;
+
+        case "deleteUnknownClicked":
+            // deleteUnknown();
+            break;
+
+        default:
+            console.log("Unrecognized event method supplied to App JS: " + event.method);
+            break;
+        }
+    }
+
+
     var AppUi = Script.require("appUi");
+    var APP_NAME = "DOMAINCLEANER";
     var ui;
 
     var EUs = Script.require("http://headache.hungry.com/~seth/hifi/entity-utils/entity-utils.js");
@@ -110,19 +157,10 @@
     }
 
 
-    function fromQml(message) {
-        print("message from qml: " + JSON.stringify(message));
-        if (message.method == "save") {
-            saveDomain();
-        } else if (message.method == "restore") {
-            restoreDomain();
-        } else if (message.method == "delete-unknown") {
-            deleteUnknown();
-        }
-    }
-
-
     function cleanup() {
+        if (ui.isOpen) {
+            ui.onClosed();
+        }
     }
 
     Script.scriptEnding.connect(cleanup);
@@ -131,8 +169,8 @@
     function startup() {
         ui = new AppUi({
             buttonName: "CLEANER",
-            home: Script.resolvePath("domain-cleaner.qml"),
-            onMessage: fromQml,
+            home: Script.resolvePath("./ui/domainCleaner_ui.html"),
+            onMessage: onWebEventReceived,
             normalButton: Script.resolvePath("domain-clean.svg"),
             activeButton: Script.resolvePath("domain-clean.svg")
         });
