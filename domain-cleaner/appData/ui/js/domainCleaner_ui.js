@@ -20,17 +20,14 @@ function emitAppSpecificEvent(method, data) {
 function buttonClicked(el) {
     switch (el.id) {
     case "save":
-        console.log("ui save clicked");
         emitAppSpecificEvent("saveClicked");
         break;
 
     case "restore":
-        console.log("ui restore clicked");
         emitAppSpecificEvent("restoreClicked");
         break;
 
     case "deleteUnknown":
-        console.log("ui delete-others clicked");
         emitAppSpecificEvent("deleteUnknownClicked");
         break;
 

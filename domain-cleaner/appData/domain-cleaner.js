@@ -31,15 +31,15 @@
             break;
 
         case "saveClicked":
-            // saveDomain();
+            saveDomain();
             break;
 
         case "restoreClicked":
-            // restoreDomain();
+            restoreDomain();
             break;
 
         case "deleteUnknownClicked":
-            // deleteUnknown();
+            deleteUnknown();
             break;
 
         default:
@@ -169,10 +169,10 @@
     function startup() {
         ui = new AppUi({
             buttonName: "CLEANER",
-            home: Script.resolvePath("./ui/domainCleaner_ui.html"),
+            home: Script.resolvePath("./ui/domain-cleaner.html"),
             onMessage: onWebEventReceived,
-            normalButton: Script.resolvePath("domain-clean.svg"),
-            activeButton: Script.resolvePath("domain-clean.svg")
+            normalButton: Script.resolvePath("domain-cleaner.svg"),
+            activeButton: Script.resolvePath("domain-cleaner.svg")
         });
 
         Script.scriptEnding.connect(cleanup);
