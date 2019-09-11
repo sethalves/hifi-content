@@ -16,11 +16,14 @@
 
 "use strict";
 
+/* global Script, Entities, Messages, Render, Vec3, Quat, MyAvatar */
+
 (function () { // BEGIN LOCAL SCOPE
 
     // VARIABLES
-    /* globals utils, Render */
     var _this = this;
+
+    var MIRROR_MESSAGE_CHANNEL = "mirror-control";
 
     // The max pixel resolution of the long side of the mirror
     // var MAX_MIRROR_RESOLUTION_SIDE_PX = 10000;
@@ -32,7 +35,7 @@
     // var MAX_MIRROR_RESOLUTION_SIDE_PX = 1200; // works?
     // var MAX_MIRROR_RESOLUTION_SIDE_PX = 1000;
 
-    var ZERO_ROT = { w: 1, x: 0, y: 0, z: 0 };   // Constant quaternion for a rotation of 0
+    // var ZERO_ROT = { w: 1, x: 0, y: 0, z: 0 };   // Constant quaternion for a rotation of 0
     var FAR_CLIP_DISTANCE = 16;     // The far clip distance for the spectator camera when the mirror is on
     var mirrorLocalEntityID = false;            // The entity ID of the local entity that displays the mirror reflection
     var mirrorLocalEntityRunning;       // True if mirror local entity is reflecting, false otherwise
@@ -41,9 +44,9 @@
     var lastDimensions = { x: 0, y: 0 };        // The previous dimensions of the mirror
     var previousFarClipDistance;    // Store the specator camera's previous far clip distance that we override for the mirror
 
-    // LOCAL FUNCTIONS    
+    // LOCAL FUNCTIONS
     function isPositionInsideBox(position, boxProperties) {
-        var localPosition = Vec3.multiplyQbyV(Quat.inverse(boxProperties.rotation), 
+        var localPosition = Vec3.multiplyQbyV(Quat.inverse(boxProperties.rotation),
                                               Vec3.subtract(MyAvatar.position, boxProperties.position));
         var halfDimensions = Vec3.multiply(boxProperties.dimensions, 0.5);
         return -halfDimensions.x <= localPosition.x &&
@@ -53,8 +56,8 @@
                -halfDimensions.z <= localPosition.z &&
                 halfDimensions.z >= localPosition.z;
     }
-    
-    // When x or y dimensions of the mirror change - reset the resolution of the 
+
+    // When x or y dimensions of the mirror change - reset the resolution of the
     // spectator camera and edit the mirror local entity to adjust for the new dimensions
     function updateMirrorDimensions(forceUpdate) {
 
@@ -80,10 +83,10 @@
         }
     }
 
-    // Takes in an mirror scalar number which is used for the index of "halfDimSigns" that is needed to adjust the mirror 
+    // Takes in an mirror scalar number which is used for the index of "halfDimSigns" that is needed to adjust the mirror
     // local entity's position. Deletes and re-adds the mirror local entity so the url and position are updated.
     function createMirrorLocalEntity() {
-        
+
         if (mirrorLocalEntityID) {
             Entities.deleteEntity(mirrorLocalEntityID);
             mirrorLocalEntityID = false;
@@ -101,17 +104,40 @@
                     x: 0,
                     y: 0,
                     z: mirrorLocalEntityOffset
-                },                
+                },
                 grab: {
                     grabbable: false
                 },
                 localRotation: Quat.fromPitchYawRollDegrees(0, 0, 180),
                 isVisibleInSecondaryCamera: false
             }, "local");
-            
+
             updateMirrorDimensions(true);
         }
-        
+
+    }
+
+    function handleMessages(channel, message, sender) {
+        // if (sender !== MyAvatar.sessionUUID) {
+        //     return;
+        // }
+        if (channel !== MIRROR_MESSAGE_CHANNEL) {
+            return;
+        }
+        var data;
+        try {
+            data = JSON.parse(message);
+        } catch (e) {
+            print("WARNING: error parsing \"Mirror-Resolution\" message: " + message);
+            return;
+        }
+
+        var method = data.method;
+        if (method == "set-resolution") {
+            _this.mirrorLocalEntityOff();
+            MAX_MIRROR_RESOLUTION_SIDE_PX = data.value;
+            _this.mirrorLocalEntityOn();
+        }
     }
 
     _this.calculateMirrorResolution = function(entityDimensions) {
@@ -131,7 +157,7 @@
 
         return resolution;
     };
-    
+
     // Sets up spectator camera to render the mirror, calls 'createMirrorLocalEntity' once to set up
     // mirror local entity, then connects 'updateMirrorDimensions' to update dimension changes
     _this.mirrorLocalEntityOn = function(onPreload) {
@@ -155,7 +181,7 @@
         }
     };
 
-    // Resets spectator camera, deletes the mirror local entity, and disconnects 'updateMirrorDimensions' 
+    // Resets spectator camera, deletes the mirror local entity, and disconnects 'updateMirrorDimensions'
     _this.mirrorLocalEntityOff = function() {
         if (mirrorLocalEntityRunning) {
             spectatorCameraConfig.enableSecondaryCameraRenderConfigs(false);
@@ -170,26 +196,31 @@
             mirrorLocalEntityRunning = false;
         }
     };
-    
+
     // ENTITY FUNCTIONS
     _this.preload = function(entityID) {
         _this.entityID = entityID;
-        mirrorlocalEntityRunning = false;
-    
+        mirrorLocalEntityRunning = false;
+
+        Messages.messageReceived.connect(handleMessages);
+        Messages.subscribe(MIRROR_MESSAGE_CHANNEL);
+
         // If avatar is already inside the mirror zone at the time preload is called then turn on the mirror
         var children = Entities.getChildrenIDs(_this.entityID);
         var childZero = Entities.getEntityProperties(children[0]);
         if (isPositionInsideBox(MyAvatar.position, {
-                position: childZero.position, 
-                rotation: childZero.rotation, 
+                position: childZero.position,
+                rotation: childZero.rotation,
                 dimensions: childZero.dimensions
             })) {
             _this.mirrorLocalEntityOn(true);
         }
     };
-    
+
     // Turn off mirror on unload
     _this.unload = function(entityID) {
         _this.mirrorLocalEntityOff();
+        Messages.unsubscribe(MIRROR_MESSAGE_CHANNEL);
+        Messages.messageReceived.disconnect(handleMessages);
     };
 });

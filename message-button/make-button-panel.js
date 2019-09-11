@@ -6,31 +6,74 @@
 (function() { // BEGIN LOCAL_SCOPE
 
     var pos = Vec3.sum(MyAvatar.position, Vec3.multiplyQbyV(MyAvatar.orientation, {x: 0, y: 0.1, z: -3}));
-    var lifetime = -1;
-    // var lifetime = 30;
+
+    // var buttons = [
+    //     {
+    //         text: "Day",
+    //         channel: "Day-Night-Cycle",
+    //         message: "{ \"method\":\"set-cycle-stage\", \"value\": 0 }"
+    //     },
+    //     {
+    //         text: "Night",
+    //         channel: "Day-Night-Cycle",
+    //         message: "{ \"method\":\"set-cycle-stage\", \"value\": 4 }"
+    //     },
+    //     {
+    //         text: "Enable Away",
+    //         channel: "Hifi-Away-Enable",
+    //         message: "enable"
+    //     },
+    //     {
+    //         text: "Disable Away",
+    //         channel: "Hifi-Away-Enable",
+    //         message: "disable"
+    //     }
+    // ];
+
 
     var buttons = [
         {
-            text: "Day",
-            channel: "Day-Night-Cycle",
-            message: "{ \"method\":\"set-cycle-stage\", \"value\": 0 }"
+            text: "1000",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 1000 }"
         },
         {
-            text: "Night",
-            channel: "Day-Night-Cycle",
-            message: "{ \"method\":\"set-cycle-stage\", \"value\": 4 }"
+            text: "1200",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 1200 }"
         },
         {
-            text: "Enable Away",
-            channel: "Hifi-Away-Enable",
-            message: "enable"
+            text: "1300",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 1300 }"
         },
         {
-            text: "Disable Away",
-            channel: "Hifi-Away-Enable",
-            message: "disable"
+            text: "1400",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 1400 }"
+        },
+        {
+            text: "1500",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 1500 }"
+        },
+        {
+            text: "2000",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 2000 }"
+        },
+        {
+            text: "2500",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 2500 }"
+        },
+        {
+            text: "3000",
+            channel: "mirror-control",
+            message: "{ \"method\":\"set-resolution\", \"value\": 3000 }"
         }
     ];
+
 
     var margin = 0.015;
     var lineHeight = 0.12;
@@ -42,6 +85,10 @@
     var frameSize = 0.02;
     var frameColor = { red: 204, green: 229, blue: 255 };
     var frameDepth = baseThickness + 0.05;
+
+    var lifetime = -1;
+    // var lifetime = 30;
+
 
     var baseID = Entities.addEntity({
         type: "Box",
