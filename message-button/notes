@@ -1,0 +1,10 @@
+
+{
+    "messageButton": {
+        "channel": "Hifi-Away-Enable",
+        "message": "disable"
+    }
+}
+
+
+{ "method":"set-cycle-stage", "value": 0 }
