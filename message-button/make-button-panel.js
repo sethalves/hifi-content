@@ -165,7 +165,7 @@
         Entities.addEntity({
             type: "Sphere",
             parentID: baseID,
-            grab: { grabbable: false },
+            grab: { grabbable: false, triggerable: true },
             name: "Button: " + button.text,
             userData: JSON.stringify({
                 messageButton: {
