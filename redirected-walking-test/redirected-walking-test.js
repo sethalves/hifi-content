@@ -14,7 +14,6 @@
     var closedValue = 0.7;
 
     function go() {
-        print("blink");
         MyAvatar.orientation = Quat.multiply(MyAvatar.orientation, leftTurn);
     }
 
