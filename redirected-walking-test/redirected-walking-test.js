@@ -10,17 +10,16 @@
     var leftClosed = false;
     var rightClosed = false;
 
-    var rightTurn = Quat.fromPitchYawRollDegrees(0, 4.5, 0);
+    var leftTurn = Quat.fromPitchYawRollDegrees(0, 3.0, 0);
+    var closedValue = 0.7;
 
     function go() {
         print("blink");
-        MyAvatar.orientation = Quat.multiply(MyAvatar.orientation, rightTurn);
+        MyAvatar.orientation = Quat.multiply(MyAvatar.orientation, leftTurn);
     }
 
     function leftBlinkChanged(value) {
-        print("QQQQ left blink: " + value);
-
-        if (value > 0.5) {
+        if (value > closedValue) {
             if (!leftClosed) {
                 leftClosed = true;
                 if (rightClosed) {
@@ -33,9 +32,7 @@
     }
 
     function rightBlinkChanged(value) {
-        print("QQQQ right blink: " + value);
-
-        if (value > 0.5) {
+        if (value > closedValue) {
             if (!rightClosed) {
                 rightClosed = true;
                 if (leftClosed) {
