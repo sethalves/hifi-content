@@ -1,6 +1,6 @@
 "use strict";
 
-/* global Entities, Script, Overlays, Controller, Reticle */
+/* global Script, Overlays, Controller, Reticle */
 
 (function() { // BEGIN LOCAL_SCOPE
 
@@ -70,7 +70,7 @@
             } else {
                 turning = 0.0;
                 if (dy < -deadSpaceSize || dy > deadSpaceSize) {
-                    walkingForward = dy / (buttonHeight * 2.0);
+                    walkingForward = dy / buttonHeight;
                 } else {
                     walkingForward = 0.0;
                 }
