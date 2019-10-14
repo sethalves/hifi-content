@@ -6,10 +6,10 @@
 
     var windowDimensions = Controller.getViewportDimensions();
 
-    var buttonWidth = windowDimensions.x / 20.0;
+    var buttonWidth = windowDimensions.x / 15.0;
     var buttonHeight = buttonWidth;
 
-    var buttonPositionX = buttonWidth * 2.0;
+    var buttonPositionX = buttonWidth * 1.5;
     var buttonPositionY = windowDimensions.y - buttonHeight * 2.5;
 
     var deadSpaceSize = buttonWidth / 2.0;
@@ -25,12 +25,12 @@
         y: buttonPositionY,
         width: buttonWidth,
         height: buttonHeight,
-        subImage: {
-            x: 0,
-            y: 0,
-            width: buttonWidth,
-            height: buttonHeight
-        },
+        // subImage: {
+        //     x: 0,
+        //     y: 0,
+        //     width: buttonWidth,
+        //     height: buttonHeight
+        // },
         imageURL: Script.resolvePath("circle.svg"),
         visible: true,
         alpha: 1.0
@@ -52,6 +52,7 @@
     function releaseEvent(event) {
         if (walking) {
             walkingForward = 0.0;
+            turning = 0.0;
             walking = false;
         }
     }
