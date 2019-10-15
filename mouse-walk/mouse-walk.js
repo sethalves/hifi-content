@@ -38,24 +38,8 @@
 
     var walking = false;
     var clickDownPosition = null;
-
-    function pressEvent(event) {
-        if (Overlays.getOverlayAtPoint(Reticle.position) == buttonID) {
-            walking = true;
-            clickDownPosition = {
-                x: event.x,
-                y: event.y
-            };
-        }
-    }
-
-    function releaseEvent(event) {
-        if (walking) {
-            walkingForward = 0.0;
-            turning = 0.0;
-            walking = false;
-        }
-    }
+    var leftDeadZone = false;
+    var jumping = 0;
 
     function moveEvent(event) {
         if (walking) {
@@ -65,6 +49,7 @@
                 walkingForward = 0.0;
                 if (dx < -deadSpaceSize || dx > deadSpaceSize) {
                     turning = dx / buttonWidth;
+                    leftDeadZone = true;
                 } else {
                     turning = 0.0;
                 }
@@ -72,6 +57,7 @@
                 turning = 0.0;
                 if (dy < -deadSpaceSize || dy > deadSpaceSize) {
                     walkingForward = dy / buttonHeight;
+                    leftDeadZone = true;
                 } else {
                     walkingForward = 0.0;
                 }
@@ -79,8 +65,31 @@
         }
     }
 
+    function pressEvent(event) {
+        if (Overlays.getOverlayAtPoint(Reticle.position) == buttonID) {
+            walking = true;
+            leftDeadZone = false;
+            clickDownPosition = {
+                x: event.x,
+                y: event.y
+            };
+            Controller.mouseMoveEvent.connect(moveEvent);
+        }
+    }
+
+    function releaseEvent(event) {
+        if (walking) {
+            walkingForward = 0.0;
+            turning = 0.0;
+            walking = false;
+            if (!leftDeadZone) {
+                jumping = 20;
+            }
+            Controller.mouseMoveEvent.disconnect(moveEvent);
+        }
+    }
+
     Controller.mousePressEvent.connect(pressEvent);
-    Controller.mouseMoveEvent.connect(moveEvent);
     Controller.mouseReleaseEvent.connect(releaseEvent);
 
     inputMapping.from(function() {
@@ -91,11 +100,23 @@
         return turning;
     }).to(Controller.Actions.Yaw);
 
+    inputMapping.from(function() {
+        if (jumping > 0) {
+            jumping -= 1;
+            return 1.0;
+        }
+        return 0.0;
+    }).to(Controller.Actions.TranslateY);
+
     Controller.enableMapping(mappingName);
 
     Script.scriptEnding.connect(function () {
         Overlays.deleteOverlay(buttonID);
         inputMapping.disable();
+
+        Controller.mousePressEvent.disconnect(pressEvent);
+        Controller.mouseMoveEvent.disconnect(moveEvent);
+        Controller.mouseReleaseEvent.disconnect(releaseEvent);
     });
 
 }()); // END LOCAL_SCOPE
